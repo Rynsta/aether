@@ -6,6 +6,7 @@ import dev.aether.ui.MainGUI;
 import it.unimi.dsi.fastutil.booleans.BooleanConsumer;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.core.BlockPos;
@@ -14,6 +15,7 @@ import net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.io.File;
+import java.util.function.Consumer;
 
 public final class AetherBootstrapHooks {
     public interface FeatureHooks {
@@ -71,6 +73,10 @@ public final class AetherBootstrapHooks {
 
         default boolean shouldSuppressVanillaHud(Screen screen) {
             return false;
+        }
+
+        default void extractScoreboardSidebar(GuiGraphicsExtractor graphics, Consumer<GuiGraphicsExtractor> vanilla) {
+            vanilla.accept(graphics);
         }
 
         default void renderConfigScreenOverlay(NVGRenderer renderer, float width, float height, float deltaTime) {
@@ -272,6 +278,10 @@ public final class AetherBootstrapHooks {
 
     public static boolean shouldSuppressVanillaHud(Screen screen) {
         return isBootstrapConfigScreen(screen) || hooks.shouldSuppressVanillaHud(screen);
+    }
+
+    public static void extractScoreboardSidebar(GuiGraphicsExtractor graphics, Consumer<GuiGraphicsExtractor> vanilla) {
+        hooks.extractScoreboardSidebar(graphics, vanilla);
     }
 
     public static boolean isBootstrapConfigScreen(Screen screen) {

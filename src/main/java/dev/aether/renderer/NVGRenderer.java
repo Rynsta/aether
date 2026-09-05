@@ -35,6 +35,7 @@ public class NVGRenderer {
     private final NVGColor c1   = NVGColor.malloc();
     private final NVGColor c2   = NVGColor.malloc();
     private final NVGPaint paint = NVGPaint.malloc();
+    private final MinecraftTextRenderer minecraftText;
 
     // Font measurement scratch buffer
     private final float[] fontBounds = new float[4];
@@ -56,6 +57,14 @@ public class NVGRenderer {
 
     NVGRenderer(long vg) {
         this.vg = vg;
+        this.minecraftText = new MinecraftTextRenderer(vg, paint);
+    }
+
+    void beginMinecraftTextFrame() { minecraftText.beginFrame(); }
+    void endMinecraftTextFrame() { minecraftText.endFrame(); }
+
+    public void minecraftText(net.minecraft.client.gui.Font.PreparedText text) {
+        text.visit(minecraftText);
     }
 
     // -- Basic shapes ----------------------------------------------------------
@@ -873,7 +882,7 @@ public class NVGRenderer {
      * Converts an ARGB int into the pre-allocated {@link NVGColor} structure.
      * The NVGColor is only valid until the next call to this method with the same slot.
      */
-    private void color(int argb, NVGColor out) {
+    static void color(int argb, NVGColor out) {
         nvgRGBA(
                 (byte) ((argb >> 16) & 0xFF),
                 (byte) ((argb >>  8) & 0xFF),

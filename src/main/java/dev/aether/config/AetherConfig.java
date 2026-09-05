@@ -815,6 +815,11 @@ public final class AetherConfig {
         public static final IntEntry     MAIN_STATUS_GRADIENT_LEFT  = Config.integer("mainStatusGradientLeft",  0xFFD32F2F);
         public static final IntEntry     MAIN_STATUS_GRADIENT_RIGHT = Config.integer("mainStatusGradientRight", 0xFF7B4FFF);
 
+        public static final BooleanEntry CUSTOM_SCOREBOARD = Config.bool("customScoreboard", false);
+        public static final IntEntry SCOREBOARD_HUD_X = Config.integer("scoreboardHudX", -1).range(-1, Integer.MAX_VALUE);
+        public static final IntEntry SCOREBOARD_HUD_Y = Config.integer("scoreboardHudY", -1).range(-1, Integer.MAX_VALUE);
+        public static final FloatEntry SCOREBOARD_HUD_SCALE = Config.floatVal("scoreboardHudScale", 1.0f).range(0.5f, 2.5f);
+
         public static final IntEntry INVENTORY_HUD_X = Config.integer("inventoryHudX", 10);
         public static final IntEntry INVENTORY_HUD_Y = Config.integer("inventoryHudY", 40);
         public static final FloatEntry INVENTORY_HUD_SCALE = Config.floatVal("inventoryHudScale", 1.0f).range(1.0f, 1.0f);

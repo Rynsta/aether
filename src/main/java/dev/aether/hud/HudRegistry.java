@@ -55,6 +55,7 @@ public class HudRegistry {
     public static WatermarkHudElement watermarkHud;
     /** Main status panel (Main theme). */
     public static MainStatusHudElement mainStatusHud;
+    public static ScoreboardHudElement scoreboardHud;
 
     private HudRegistry() {}
 
@@ -71,6 +72,7 @@ public class HudRegistry {
         inventoryHud = new InventoryHudElement();
         watermarkHud  = new WatermarkHudElement();
         mainStatusHud = new MainStatusHudElement();
+        scoreboardHud = new ScoreboardHudElement();
         ELEMENTS.add(macroHud);
         ELEMENTS.add(sessionHud);
         ELEMENTS.add(lifetimeHud);
@@ -81,6 +83,7 @@ public class HudRegistry {
         ELEMENTS.add(inventoryHud);
         ELEMENTS.add(watermarkHud);
         ELEMENTS.add(mainStatusHud);
+        ELEMENTS.add(scoreboardHud);
 
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("aether", "hud"), (guiGraphics, delta) -> {
                         Minecraft mc = Minecraft.getInstance();
@@ -122,7 +125,7 @@ public class HudRegistry {
 
     private static void renderMcElements(net.minecraft.client.gui.GuiGraphicsExtractor graphics) {
         for (HudElement e : ELEMENTS) {
-            if (e.isVisible()) {
+            if (e.rendersWithHud() && e.isVisible()) {
                 e.renderMinecraft(graphics, false);
             }
         }
@@ -163,10 +166,10 @@ public class HudRegistry {
     }
 
     private static boolean hasVisibleElements() {
-        return ELEMENTS.stream().anyMatch(HudElement::isVisible);
+        return ELEMENTS.stream().anyMatch(e -> e.rendersWithHud() && e.isVisible());
     }
 
-    private static boolean canRenderInGameplay(Minecraft mc) {
+    static boolean canRenderInGameplay(Minecraft mc) {
         if (AetherConfig.HUD_ONLY_WHILE_MACRO_RUNNING.get() && !MacroStateManager.isMacroRunning()) {
             return false;
         }
@@ -190,7 +193,7 @@ public class HudRegistry {
         nvg.save();
         nvg.globalAlpha(alpha);
         for (HudElement e : ELEMENTS) {
-            if (!e.rendersBeforeMinecraft()) e.render(nvg, false);
+            if (e.rendersWithHud() && !e.rendersBeforeMinecraft()) e.render(nvg, false);
         }
         nvg.restore();
     }
@@ -245,7 +248,7 @@ public class HudRegistry {
         nvg.save();
         nvg.globalAlpha(alpha);
         for (HudElement e : ELEMENTS) {
-            if (!e.isVisible()) continue;
+            if (!e.rendersWithHud() || !e.isVisible()) continue;
             nvg.save();
             nvg.translate(e.getX(), e.getY());
             nvg.scale(e.getScale(), e.getScale());
@@ -267,7 +270,7 @@ public class HudRegistry {
         inventoryHud = null;
         watermarkHud = null;
         mainStatusHud = null;
+        scoreboardHud = null;
         hudAlpha = 0f;
     }
 }
-

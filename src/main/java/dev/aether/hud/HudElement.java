@@ -63,6 +63,9 @@ public abstract class HudElement {
     // Panels containing native items/entities must draw their themed surfaces before the GUI pass.
     public boolean rendersBeforeMinecraft() { return false; }
 
+    // Some vanilla replacements queue gameplay drawing at their original HUD hook.
+    public boolean rendersWithHud() { return true; }
+
     /**
      * Override to render NVG content that must appear on top of
      * {@link #renderMinecraft} output (e.g. item counts, text overlays).

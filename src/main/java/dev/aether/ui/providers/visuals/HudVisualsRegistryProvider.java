@@ -2,6 +2,7 @@ package dev.aether.ui.providers.visuals;
 
 import dev.aether.config.AetherConfig;
 import dev.aether.hud.HudEditScreen;
+import dev.aether.hud.ScoreboardHudElement;
 import dev.aether.modules.visuals.StreamerModeManager;
 import dev.aether.ui.MainGUIRegistry;
 import dev.aether.ui.providers.base.AbstractVisualsRegistryProvider;
@@ -109,6 +110,13 @@ public final class HudVisualsRegistryProvider extends AbstractVisualsRegistryPro
                             AetherConfig.SHOW_FAILSAFES_HUD.set(v);
                             AetherConfig.save();
                         })));
+
+        groups.add(SettingGroup.of(
+                        "Custom Scoreboard",
+                        "Move and resize the scoreboard while preserving its vanilla appearance",
+                        () -> AetherConfig.CUSTOM_SCOREBOARD.get(),
+                        ScoreboardHudElement::setEnabled)
+                .add(new ActionSetting("Reset Scoreboard Layout", ScoreboardHudElement::resetLayout)));
 
         groups.add(SettingGroup.alwaysOn(
                         "Inventory HUD",

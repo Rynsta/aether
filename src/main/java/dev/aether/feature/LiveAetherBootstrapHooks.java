@@ -41,12 +41,14 @@ import dev.aether.util.ProgrammaticMovementTracker;
 import it.unimi.dsi.fastutil.booleans.BooleanConsumer;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket;
 
 import java.io.File;
+import java.util.function.Consumer;
 
 public final class LiveAetherBootstrapHooks implements AetherBootstrapHooks.FeatureHooks {
     @Override
@@ -171,6 +173,12 @@ public final class LiveAetherBootstrapHooks implements AetherBootstrapHooks.Feat
     @Override
     public boolean shouldSuppressVanillaHud(Screen screen) {
         return AetherBootstrapHooks.isBootstrapConfigScreen(screen) || screen instanceof MainGUI || screen instanceof HudEditScreen;
+    }
+
+    @Override
+    public void extractScoreboardSidebar(GuiGraphicsExtractor graphics, Consumer<GuiGraphicsExtractor> vanilla) {
+        if (HudRegistry.scoreboardHud == null) vanilla.accept(graphics);
+        else HudRegistry.scoreboardHud.extract(graphics, vanilla);
     }
 
     @Override
