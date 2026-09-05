@@ -680,5 +680,14 @@
   "text.aether.hours_played": "Hours played",
   "text.aether.custom_scoreboard": "Custom Scoreboard",
   "text.aether.reset_scoreboard_layout": "Reset Scoreboard Layout",
-  "text.aether.style_the_scoreboard_to_match_your_hud_while_keeping_its_layout_and_spacing": "Style the scoreboard to match your HUD while keeping its layout and spacing"
+  "text.aether.style_the_scoreboard_to_match_your_hud_while_keeping_its_layout_and_spacing": "Style the scoreboard to match your HUD while keeping its layout and spacing",
+  "text.aether.vacuum_follow_distance": "Vacuum Follow Distance",
+  "text.aether.pest_approach_speed": "Pest Approach Speed",
+  "text.aether.pest_tracking_smoothing": "Pest Tracking Smoothing",
+  "text.aether.flight_braking_lookahead": "Flight Braking Lookahead",
+  "text.aether.style_the_scoreboard_to_match_your_hud": "Style the scoreboard to match your HUD",
+  "text.aether.scoreboard_title_text": "Scoreboard Title Text",
+  "text.aether.scoreboard_server_line_text": "Scoreboard Server Line Text",
+  "text.aether.leave_empty_to_keep_the_server_title": "Leave empty to keep the server title",
+  "text.aether.leave_empty_to_keep_the_server_address": "Leave empty to keep the server address"
 }
