@@ -19,17 +19,23 @@ public final class ScoreboardHudElement extends HudElement {
     private boolean renderingFailed;
 
     @Override public float getX() {
-        return AetherConfig.SCOREBOARD_HUD_X.get() < 0 ? drawList.left() : AetherConfig.SCOREBOARD_HUD_X.get();
+        float screenWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();
+        float x = AetherConfig.SCOREBOARD_HUD_X.get() < 0
+                ? screenWidth - getWidth() * getScale() - 8 : AetherConfig.SCOREBOARD_HUD_X.get();
+        return Math.max(0, Math.min(screenWidth - getWidth() * getScale(), x));
     }
     @Override public float getY() {
-        return AetherConfig.SCOREBOARD_HUD_Y.get() < 0 ? drawList.top() : AetherConfig.SCOREBOARD_HUD_Y.get();
+        float screenHeight = Minecraft.getInstance().getWindow().getGuiScaledHeight();
+        float y = AetherConfig.SCOREBOARD_HUD_Y.get() < 0
+                ? drawList.top() - ScoreboardDrawList.PADDING : AetherConfig.SCOREBOARD_HUD_Y.get();
+        return Math.max(0, Math.min(screenHeight - getHeight() * getScale(), y));
     }
     @Override public void setX(float x) { AetherConfig.SCOREBOARD_HUD_X.set(Math.round(x)); }
     @Override public void setY(float y) { AetherConfig.SCOREBOARD_HUD_Y.set(Math.round(y)); }
     @Override public float getScale() { return AetherConfig.SCOREBOARD_HUD_SCALE.get(); }
     @Override public void setScale(float scale) { AetherConfig.SCOREBOARD_HUD_SCALE.set(scale); }
-    @Override public float getWidth() { return drawList.width(); }
-    @Override public float getHeight() { return drawList.height(); }
+    @Override public float getWidth() { return drawList.panelWidth(); }
+    @Override public float getHeight() { return drawList.panelHeight(); }
     @Override public String getName() { return "Custom Scoreboard"; }
     @Override public void savePosition() { AetherConfig.save(); }
     @Override public boolean isEnabled() { return AetherConfig.CUSTOM_SCOREBOARD.get(); }

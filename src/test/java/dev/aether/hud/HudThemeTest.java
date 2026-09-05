@@ -79,4 +79,17 @@ class HudThemeTest {
             AetherConfig.HUD_THEME.set(saved);
         }
     }
+
+    @Test
+    void scoreboardUsesLiveHudColorsAndRetainsServerValueColors() {
+        Theme.HUD_TITLE = 0xFFDEC0FF;
+        Theme.HUD_VALUE = 0xFFE1E2E3;
+        Theme.HUD_LABEL = 0xFFA1A2A3;
+        assertEquals(Theme.HUD_TITLE, ScoreboardText.textColor(net.minecraft.network.chat.Style.EMPTY.withColor(0xFFFF55), -1, true));
+        assertEquals(Theme.HUD_VALUE, ScoreboardText.textColor(net.minecraft.network.chat.Style.EMPTY, -1, false));
+        assertEquals(Theme.HUD_LABEL, ScoreboardText.textColor(net.minecraft.network.chat.Style.EMPTY.withColor(0xAAAAAA), -1, false));
+        assertEquals(0xFFFFAA00, ScoreboardText.textColor(net.minecraft.network.chat.Style.EMPTY.withColor(0xFFAA00), -1, false));
+        Theme.HUD_TITLE = 0x80ABCDEF;
+        assertEquals(0x40ABCDEF, ScoreboardText.textColor(net.minecraft.network.chat.Style.EMPTY, 0x80FFFFFF, true));
+    }
 }

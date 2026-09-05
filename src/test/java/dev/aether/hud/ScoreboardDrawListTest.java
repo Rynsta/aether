@@ -15,6 +15,8 @@ class ScoreboardDrawListTest {
         assertEquals(130, list.top());
         assertEquals(164, list.width());
         assertEquals(145, list.height());
+        assertEquals(184, list.panelWidth());
+        assertEquals(165, list.panelHeight());
     }
 
     @Test

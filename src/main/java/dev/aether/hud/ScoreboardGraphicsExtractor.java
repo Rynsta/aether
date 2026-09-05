@@ -29,7 +29,7 @@ final class ScoreboardGraphicsExtractor extends GuiGraphicsExtractor {
     @Override
     public void text(Font font, FormattedCharSequence text, int x, int y, int color, boolean shadow) {
         if ((color >>> 24) == 0) return;
-        drawList.text(font.prepareText(text, x, y, color, shadow, false, 0));
+        drawList.text(ScoreboardText.prepare(font, text, color, shadow), x, y, font.width(text));
     }
 
     ScoreboardDrawList drawList() { return drawList; }

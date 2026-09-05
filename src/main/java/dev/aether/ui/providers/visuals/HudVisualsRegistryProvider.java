@@ -113,7 +113,7 @@ public final class HudVisualsRegistryProvider extends AbstractVisualsRegistryPro
 
         groups.add(SettingGroup.of(
                         "Custom Scoreboard",
-                        "Move and resize the scoreboard while preserving its vanilla appearance",
+                        "Style the scoreboard to match your HUD while keeping its layout and spacing",
                         () -> AetherConfig.CUSTOM_SCOREBOARD.get(),
                         ScoreboardHudElement::setEnabled)
                 .add(new ActionSetting("Reset Scoreboard Layout", ScoreboardHudElement::resetLayout)));

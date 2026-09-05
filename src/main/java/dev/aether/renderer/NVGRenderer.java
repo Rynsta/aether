@@ -43,7 +43,7 @@ public class NVGRenderer {
     // Scissor stack for nested clipping
     private ScissorRegion scissorStack = null;
 
-    // Per-font cached text width (key = fontName + "|" + text + "|" + size + "|" + textScale)
+    // Per-font cached text width at the effective render size.
     private static final int MAX_TEXT_WIDTH_CACHE = 512;
     private final Map<String, Float> textWidthCache = new LinkedHashMap<>(256, 0.75f, true) {
         @Override
@@ -642,11 +642,15 @@ public class NVGRenderer {
      * @param color    ARGB text color
      */
     public void text(String fontName, String text, float x, float y, float size, int color) {
-        text = AetherLang.localize(text);
+        textLiteral(fontName, AetherLang.localize(text), x, y, size * textScale, color);
+    }
+
+    // Server text must not be localized or inherit the settings menu's text scale.
+    public void textLiteral(String fontName, String text, float x, float y, float size, int color) {
         int fontId = NanoVGManager.getFontId(fontName);
         if (fontId == -1) return;
         nvgFontFaceId(vg, fontId);
-        nvgFontSize(vg, size * textScale);
+        nvgFontSize(vg, size);
         color(color, c1);
         nvgFillColor(vg, c1);
         nvgText(vg, x, y + 0.5f, text);
@@ -702,16 +706,18 @@ public class NVGRenderer {
      * @return width in pixels
      */
     public float textWidth(String fontName, String text, float size) {
-        text = AetherLang.localize(text);
-        String key = fontName + "|" + text + "|" + size + "|" + textScale;
+        return textWidthLiteral(fontName, AetherLang.localize(text), size * textScale);
+    }
+
+    public float textWidthLiteral(String fontName, String text, float size) {
+        String key = fontName + "|" + text + "|" + size;
         if (key.equals(lastTextKey)) {
             return textWidthCache.getOrDefault(key, 0f);
         }
         int fontId = NanoVGManager.getFontId(fontName);
         if (fontId == -1) return 0f;
         nvgFontFaceId(vg, fontId);
-        // text() renders at size * textScale, so measure at the same effective size.
-        nvgFontSize(vg, size * textScale);
+        nvgFontSize(vg, size);
         float w = nvgTextBounds(vg, 0, 0, text, fontBounds);
         textWidthCache.put(key, w);
         lastTextKey = key;
@@ -860,6 +866,8 @@ public class NVGRenderer {
      * @param sy vertical scale factor
      */
     public void scale(float sx, float sy) { nvgScale(vg, sx, sy); }
+
+    public void skewX(float radians) { nvgSkewX(vg, radians); }
 
     /**
      * Sets a global alpha multiplier applied to all subsequent draw calls.
