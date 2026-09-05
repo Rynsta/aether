@@ -44,6 +44,8 @@ public final class BazaarUtils {
 
     private static final long TICK_MS = 50;
 
+    private static volatile BazaarBuySession activeBuy;
+
     public static volatile boolean isBuying = false;
     public static volatile boolean isSellingBazaar = false;
     public static volatile boolean detectedInstantSell = false;
@@ -123,6 +125,22 @@ public final class BazaarUtils {
     // -- Core state machine (blocking, runs on worker thread) --
 
     public static boolean executeBuy(Minecraft client, String itemName, int count) {
+        if (client == null || count <= 0 || itemName == null || itemName.isBlank()) return false;
+        BazaarBuySession purchase = new BazaarBuySession(itemName, count);
+        activeBuy = purchase;
+        try {
+            return executeBuy(client, itemName, count, purchase);
+        } finally {
+            if (activeBuy == purchase) activeBuy = null;
+        }
+    }
+
+    public static void onBuyChatMessage(String text) {
+        BazaarBuySession purchase = activeBuy;
+        if (purchase != null) purchase.onChat(text);
+    }
+
+    private static boolean executeBuy(Minecraft client, String itemName, int count, BazaarBuySession purchase) {
         long guiDelay = Math.max(50L, ConfigHelpers.getRandomizedDelay(
                 AetherConfig.BAZAAR_DELAY_MIN.get(),
                 AetherConfig.BAZAAR_DELAY_MAX.get()));
@@ -197,27 +215,9 @@ public final class BazaarUtils {
         MacroWorkerThread.sleep(fastDelay);
 
         // Step 7: Pick quantity
-        if (count == 1) {
-            ClientUtils.sendDebugMessage("[BazaarUtils] Selecting quantity: 1 (slot " + SLOT_QTY_1 + ")");
-            clickSlot(client, SLOT_QTY_1);
-            MacroWorkerThread.sleep(fastDelay); // Wait for click
-            MacroWorkerThread.sleep(guiDelay);
-            // Preset quantities buy directly - no confirm screen
-            closeScreen(client);
-            MacroWorkerThread.sleep(fastDelay);
-            msg(client, "\u00A7aBazaar buy completed (\u00A7e" + count + "\u00A77).");
-            ClientUtils.sendDebugMessage("[BazaarUtils] Buy complete");
-            return true;
-        } else if (count == 64) {
-            ClientUtils.sendDebugMessage("[BazaarUtils] Selecting quantity: 64 (slot " + SLOT_QTY_64 + ")");
-            clickSlot(client, SLOT_QTY_64);
-            MacroWorkerThread.sleep(fastDelay); // Wait for click
-            MacroWorkerThread.sleep(guiDelay);
-            closeScreen(client);
-            MacroWorkerThread.sleep(fastDelay);
-            msg(client, "\u00A7aBazaar buy completed (\u00A7e" + count + "\u00A77).");
-            ClientUtils.sendDebugMessage("[BazaarUtils] Buy complete");
-            return true;
+        if (count == 1 || count == 64) {
+            clickSlot(client, count == 1 ? SLOT_QTY_1 : SLOT_QTY_64);
+            return finishBuy(client, count, fastDelay, guiDelay, purchase);
         } else {
             // Custom amount - need to use the sign editor
             ClientUtils.sendDebugMessage("[BazaarUtils] Selecting custom quantity: " + count + " (slot " + SLOT_QTY_CUSTOM + ")");
@@ -241,7 +241,7 @@ public final class BazaarUtils {
             ClientUtils.sendDebugMessage("[BazaarUtils] Sign submitted");
             MacroWorkerThread.sleep(longDelay);
 
-            return finishBuy(client, count, fastDelay, guiDelay);
+            return finishBuy(client, count, fastDelay, guiDelay, purchase);
         }
     }
 
@@ -334,31 +334,70 @@ public final class BazaarUtils {
         }
     }
 
-    private static boolean finishBuy(Minecraft client, int count, long fastDelay, long guiDelay) {
-        // Wait for the Confirm screen
-        ClientUtils.sendDebugMessage("[BazaarUtils] Waiting for Confirm screen...");
-        if (!waitForContainerTitle(client, "Confirm Instant Buy", 5000)) {
-            // Some quantities skip the confirm screen and buy directly
-            ClientUtils.sendDebugMessage("[BazaarUtils] No confirm screen - may have bought directly.");
-            closeScreen(client);
-            MacroWorkerThread.sleep(fastDelay);
-            msg(client, "\u00A7aBazaar buy completed (\u00A7e" + count + "\u00A77).");
-            return true;
+    private static boolean finishBuy(Minecraft client, int count, long fastDelay, long guiDelay,
+                                     BazaarBuySession purchase) {
+        long deadline = System.currentTimeMillis() + 30_000L;
+        while (System.currentTimeMillis() < deadline && !Thread.currentThread().isInterrupted()) {
+            if (purchase.completed()) {
+                closeScreen(client);
+                MacroWorkerThread.sleep(fastDelay);
+                msg(client, "§aBazaar buy completed (§e" + count + "§7).");
+                return true;
+            }
+            // Read and click together so a replaced GUI cannot receive a stale click.
+            CompletableFuture<Void> poll = new CompletableFuture<>();
+            client.execute(() -> {
+                try {
+                    if (activeBuy == purchase && System.currentTimeMillis() < deadline) {
+                        pollPurchaseConfirmation(client, purchase, guiDelay);
+                    }
+                    poll.complete(null);
+                } catch (RuntimeException error) {
+                    poll.completeExceptionally(error);
+                }
+            });
+            try {
+                poll.get(2, java.util.concurrent.TimeUnit.SECONDS);
+            } catch (InterruptedException error) {
+                Thread.currentThread().interrupt();
+                return false;
+            } catch (Exception error) {
+                ClientUtils.sendDebugMessage("[BazaarUtils] Confirmation poll failed: " + error.getMessage());
+                break;
+            }
+            MacroWorkerThread.sleep(TICK_MS);
         }
-        ClientUtils.sendDebugMessage("[BazaarUtils] Confirm screen opened, clicking confirm (slot " + SLOT_CONFIRM + ")");
-        MacroWorkerThread.sleep(fastDelay);
-
-        // Click confirm
-        clickSlot(client, SLOT_CONFIRM);
-        MacroWorkerThread.sleep(fastDelay); // Wait for click
-        MacroWorkerThread.sleep(guiDelay);
-        handlePostConfirmWarning(client, fastDelay, guiDelay);
-
+        msg(client, "§cBazaar purchase was not confirmed. Aborting.");
         closeScreen(client);
-        MacroWorkerThread.sleep(fastDelay);
-        msg(client, "\u00A7aBazaar buy completed (\u00A7e" + count + "\u00A77).");
-        ClientUtils.sendDebugMessage("[BazaarUtils] Buy complete");
-        return true;
+        return false;
+    }
+
+    private static void pollPurchaseConfirmation(Minecraft client, BazaarBuySession purchase, long guiDelay) {
+        if (purchase.completed() || !(client.screen instanceof AbstractContainerScreen<?> screen)) return;
+        boolean dialog = BazaarBuySession.isPurchaseDialog(screen.getTitle().getString())
+                || purchase.isAlertMenu(screen.getMenu().containerId);
+        int confirmSlot = -1;
+        boolean blocked = false;
+        for (Slot slot : screen.getMenu().slots) {
+            if (client.player == null || slot.container == client.player.getInventory() || !slot.hasItem()) continue;
+            String name = stripColors(slot.getItem().getHoverName().getString());
+            String lower = name.toLowerCase(java.util.Locale.ROOT);
+            if (slot.getItem().is(Items.BARRIER)) {
+                boolean warning = lower.contains("warning") || lower.contains("alert")
+                        || lower.contains("wait") || lower.contains("second");
+                if (warning || dialog && slot.index == SLOT_CONFIRM) {
+                    blocked = true;
+                    dialog = true;
+                }
+            } else if (BazaarBuySession.isConfirmation(name)) {
+                confirmSlot = slot.index;
+            }
+        }
+        if (dialog && purchase.shouldConfirm(screen.getMenu().containerId, confirmSlot, blocked,
+                System.currentTimeMillis(), guiDelay)) {
+            ClientUtils.sendDebugMessage("[BazaarUtils] Confirming unlocked purchase in slot " + confirmSlot);
+            ClientUtils.performSlotClick(screen, confirmSlot, 0, ContainerInput.PICKUP);
+        }
     }
 
     // -- Helpers --
@@ -528,50 +567,6 @@ public final class BazaarUtils {
         }
         ClientUtils.sendDebugMessage("[BazaarUtils] Timeout waiting for buy stage");
         return false;
-    }
-
-    private static void handlePostConfirmWarning(Minecraft client, long fastDelay, long guiDelay) {
-        if (!isWarningBarrierInConfirmSlot(client)) {
-            return;
-        }
-
-        ClientUtils.sendDebugMessage("[BazaarUtils] Confirm warning detected, waiting for slot 13 to unlock");
-        long deadline = System.currentTimeMillis() + 8000L;
-        while (System.currentTimeMillis() < deadline) {
-            if (!(client.screen instanceof AbstractContainerScreen<?>)) {
-                ClientUtils.sendDebugMessage("[BazaarUtils] Confirm warning screen closed while waiting");
-                return;
-            }
-
-            if (!isWarningBarrierInConfirmSlot(client)) {
-                ClientUtils.sendDebugMessage("[BazaarUtils] Confirm warning cleared, waiting Bazaar action delay before clicking slot 13");
-                MacroWorkerThread.sleep(guiDelay);
-                clickSlot(client, SLOT_CONFIRM);
-                MacroWorkerThread.sleep(fastDelay);
-                return;
-            }
-
-            MacroWorkerThread.sleep(TICK_MS);
-        }
-
-        ClientUtils.sendDebugMessage("[BazaarUtils] Timed out waiting for confirm warning to clear");
-    }
-
-    private static boolean isWarningBarrierInConfirmSlot(Minecraft client) {
-        if (!(client.screen instanceof AbstractContainerScreen<?> screen)) {
-            return false;
-        }
-        if (SLOT_CONFIRM >= screen.getMenu().slots.size()) {
-            return false;
-        }
-
-        Slot slot = screen.getMenu().slots.get(SLOT_CONFIRM);
-        if (!slot.hasItem() || !slot.getItem().is(Items.BARRIER)) {
-            return false;
-        }
-
-        String itemName = stripColors(slot.getItem().getHoverName().getString()).trim();
-        return itemName.equalsIgnoreCase("WARNING");
     }
 
     private static void submitSignAmount(Minecraft client, int amount) {

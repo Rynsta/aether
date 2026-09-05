@@ -64,6 +64,7 @@ public final class AetherChatEvents {
             if (plainText.contains("You don't have anything to sell!")) {
                 BazaarUtils.detectedNoItemsToSell = true;
             }
+            if (!overlay) BazaarUtils.onBuyChatMessage(plainText);
             if (overlay || isHandlingMessage) {
                 return;
             }
