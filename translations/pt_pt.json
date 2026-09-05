@@ -689,5 +689,13 @@
   "text.aether.scoreboard_title_text": "Scoreboard Title Text",
   "text.aether.scoreboard_server_line_text": "Scoreboard Server Line Text",
   "text.aether.leave_empty_to_keep_the_server_title": "Leave empty to keep the server title",
-  "text.aether.leave_empty_to_keep_the_server_address": "Leave empty to keep the server address"
+  "text.aether.leave_empty_to_keep_the_server_address": "Leave empty to keep the server address",
+  "text.aether.esp_mode": "ESP Mode",
+  "text.aether.box": "Box",
+  "text.aether.glow_outline": "Glow Outline",
+  "text.aether.pest_target_hud": "Pest Target HUD",
+  "text.aether.pest_icons_health_and_hunting_progress_below_the_crosshair": "Pest icons, health and hunting progress below the crosshair",
+  "text.aether.reset_target_hud_position": "Reset Target HUD Position",
+  "text.aether.hunting_tracking_smoothing": "Hunting Tracking Smoothing",
+  "text.aether.hunting_max_turn_speed": "Hunting Max Turn Speed"
 }
