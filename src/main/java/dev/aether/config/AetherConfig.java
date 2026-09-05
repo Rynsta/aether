@@ -469,6 +469,12 @@ public final class AetherConfig {
         public static final FloatEntry PEST_FOV_RANGE = Config.floatVal("pestFovRange", 20.0f).range(0.0f, 90.0f);
         public static final FloatEntry PEST_MAX_TURN_SPEED =
                         Config.floatVal("pestMaxTurnSpeed", 300.0f).range(60.0f, 1200.0f);
+        public static final FloatEntry PEST_VACUUM_FOLLOW_DISTANCE =
+                        Config.floatVal("pestVacuumFollowDistance", 5.0f).range(2.0f, 7.0f);
+        public static final FloatEntry PEST_APPROACH_SPEED =
+                        Config.floatVal("pestApproachSpeed", 0.35f).range(0.15f, 0.8f);
+        public static final FloatEntry PEST_TRACKING_SMOOTHING_MS =
+                        Config.floatVal("pestTrackingSmoothingMs", 220.0f).range(100.0f, 500.0f);
         public static final FloatEntry PEST_ABOVE_TARGET_PITCH_MIN = Config.floatVal("pestAboveTargetPitchMin", 25.0f)
                         .range(20.0f, 40.0f);
         public static final FloatEntry PEST_ABOVE_TARGET_PITCH_MAX = Config.floatVal("pestAboveTargetPitchMax", 40.0f)
@@ -816,6 +822,8 @@ public final class AetherConfig {
         public static final IntEntry     MAIN_STATUS_GRADIENT_RIGHT = Config.integer("mainStatusGradientRight", 0xFF7B4FFF);
 
         public static final BooleanEntry CUSTOM_SCOREBOARD = Config.bool("customScoreboard", false);
+        public static final StringEntry SCOREBOARD_TITLE_TEXT = Config.string("scoreboardTitleText", "");
+        public static final StringEntry SCOREBOARD_SERVER_TEXT = Config.string("scoreboardServerText", "");
         public static final IntEntry SCOREBOARD_HUD_X = Config.integer("scoreboardHudX", -1).range(-1, Integer.MAX_VALUE);
         public static final IntEntry SCOREBOARD_HUD_Y = Config.integer("scoreboardHudY", -1).range(-1, Integer.MAX_VALUE);
         public static final FloatEntry SCOREBOARD_HUD_SCALE = Config.floatVal("scoreboardHudScale", 1.0f).range(0.5f, 2.5f);
@@ -849,6 +857,8 @@ public final class AetherConfig {
         // Master volume applied while Mute Game is active, as a 0.0-1.0 fraction (0.0 = fully muted).
         public static final FloatEntry MUTE_GAME_VOLUME = Config.floatVal("muteGameVolume", 0.0f).range(0.0f, 1.0f);
         public static final BooleanEntry KEEP_FOCUS = Config.bool("keepFocus", true);
+        public static final FloatEntry FLY_BRAKING_LOOKAHEAD_TICKS =
+                        Config.floatVal("flyBrakingLookaheadTicks", 2.0f).range(0.0f, 6.0f);
         public static final IntEntry PATHFINDER_MAX_JUMP_HEIGHT = Config.integer("pathfinderMaxJumpHeight", 1)
                         .range(1, 6);
 

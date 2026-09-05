@@ -17,6 +17,7 @@ import net.minecraft.util.RandomSource;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.MemoryUtil;
@@ -39,6 +40,8 @@ class ScoreboardAppearanceTest {
         configDir.setAccessible(true);
         if (configDir.get(loader) == null) configDir.set(loader, Files.createTempDirectory("aether-scoreboard-test"));
         String savedTheme = Theme.exportJson();
+        GLFWErrorCallback errors = GLFWErrorCallback.createPrint(System.err);
+        GLFW.glfwSetErrorCallback(errors);
         if (System.getenv("DISPLAY") != null && System.getProperty("os.name").equals("Linux")) {
             GLFW.glfwInitHint(GLFW.GLFW_PLATFORM, GLFW.GLFW_PLATFORM_X11);
         }
@@ -48,7 +51,7 @@ class ScoreboardAppearanceTest {
         GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 3);
         GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE);
         GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, GLFW.GLFW_TRUE);
-        long window = GLFW.glfwCreateWindow(720, 480, "Scoreboard appearance test", 0, 0);
+        long window = GLFW.glfwCreateWindow(720, 600, "Scoreboard appearance test", 0, 0);
         try {
             assertNotEquals(0, window);
             GLFW.glfwMakeContextCurrent(window);
@@ -61,19 +64,19 @@ class ScoreboardAppearanceTest {
             Theme.HUD_LABEL = 0xFFAAAFB7;
             Theme.HUD_VALUE = 0xFFD8DCE2;
 
-            GL11.glViewport(0, 0, 720, 480);
+            GL11.glViewport(0, 0, 720, 600);
             GL11.glClearColor(0.13f, 0.14f, 0.15f, 1);
             GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_STENCIL_BUFFER_BIT);
             NVGRenderer nvg = NanoVGManager.getRenderer();
-            // Menu text scaling must not change the scoreboard's nine-pixel row spacing.
+            // Menu text scaling must not change the scoreboard's own text size or line spacing.
             nvg.setTextScale(2f);
-            nvgBeginFrame(NanoVGManager.getVg(), 240, 160, 3);
+            nvgBeginFrame(NanoVGManager.getVg(), 240, 200, 3);
             nvgTextAlign(NanoVGManager.getVg(), NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
             nvg.translate(20, 20);
             sample().render(nvg);
             nvgEndFrame(NanoVGManager.getVg());
 
-            BufferedImage preview = readPixels(720, 480);
+            BufferedImage preview = readPixels(720, 600);
             assertEquals(Theme.HUD_BG, preview.getRGB(30 * 3, 25 * 3));
             long titlePixels = 0;
             for (int y = 31 * 3; y < 40 * 3; y++) {
@@ -82,6 +85,13 @@ class ScoreboardAppearanceTest {
                 }
             }
             assertTrue(titlePixels > 100, "The title must be drawn with the bundled HUD font");
+            int middleAccent = preview.getRGB(112 * 3, 20 * 3 + 2) >> 16 & 255;
+            int leftAccent = preview.getRGB(34 * 3, 20 * 3 + 2) >> 16 & 255;
+            int rightAccent = preview.getRGB(190 * 3, 20 * 3 + 2) >> 16 & 255;
+            assertTrue(middleAccent > leftAccent + 60, "The accent must fade at the left edge");
+            assertTrue(middleAccent > rightAccent + 60, "The accent must fade at the right edge");
+            assertTrue(nvg.textWidthLiteral(dev.aether.ui.util.Fonts.SCOREBOARD_BOLD, "Purse: 12345", 9)
+                    > nvg.textWidthLiteral(dev.aether.ui.util.Fonts.SCOREBOARD_REGULAR, "Purse: 12345", 9));
             Path output = Path.of("build/reports/tests/scoreboard-preview.png");
             Files.createDirectories(output.getParent());
             ImageIO.write(preview, "png", output.toFile());
@@ -91,6 +101,8 @@ class ScoreboardAppearanceTest {
             if (NanoVGManager.isInitialized()) NanoVGManager.destroy();
             if (window != 0) GLFW.glfwDestroyWindow(window);
             GLFW.glfwTerminate();
+            GLFW.glfwSetErrorCallback(null);
+            errors.free();
         }
     }
 
@@ -105,7 +117,7 @@ class ScoreboardAppearanceTest {
                 Component.literal("09/05/26").withStyle(ChatFormatting.GRAY), Component.empty(),
                 Component.literal("Early Autumn 19th"), Component.literal("5:10pm"),
                 Component.literal("Plot - 5").withStyle(ChatFormatting.GREEN), Component.empty(),
-                value("Purse: ", "12,126,571", ChatFormatting.GOLD),
+                value("Purse: ", "12,126,571", ChatFormatting.GOLD).copy().withStyle(ChatFormatting.BOLD),
                 value("Bits: ", "1,299", ChatFormatting.AQUA),
                 value("Copper: ", "682", ChatFormatting.RED),
                 value("Sawdust: ", "205,453", ChatFormatting.GREEN), Component.empty(),

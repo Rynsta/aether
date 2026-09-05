@@ -12,6 +12,26 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ScoreboardTextTest {
     @Test
+    void customTitleInheritsTheServerWeightAndEmptySettingsKeepVanilla() {
+        var original = Component.literal("SKYBLOCK").withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD).getVisualOrderText();
+        assertSame(original, ScoreboardText.customize(original, true, "", "custom.net"));
+        var runs = ScoreboardText.split(ScoreboardText.customize(original, true, "My Garden", "custom.net"));
+        assertEquals("My Garden", runs.getFirst().text());
+        assertTrue(runs.getFirst().style().isBold());
+    }
+
+    @Test
+    void serverOverrideOnlyReplacesTheAddressAndStaysOnOneLine() {
+        var footer = Component.literal("www.hypixel.net").withStyle(ChatFormatting.YELLOW).getVisualOrderText();
+        var runs = ScoreboardText.split(ScoreboardText.customize(footer, false, "Title", "My\nServer"));
+        assertEquals("My Server", runs.getFirst().text());
+        assertEquals(ChatFormatting.YELLOW.getColor(), runs.getFirst().style().getColor().getValue());
+        var row = Component.literal("Wave 10").getVisualOrderText();
+        assertSame(row, ScoreboardText.customize(row, false, "Title", "My Server"));
+        assertSame(footer, ScoreboardText.customize(footer, false, "Title", ""));
+    }
+
+    @Test
     void ordinaryTextUsesHudTypographyWhileSymbolsKeepTheirGlyphs() {
         var runs = ScoreboardText.split(FormattedCharSequence.forward("Plot  \u23e3 5 \uE000", Style.EMPTY));
         assertEquals(4, runs.size());

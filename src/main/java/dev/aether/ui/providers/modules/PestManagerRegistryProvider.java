@@ -145,7 +145,25 @@ public final class PestManagerRegistryProvider extends AbstractModulesRegistryPr
                         .visibleWhen(() -> AetherConfig.PEST_AOTV_BETWEEN.get()))
                 .add(FarmingSettingsFactory.pestFovRangeSetting())
                 .add(FarmingSettingsFactory.pestAboveAimPitchRangeSetting())
-                .add(FarmingSettingsFactory.pestMaxTurnSpeedSetting()));
+                .add(FarmingSettingsFactory.pestMaxTurnSpeedSetting())
+                .add(new SliderSetting("Vacuum Follow Distance", 2, 7,
+                        AetherConfig.PEST_VACUUM_FOLLOW_DISTANCE::get,
+                        v -> {
+                            AetherConfig.PEST_VACUUM_FOLLOW_DISTANCE.set(v);
+                            AetherConfig.save();
+                        }).withDecimals(1).withSuffix(" blocks"))
+                .add(new SliderSetting("Pest Approach Speed", 0.15f, 0.8f,
+                        AetherConfig.PEST_APPROACH_SPEED::get,
+                        v -> {
+                            AetherConfig.PEST_APPROACH_SPEED.set(v);
+                            AetherConfig.save();
+                        }).withDecimals(2).withSuffix(" blocks/tick"))
+                .add(new SliderSetting("Pest Tracking Smoothing", 100, 500,
+                        AetherConfig.PEST_TRACKING_SMOOTHING_MS::get,
+                        v -> {
+                            AetherConfig.PEST_TRACKING_SMOOTHING_MS.set(v);
+                            AetherConfig.save();
+                        }).withDecimals(0).withSuffix("ms")));
         groups.add(SettingGroup.of(
                         "Pest Hunting",
                         "Lassos pests for guaranteed shards instead of vacuuming them (needs a lasso in your hotbar)",

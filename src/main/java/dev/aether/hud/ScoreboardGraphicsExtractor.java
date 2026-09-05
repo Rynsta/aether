@@ -1,5 +1,7 @@
 package dev.aether.hud;
 
+import dev.aether.config.AetherConfig;
+import dev.aether.util.ServerIdHider;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -29,7 +31,13 @@ final class ScoreboardGraphicsExtractor extends GuiGraphicsExtractor {
     @Override
     public void text(Font font, FormattedCharSequence text, int x, int y, int color, boolean shadow) {
         if ((color >>> 24) == 0) return;
-        drawList.text(ScoreboardText.prepare(font, text, color, shadow), x, y, font.width(text));
+        FormattedCharSequence display = ScoreboardText.customize(text, !drawList.hasText(),
+                AetherConfig.SCOREBOARD_TITLE_TEXT.get(), AetherConfig.SCOREBOARD_SERVER_TEXT.get());
+        if (AetherConfig.NICK_HIDER_MASTER_ENABLED.get() && AetherConfig.HIDE_SERVER_ID.get()) {
+            display = ServerIdHider.replace(display, AetherConfig.CUSTOM_SERVER_ID.get());
+        }
+        drawList.text(ScoreboardText.prepare(font, display, color, shadow), x, y, font.width(text),
+                display == text ? 0 : Math.min(font.width(display), Math.max(0, width - 32)));
     }
 
     ScoreboardDrawList drawList() { return drawList; }

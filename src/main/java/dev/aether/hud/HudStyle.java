@@ -24,7 +24,14 @@ final class HudStyle {
     }
 
     static void accent(NVGRenderer nvg, float width, int left, int right) {
-        nvg.horizontalGradient(PAD, 0, width - PAD * 2, 2f, 1f, left, right);
+        float length = width - PAD * 2;
+        if (length <= 0) return;
+        float fade = Math.min(28f, length * 0.25f);
+        int fadeLeft = Theme.blend(left, right, fade / length);
+        int fadeRight = Theme.blend(left, right, 1f - fade / length);
+        nvg.horizontalGradient(PAD, 0, fade, 2f, 0, alpha(left, 0), fadeLeft);
+        nvg.horizontalGradient(PAD + fade, 0, length - fade * 2, 2f, 0, fadeLeft, fadeRight);
+        nvg.horizontalGradient(PAD + length - fade, 0, fade, 2f, 0, fadeRight, alpha(right, 0));
     }
 
     static void header(NVGRenderer nvg, float width, String title, String meta) {

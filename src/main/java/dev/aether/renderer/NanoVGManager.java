@@ -106,6 +106,8 @@ public final class NanoVGManager {
         loadFont("Inter-Regular", "/assets/aether/fonts/Inter-Regular.otf");
         loadFont("Inter-Bold",    "/assets/aether/fonts/Inter-Bold.otf");
         loadFont("Inter-Mono",    "/assets/aether/fonts/Inter-Mono.otf");
+        loadFont(Fonts.SCOREBOARD_REGULAR, "/assets/aether/fonts/scoreboard/Inter-Regular.otf");
+        loadFont(Fonts.SCOREBOARD_BOLD, "/assets/aether/fonts/scoreboard/Inter-Bold.otf");
         loadUnicodeFallbackFont();
 
         initialized = true;
@@ -406,6 +408,8 @@ public final class NanoVGManager {
         addFallback(Fonts.REGULAR, fallbackId);
         addFallback(Fonts.BOLD, fallbackId);
         addFallback(Fonts.MONO, fallbackId);
+        addFallback(Fonts.SCOREBOARD_REGULAR, fallbackId);
+        addFallback(Fonts.SCOREBOARD_BOLD, fallbackId);
     }
 
     private static void addFallback(String baseFont, int fallbackId) {

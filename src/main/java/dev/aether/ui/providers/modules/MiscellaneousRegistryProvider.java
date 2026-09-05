@@ -48,7 +48,13 @@ public final class MiscellaneousRegistryProvider extends AbstractModulesRegistry
                             AetherConfig.PATHFINDER_MAX_JUMP_HEIGHT.set(Math.round(v));
                             AetherConfig.save();
                         })
-                        .withDecimals(0).withSuffix(" blocks")));
+                        .withDecimals(0).withSuffix(" blocks"))
+                .add(new SliderSetting("Flight Braking Lookahead", 0, 6,
+                        AetherConfig.FLY_BRAKING_LOOKAHEAD_TICKS::get,
+                        v -> {
+                            AetherConfig.FLY_BRAKING_LOOKAHEAD_TICKS.set(v);
+                            AetherConfig.save();
+                        }).withDecimals(1).withSuffix(" ticks")));
 
         groups.add(SettingGroup.alwaysOn(
                         "Macro Settings",

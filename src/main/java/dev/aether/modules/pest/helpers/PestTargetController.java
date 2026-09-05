@@ -22,7 +22,6 @@ final class PestTargetController {
     static final double AOTV_RANGE = 12.0;
     static final double AOTV_GAP_MULTIPLIER = 1.6;
 
-    private static final int TARGET_SWITCH_ROTATION_MS = 90;
     private static final double TARGET_REACH_DISTANCE = 12.0;
     private static final double PRE_TRIGGER_RATIO = 0.67;
     private static final double PRE_TRIGGER_DISTANCE =
@@ -56,6 +55,7 @@ final class PestTargetController {
             Context context,
             Entity pest) {
         runtime.currentTarget = pest;
+        runtime.flightController.reset();
         runtime.arrivedAtCurrentTargetViaAotv = false;
         runtime.navigation.waypointCycleCount = 0;
         runtime.navigation.getLocationAttempts = 0;
@@ -107,6 +107,7 @@ final class PestTargetController {
             PestDestroyerRuntime runtime,
             PestLeaveOneController.Context context) {
         boolean lassoTarget = PestHuntingController.shouldLassoTarget(client, runtime.currentTarget);
+        PathfindingManager.stop();
         runtime.currentTargetUsesLasso = lassoTarget;
         ClientUtils.sendDebugMessage("[PestDestroyer] Target route: "
                 + (lassoTarget ? "LASSO" : "VACUUM")
@@ -342,11 +343,10 @@ final class PestTargetController {
         }
         Vec3 targetEye = PestCombatCoordinator.buildCombatAimTarget(client, target);
         if (!isLookingAt(client, targetEye, AetherConfig.PEST_FOV_RANGE.get())) {
-            RotationManager.initiateRotation(
+            RotationManager.trackRotation(
                     client,
                     targetEye,
-                    TARGET_SWITCH_ROTATION_MS,
-                    AetherConfig.PEST_FOV_RANGE.get(),
+                    AetherConfig.PEST_TRACKING_SMOOTHING_MS.get(),
                     AetherConfig.PEST_MAX_TURN_SPEED.get());
         }
     }

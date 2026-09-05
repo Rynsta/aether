@@ -113,9 +113,15 @@ public final class HudVisualsRegistryProvider extends AbstractVisualsRegistryPro
 
         groups.add(SettingGroup.of(
                         "Custom Scoreboard",
-                        "Style the scoreboard to match your HUD while keeping its layout and spacing",
+                        "Style the scoreboard to match your HUD",
                         () -> AetherConfig.CUSTOM_SCOREBOARD.get(),
                         ScoreboardHudElement::setEnabled)
+                .add(new TextSetting("Scoreboard Title Text", "Leave empty to keep the server title",
+                        AetherConfig.SCOREBOARD_TITLE_TEXT::get,
+                        v -> { AetherConfig.SCOREBOARD_TITLE_TEXT.set(v); AetherConfig.save(); }))
+                .add(new TextSetting("Scoreboard Server Line Text", "Leave empty to keep the server address",
+                        AetherConfig.SCOREBOARD_SERVER_TEXT::get,
+                        v -> { AetherConfig.SCOREBOARD_SERVER_TEXT.set(v); AetherConfig.save(); }))
                 .add(new ActionSetting("Reset Scoreboard Layout", ScoreboardHudElement::resetLayout)));
 
         groups.add(SettingGroup.alwaysOn(

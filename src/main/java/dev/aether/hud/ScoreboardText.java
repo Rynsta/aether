@@ -19,6 +19,17 @@ final class ScoreboardText {
         this.parts = List.copyOf(parts);
     }
 
+    static FormattedCharSequence customize(FormattedCharSequence original, boolean title, String titleText, String serverText) {
+        List<Run> runs = split(original);
+        StringBuilder plain = new StringBuilder();
+        for (Run run : runs) plain.append(run.text());
+        String replacement = title ? titleText
+                : plain.toString().strip().matches("(?i)(?:www\\.)?hypixel\\.net") ? serverText : "";
+        if (replacement == null || replacement.isBlank()) return original;
+        Style style = runs.isEmpty() ? Style.EMPTY : runs.getFirst().style();
+        return FormattedCharSequence.forward(replacement.replace('\n', ' ').replace('\r', ' '), style);
+    }
+
     static ScoreboardText prepare(Font font, FormattedCharSequence text, int color, boolean shadow) {
         List<Part> parts = new ArrayList<>();
         for (Run run : split(text)) {
@@ -100,7 +111,7 @@ final class ScoreboardText {
 
     private record Part(Run run, int color, Font.PreparedText glyphs, float nativeWidth) {
         private String font(boolean title) {
-            return title || run.style().isBold() ? Fonts.BOLD : Fonts.REGULAR;
+            return run.style().isBold() ? Fonts.SCOREBOARD_BOLD : Fonts.SCOREBOARD_REGULAR;
         }
 
         float width(NVGRenderer nvg, boolean title) {
