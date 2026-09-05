@@ -483,6 +483,10 @@ public final class AetherConfig {
         // -- PEST HUNTING ----------------------------------------------------------
 
         public static final BooleanEntry PEST_HUNTING = Config.bool("pestHunting", false);
+        public static final FloatEntry PEST_HUNTING_TRACKING_SMOOTHING_MS =
+                        Config.floatVal("pestHuntingTrackingSmoothingMs", 90f).range(75f, 300f);
+        public static final FloatEntry PEST_HUNTING_MAX_TURN_SPEED =
+                        Config.floatVal("pestHuntingMaxTurnSpeed", 700f).range(180f, 900f);
         public static final BooleanEntry PEST_HUNTING_VACUUM_STUN = Config.bool("pestHuntingVacuumStun", true);
         /** Selected pest types use the vacuum instead of the lasso. */
         public static final IntEntry PEST_HUNTING_VACUUM_PEST_MASK =
@@ -1056,7 +1060,12 @@ public final class AetherConfig {
         public static final BooleanEntry PIP_ENABLE_ZOOM = Config.bool("pipEnableZoom", true);
 
         // -- PEST ESP -------------------------------------------------------------
+        public static final BooleanEntry SHOW_PEST_TARGET_HUD = Config.bool("showPestTargetHud", false);
+        public static final IntEntry PEST_TARGET_HUD_X = Config.integer("pestTargetHudX", -1);
+        public static final IntEntry PEST_TARGET_HUD_Y = Config.integer("pestTargetHudY", -1);
+        public static final FloatEntry PEST_TARGET_HUD_SCALE = Config.floatVal("pestTargetHudScale", 1f).range(0.5f, 2.5f);
         public static final BooleanEntry PEST_ESP_ENABLED = Config.bool("pestEspEnabled", false);
+        public static final StringEntry PEST_ESP_MODE = Config.string("pestEspMode", "BOX");
         public static final BooleanEntry PEST_ESP_HIGHLIGHT = Config.bool("pestEspHighlight", true);
         public static final IntEntry PEST_ESP_HIGHLIGHT_COLOR = Config.integer("pestEspHighlightColor", 0xFFFF3030);
         public static final BooleanEntry PEST_ESP_TRACER = Config.bool("pestEspTracer", true);

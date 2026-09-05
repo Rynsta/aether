@@ -83,7 +83,6 @@ public final class ClientFeatureBootstrap {
             }
             if (drawPestEsp) {
                 PestEspManager.renderWorld();
-                PestEspManager.renderTracerOverlay();
             }
             if (drawFunEffects) {
                 FunRenderer.renderWorld(ctx);

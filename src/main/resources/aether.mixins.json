@@ -18,6 +18,8 @@
         "AccessorWindow",
         "PlayerTabOverlayAccessor",
         "MixinEntityTurn",
+        "MixinPestOutline",
+        "MixinPestSkullOutline",
         "MixinPlayer",
         "MixinPlayerInfo",
         "MixinPlayerTeam",

@@ -161,6 +161,11 @@ public final class LiveAetherBootstrapHooks implements AetherBootstrapHooks.Feat
     }
 
     @Override
+    public int pestOutlineColor(net.minecraft.world.entity.Entity entity) {
+        return PestEspManager.outlineColor(entity);
+    }
+
+    @Override
     public void renderPestEspTracerOverlay() {
         PestEspManager.renderTracerOverlay();
     }

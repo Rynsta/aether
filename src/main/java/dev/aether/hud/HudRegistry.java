@@ -81,6 +81,7 @@ public class HudRegistry {
         ELEMENTS.add(midFarmingHud);
         ELEMENTS.add(failsafesHud);
         ELEMENTS.add(inventoryHud);
+        ELEMENTS.add(new PestTargetHudElement());
         ELEMENTS.add(watermarkHud);
         ELEMENTS.add(mainStatusHud);
         ELEMENTS.add(scoreboardHud);

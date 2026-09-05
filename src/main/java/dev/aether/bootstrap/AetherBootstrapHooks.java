@@ -65,6 +65,8 @@ public final class AetherBootstrapHooks {
         default void renderFailsafeColourFlash() {
         }
 
+        default int pestOutlineColor(net.minecraft.world.entity.Entity entity) { return 0; }
+
         default void renderPestEspTracerOverlay() {
         }
 
@@ -266,6 +268,10 @@ public final class AetherBootstrapHooks {
 
     public static void renderFailsafeColourFlash() {
         hooks.renderFailsafeColourFlash();
+    }
+
+    public static int pestOutlineColor(net.minecraft.world.entity.Entity entity) {
+        return hooks.pestOutlineColor(entity);
     }
 
     public static void renderPestEspTracerOverlay() {

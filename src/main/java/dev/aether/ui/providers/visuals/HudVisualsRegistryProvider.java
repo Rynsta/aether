@@ -146,6 +146,11 @@ public final class HudVisualsRegistryProvider extends AbstractVisualsRegistryPro
                             AetherConfig.save();
                         })));
 
+        groups.add(SettingGroup.of("Pest Target HUD", "Pest icons, health and hunting progress below the crosshair",
+                AetherConfig.SHOW_PEST_TARGET_HUD::get,
+                value -> { AetherConfig.SHOW_PEST_TARGET_HUD.set(value); AetherConfig.save(); })
+                .add(new ActionSetting("Reset Target HUD Position", dev.aether.hud.PestTargetHudElement::resetLayout)));
+
         SettingGroup watermark = SettingGroup.alwaysOn(
                 "Watermark",
                 "Displays mod name, username, FPS, ping and time");

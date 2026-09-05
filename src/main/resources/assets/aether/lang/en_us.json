@@ -689,5 +689,13 @@
   "text.aether.coins": "COINS",
   "text.aether.macro": "Macro",
   "text.aether.current_session": "Current session",
-  "text.aether.hours_played": "Hours played"
+  "text.aether.hours_played": "Hours played",
+  "text.aether.esp_mode": "ESP Mode",
+  "text.aether.box": "Box",
+  "text.aether.glow_outline": "Glow Outline",
+  "text.aether.pest_target_hud": "Pest Target HUD",
+  "text.aether.pest_icons_health_and_hunting_progress_below_the_crosshair": "Pest icons, health and hunting progress below the crosshair",
+  "text.aether.reset_target_hud_position": "Reset Target HUD Position",
+  "text.aether.hunting_tracking_smoothing": "Hunting Tracking Smoothing",
+  "text.aether.hunting_max_turn_speed": "Hunting Max Turn Speed"
 }
