@@ -679,6 +679,6 @@
   "text.aether.current_session": "Current session",
   "text.aether.hours_played": "Hours played",
   "text.aether.custom_scoreboard": "Custom Scoreboard",
-  "text.aether.move_and_resize_the_scoreboard_while_preserving_its_vanilla_appearance": "Move and resize the scoreboard while preserving its vanilla appearance",
-  "text.aether.reset_scoreboard_layout": "Reset Scoreboard Layout"
+  "text.aether.reset_scoreboard_layout": "Reset Scoreboard Layout",
+  "text.aether.style_the_scoreboard_to_match_your_hud_while_keeping_its_layout_and_spacing": "Style the scoreboard to match your HUD while keeping its layout and spacing"
 }
