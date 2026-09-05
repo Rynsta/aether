@@ -158,6 +158,9 @@ public class Theme {
     public static int HUD_ACCENT = 0xFF70B7D9;
     public static int HUD_SEP    = 0xFF5D7182;
     public static int HUD_BAR_BG = 0xFF2F3A45;
+    public static int HUD_SUCCESS = 0xFF8AD9A5;
+    public static int HUD_WARNING = 0xFFE8BF78;
+    public static int HUD_ERROR = 0xFFED8A93;
 
     // ============================================================
     // ANIMATION SPEED / SPACING
@@ -259,7 +262,10 @@ public class Theme {
         entry("HUD Value",      () -> HUD_VALUE,   v -> HUD_VALUE   = v),
         entry("HUD Accent",     () -> HUD_ACCENT,  v -> HUD_ACCENT  = v),
         entry("HUD Separator",  () -> HUD_SEP,     v -> HUD_SEP     = v),
-        entry("HUD Bar BG",     () -> HUD_BAR_BG,  v -> HUD_BAR_BG  = v)
+        entry("HUD Bar BG",     () -> HUD_BAR_BG,  v -> HUD_BAR_BG  = v),
+        entry("HUD Success",    () -> HUD_SUCCESS, v -> HUD_SUCCESS = v),
+        entry("HUD Warning",    () -> HUD_WARNING, v -> HUD_WARNING = v),
+        entry("HUD Error",      () -> HUD_ERROR,   v -> HUD_ERROR   = v)
     );
 
     private static final int[] DEFAULT_MENU_COLORS = ENTRIES.stream()

@@ -109,9 +109,12 @@ public class HudRegistry {
             float sh = win.getGuiScaledHeight();
             float frameDelta = delta.getGameTimeDeltaTicks();
 
-            // Extract MC-rendered parts now; queued NVG draws after MC flushes GUI state.
+            // Keep themed inventory surfaces below the native item and player-model pass.
             if (alpha > FADE_EPSILON) {
                 renderMcElements(guiGraphics);
+                if (ELEMENTS.stream().anyMatch(e -> e.rendersBeforeMinecraft() && e.isVisible())) {
+                    AetherRenderQueue.enqueueBeforeGui(() -> renderBackgroundFrame(sw, sh, alpha));
+                }
             }
             AetherRenderQueue.enqueue(() -> renderGameplayFrame(sw, sh, alpha, frameDelta));
         });
@@ -187,12 +190,27 @@ public class HudRegistry {
         nvg.save();
         nvg.globalAlpha(alpha);
         for (HudElement e : ELEMENTS) {
-            e.render(nvg, false);
+            if (!e.rendersBeforeMinecraft()) e.render(nvg, false);
         }
         nvg.restore();
     }
 
     // -- Queued render pass ----------------------------------------------------
+
+    private static void renderBackgroundFrame(float width, float height, float alpha) {
+        if (StreamerModeManager.isEnabled() || NanoVGManager.isDrawing()) return;
+        if (!NanoVGManager.isInitialized()) NanoVGManager.init();
+        NanoVGManager.beginFrame(width, height);
+        NVGRenderer nvg = NanoVGManager.getRenderer();
+        try {
+            nvg.globalAlpha(alpha);
+            for (HudElement element : ELEMENTS) {
+                if (element.rendersBeforeMinecraft()) element.render(nvg, false);
+            }
+        } finally {
+            NanoVGManager.endFrame();
+        }
+    }
 
     public static void onGuiGraphicsClosed() {
         // Kept for the bootstrap hook ABI. Gameplay HUD drawing is queued from
