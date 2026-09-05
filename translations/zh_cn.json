@@ -668,5 +668,14 @@
   "text.aether.random_local": "Random (Local)",
   "text.aether.random_global": "Random (Global)",
   "text.aether.restoring_previous_equipment": "Restoring previous equipment...",
-  "text.aether.auto_reconnect": "Auto Reconnect"
+  "text.aether.auto_reconnect": "Auto Reconnect",
+  "text.aether.hud_success": "HUD Success",
+  "text.aether.hud_warning": "HUD Warning",
+  "text.aether.hud_error": "HUD Error",
+  "text.aether.no_tracked_drops_yet": "No tracked drops yet",
+  "text.aether.inventory": "Inventory",
+  "text.aether.coins": "COINS",
+  "text.aether.macro": "Macro",
+  "text.aether.current_session": "Current session",
+  "text.aether.hours_played": "Hours played"
 }
