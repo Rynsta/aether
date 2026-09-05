@@ -677,5 +677,8 @@
   "text.aether.coins": "COINS",
   "text.aether.macro": "Macro",
   "text.aether.current_session": "Current session",
-  "text.aether.hours_played": "Hours played"
+  "text.aether.hours_played": "Hours played",
+  "text.aether.custom_scoreboard": "Custom Scoreboard",
+  "text.aether.move_and_resize_the_scoreboard_while_preserving_its_vanilla_appearance": "Move and resize the scoreboard while preserving its vanilla appearance",
+  "text.aether.reset_scoreboard_layout": "Reset Scoreboard Layout"
 }
