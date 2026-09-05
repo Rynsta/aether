@@ -90,11 +90,10 @@ class ScoreboardAppearanceTest {
             int rightAccent = preview.getRGB(190 * 3, 20 * 3 + 2) >> 16 & 255;
             assertTrue(middleAccent > leftAccent + 60, "The accent must fade at the left edge");
             assertTrue(middleAccent > rightAccent + 60, "The accent must fade at the right edge");
-            assertTrue(nvg.textWidthLiteral(dev.aether.ui.util.Fonts.SCOREBOARD_BOLD, "Purse: 12345", 9)
-                    > nvg.textWidthLiteral(dev.aether.ui.util.Fonts.SCOREBOARD_REGULAR, "Purse: 12345", 9));
             Path output = Path.of("build/reports/tests/scoreboard-preview.png");
             Files.createDirectories(output.getParent());
             ImageIO.write(preview, "png", output.toFile());
+            verifyBoldWeight(nvg);
             assertEquals(GL11.GL_NO_ERROR, GL11.glGetError());
         } finally {
             Theme.importJson(savedTheme);
@@ -104,6 +103,25 @@ class ScoreboardAppearanceTest {
             GLFW.glfwSetErrorCallback(null);
             errors.free();
         }
+    }
+
+    private static void verifyBoldWeight(NVGRenderer nvg) {
+        GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_STENCIL_BUFFER_BIT);
+        nvgBeginFrame(NanoVGManager.getVg(), 240, 200, 3);
+        nvgTextAlign(NanoVGManager.getVg(), NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+        nvg.textLiteral(dev.aether.ui.util.Fonts.REGULAR, "HHHHH", 20, 20, 9, -1);
+        nvg.textLiteral(dev.aether.ui.util.Fonts.SCOREBOARD_BOLD, "HHHHH", 120, 20, 9, -1);
+        nvgEndFrame(NanoVGManager.getVg());
+        BufferedImage weights = readPixels(720, 600);
+        long regularInk = 0, boldInk = 0;
+        // Font weights can share advance widths; the rasterized strokes must still differ.
+        for (int y = 60; y < 96; y++) {
+            for (int x = 60; x < 240; x++) {
+                regularInk += weights.getRGB(x, y) & 255;
+                boldInk += weights.getRGB(x + 300, y) & 255;
+            }
+        }
+        assertTrue(boldInk > regularInk, "Vanilla bold text must have heavier strokes than the HUD font");
     }
 
     private static ScoreboardDrawList sample() {

@@ -111,7 +111,7 @@ final class ScoreboardText {
 
     private record Part(Run run, int color, Font.PreparedText glyphs, float nativeWidth) {
         private String font(boolean title) {
-            return run.style().isBold() ? Fonts.SCOREBOARD_BOLD : Fonts.SCOREBOARD_REGULAR;
+            return run.style().isBold() ? Fonts.SCOREBOARD_BOLD : Fonts.REGULAR;
         }
 
         float width(NVGRenderer nvg, boolean title) {

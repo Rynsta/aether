@@ -17,7 +17,6 @@ public final class Fonts {
     /** Monospace font (Inter-Mono). */
     public static final String MONO = "Inter-Mono";
 
-    public static final String SCOREBOARD_REGULAR = "Scoreboard-Regular";
     public static final String SCOREBOARD_BOLD = "Scoreboard-Bold";
     
     private Fonts() {}
