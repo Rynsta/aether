@@ -29,10 +29,14 @@ final class ProfitGraph {
         double step = ProfitGraphScale.tickStep(bounds.max() - bounds.min());
         double firstTick = Math.ceil(bounds.min() / step) * step;
         double offset = ProfitGraphScale.offset(bounds);
-        float labelWidth = 48f;
+        float labelWidth = 0f;
+        for (double tick = firstTick; tick <= bounds.max(); tick += step) {
+            labelWidth = Math.max(labelWidth,
+                    nvg.textWidth(Fonts.MONO, ProfitGraphScale.label(tick - offset, step), 8f));
+        }
         float plotX = x + labelWidth + 7f;
         float plotY = y + 23f;
-        float plotWidth = width - (plotX - x) - 3f;
+        float plotWidth = width - 2f * (plotX - x);
         float plotHeight = 65f;
         nvg.text(Fonts.REGULAR, AetherLang.localize("Coins per hour"), x, y + 3f, 9f, Theme.HUD_LABEL);
         if (offset != 0) {
