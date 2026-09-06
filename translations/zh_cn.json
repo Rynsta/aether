@@ -712,5 +712,6 @@
   "text.aether.wingspan": "Wingspan",
   "text.aether.wing_animation_speed": "Wing Animation Speed",
   "text.aether.wing_accent": "Wing Accent",
-  "text.aether.membrane_glow": "Membrane Glow"
+  "text.aether.membrane_glow": "Membrane Glow",
+  "text.aether.wireframe": "Wireframe"
 }
