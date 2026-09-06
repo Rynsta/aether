@@ -9,10 +9,11 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public final class ServerIdHider {
+    private static final String SERVER_ID = "(?:mini|mega|lobby|m)\\d+[a-z0-9]*(?:[-_][a-z0-9]+)*";
     private static final List<Pattern> PATTERNS = List.of(
-            Pattern.compile("(?iU)(\\d{1,2}/\\d{1,2}/(?:\\d{4}|\\d{2})\\s+)([a-z0-9][a-z0-9_-]*)"),
-            Pattern.compile("(?iU)((?:Server|Lobby)(?:\\s+ID)?\\s*:\\s*)([a-z0-9][a-z0-9_-]*)"),
-            Pattern.compile("(?i)(?<![a-z0-9_])((?:mini|mega|lobby|m)\\d+[a-z0-9]*(?:[-_][a-z0-9]+)*)(?![a-z0-9_])"));
+            Pattern.compile("(?iU)(\\d{1,2}/\\d{1,2}/(?:\\d{4}|\\d{2})\\s+)(" + SERVER_ID + ")(?=\\s|$)"),
+            Pattern.compile("(?iU)((?:Server|Lobby)(?:\\s+ID)?\\s*:\\s*)(" + SERVER_ID + ")(?=\\s|$)"),
+            Pattern.compile("(?iU)^\\s*(" + SERVER_ID + ")\\s*$"));
 
     private ServerIdHider() {
     }
