@@ -6,9 +6,12 @@ import dev.aether.macro.MacroWorkerThread;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.AbstractSignEditScreen;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.ItemLore;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -374,8 +377,10 @@ public final class BazaarUtils {
         var items = new java.util.ArrayList<BazaarBuySession.MenuItem>();
         for (Slot slot : screen.getMenu().slots) {
             if (client.player == null || slot.container == client.player.getInventory() || !slot.hasItem()) continue;
+            ItemLore lore = slot.getItem().get(DataComponents.LORE);
             items.add(new BazaarBuySession.MenuItem(slot.index, slot.getItem().getHoverName().getString(),
-                    slot.getItem().is(Items.BARRIER)));
+                    slot.getItem().is(Items.BARRIER),
+                    lore == null ? java.util.List.of() : lore.lines().stream().map(Component::getString).toList()));
         }
         int confirmSlot = purchase.confirmationSlot(screen.getMenu().containerId, screen.getTitle().getString(),
                 items, System.currentTimeMillis(), guiDelay);

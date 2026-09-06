@@ -7,8 +7,25 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class BazaarBuySessionTest {
+    private static final List<String> COCOA_CONFIRMATION_LORE = List.of(
+            "§8Enchanted Cocoa Beans", "", "§7Amount: §a435x", "",
+            "§7Per unit: §6486.2 coins", "§7Price: §6219,957 coins", "", "§eClick to buy now!");
+
     @Test
-    void clicksTheActualItemOnTheCustomAmountConfirmation() {
+    void clicksCustomAmountFromTheReportedCocoaBeansScreenAndWaitsForReceipt() {
+        var buy = new BazaarBuySession("Enchanted Cocoa Beans", 435);
+        var items = List.of(new BazaarBuySession.MenuItem(13, "§aCustom Amount", false, COCOA_CONFIRMATION_LORE),
+                new BazaarBuySession.MenuItem(31, "Cancel", true));
+        assertEquals(-1, buy.confirmationSlot(7, "Confirm Instant Buy", items, 0, 300));
+        assertEquals(13, buy.confirmationSlot(7, "Confirm Instant Buy", items, 300, 300));
+        assertEquals(-1, buy.confirmationSlot(7, "Confirm Instant Buy", items, 1000, 300));
+        assertFalse(buy.completed());
+        buy.onChat("§6[Bazaar] §aBought 435x Enchanted Cocoa Beans for 219,957 coins!");
+        assertTrue(buy.completed());
+    }
+
+    @Test
+    void clicksConfirmationButtonsNamedAfterThePurchasedItem() {
         for (String label : new String[]{"§aEnchanted Wheat", "§aBuy Enchanted Wheat", "§aBuy 1,234x Enchanted Wheat"}) {
             var buy = new BazaarBuySession("Enchanted Wheat", 1234);
             var items = List.of(new BazaarBuySession.MenuItem(13, label, false),
@@ -19,6 +36,70 @@ class BazaarBuySessionTest {
             assertEquals(-1, buy.confirmationSlot(7, "Confirm Instant Buy", items, 1000, 300));
             assertFalse(buy.completed());
         }
+    }
+
+    @Test
+    void customAmountRequiresMatchingItemQuantityAndBuyAction() {
+        var invalidLore = List.of(
+                List.<String>of(),
+                List.of("Enchanted Cocoa Beans", "Amount: 435x"),
+                List.of("Enchanted Cocoa Beans", "Amount: 435x", "Click to specify!"),
+                List.of("Cocoa Beans", "Amount: 435x", "Click to buy now!"),
+                List.of("Enchanted Cocoa Beans", "Amount: 64x", "Click to buy now!"),
+                List.of("Amount: 435x", "Click to buy now!"),
+                List.of("Enchanted Cocoa Beans", "Click to buy now!"));
+        for (var lore : invalidLore) {
+            var buy = new BazaarBuySession("Enchanted Cocoa Beans", 435);
+            assertEquals(-1, buy.confirmationSlot(7, "Confirm Instant Buy",
+                    List.of(new BazaarBuySession.MenuItem(13, "Custom Amount", false, lore)), 0, 0),
+                    "Unexpected confirmation for lore: " + lore);
+        }
+        var buy = new BazaarBuySession("Enchanted Cocoa Beans", 1234);
+        assertEquals(13, buy.confirmationSlot(7, "Confirm Instant Buy", List.of(
+                new BazaarBuySession.MenuItem(13, "Custom Amount", false,
+                        List.of("Enchanted Cocoa Beans", "Amount: 1,234x", "Click to buy now!"))), 0, 0));
+    }
+
+    @Test
+    void customAmountRequiresTheConfirmationScreenAndSlot() {
+        var buy = new BazaarBuySession("Enchanted Cocoa Beans", 435);
+        var item = new BazaarBuySession.MenuItem(13, "Custom Amount", false, COCOA_CONFIRMATION_LORE);
+        assertEquals(-1, buy.confirmationSlot(7, "How many do you want?", List.of(item), 0, 0));
+        assertEquals(-1, buy.confirmationSlot(7, "Bazaar ➜ Enchanted Cocoa Beans", List.of(item), 0, 0));
+        assertEquals(-1, buy.confirmationSlot(7, "Confirm Instant Buy", List.of(
+                new BazaarBuySession.MenuItem(16, "Custom Amount", false, COCOA_CONFIRMATION_LORE)), 0, 0));
+        assertEquals(13, buy.confirmationSlot(7, "Confirm Instant Buy", List.of(item), 0, 0));
+    }
+
+    @Test
+    void customAmountWaitsForCompleteLoreBeforeStartingTheDelay() {
+        var buy = new BazaarBuySession("Enchanted Cocoa Beans", 435);
+        var ready = List.of(new BazaarBuySession.MenuItem(13, "Custom Amount", false, COCOA_CONFIRMATION_LORE));
+        var incomplete = List.of(new BazaarBuySession.MenuItem(13, "Custom Amount", false,
+                List.of("Enchanted Cocoa Beans", "Amount: 435x")));
+        assertEquals(-1, buy.confirmationSlot(7, "Confirm Instant Buy", ready, 0, 300));
+        assertEquals(-1, buy.confirmationSlot(7, "Confirm Instant Buy", incomplete, 200, 300));
+        assertEquals(-1, buy.confirmationSlot(7, "Confirm Instant Buy", ready, 300, 300));
+        assertEquals(-1, buy.confirmationSlot(7, "Confirm Instant Buy", ready, 599, 300));
+        assertEquals(13, buy.confirmationSlot(7, "Confirm Instant Buy", ready, 600, 300));
+    }
+
+    @Test
+    void customAmountHandlesAnOverpricedWarningAfterTheFirstClick() {
+        var buy = new BazaarBuySession("Enchanted Cocoa Beans", 435);
+        var ready = List.of(new BazaarBuySession.MenuItem(13, "Custom Amount", false, COCOA_CONFIRMATION_LORE));
+        var locked = List.of(new BazaarBuySession.MenuItem(13, "Warning! Wait 5 seconds", true,
+                COCOA_CONFIRMATION_LORE));
+        assertEquals(13, buy.confirmationSlot(7, "Confirm Instant Buy", ready, 0, 0));
+        assertEquals(-1, buy.confirmationSlot(7, "Bazaar Alert!", locked, 100, 300));
+        assertEquals(-1, buy.confirmationSlot(7, "Bazaar Alert!", locked, 5000, 300));
+        assertEquals(-1, buy.confirmationSlot(7, "Bazaar Alert!", ready, 5100, 300));
+        assertEquals(-1, buy.confirmationSlot(7, "Bazaar Alert!", ready, 5399, 300));
+        assertEquals(13, buy.confirmationSlot(7, "Bazaar Alert!", ready, 5400, 300));
+        assertEquals(-1, buy.confirmationSlot(7, "Bazaar Alert!", ready, 6000, 300));
+        assertFalse(buy.completed());
+        buy.onChat("[Bazaar] Bought 435x Enchanted Cocoa Beans for 219,957 coins!");
+        assertTrue(buy.completed());
     }
 
     @Test

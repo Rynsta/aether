@@ -9,6 +9,7 @@ final class BazaarBuySession {
     private static final Pattern RECEIPT = Pattern.compile(
             "\\[Bazaar] Bought ([\\d,]+)x (.+?) for [\\d,.]+ coins!", Pattern.CASE_INSENSITIVE);
     private static final Pattern BUY_ITEM = Pattern.compile("(?:buy )?([\\d,]+)x (.+)");
+    private static final Pattern AMOUNT = Pattern.compile("amount:\\s*([\\d,]+)x");
 
     private final String item;
     private final int count;
@@ -21,7 +22,11 @@ final class BazaarBuySession {
     private int alertMenu = -1;
     private String alertTitle = "";
 
-    record MenuItem(int slot, String name, boolean barrier) {}
+    record MenuItem(int slot, String name, boolean barrier, List<String> lore) {
+        MenuItem(int slot, String name, boolean barrier) {
+            this(slot, name, barrier, List.of());
+        }
+    }
 
     BazaarBuySession(String item, int count) {
         this.item = normalize(item);
@@ -56,8 +61,9 @@ final class BazaarBuySession {
         if (dialog) {
             for (MenuItem entry : items) {
                 if (entry.barrier()) continue;
-                // The custom-amount confirmation displays the purchased item, not a button label.
-                if (entry.slot() == CONFIRM_SLOT && isPurchaseItem(entry.name())) {
+                // Custom Amount identifies the purchase in its lore instead of its button name.
+                if (entry.slot() == CONFIRM_SLOT
+                        && (isPurchaseItem(entry.name()) || isCustomAmountPurchase(entry))) {
                     confirmSlot = entry.slot();
                     break;
                 }
@@ -73,6 +79,23 @@ final class BazaarBuySession {
         var label = BUY_ITEM.matcher(plain);
         return label.matches() && label.group(2).equals(item)
                 && label.group(1).replace(",", "").equals(Integer.toString(count));
+    }
+
+    private boolean isCustomAmountPurchase(MenuItem entry) {
+        if (!normalize(entry.name()).equals("custom amount")) return false;
+        boolean matchingItem = false;
+        boolean matchingAmount = false;
+        boolean readyToBuy = false;
+        for (String line : entry.lore()) {
+            String plain = normalize(line);
+            if (plain.equals(item)) matchingItem = true;
+            var amount = AMOUNT.matcher(plain);
+            if (amount.matches() && amount.group(1).replace(",", "").equals(Integer.toString(count))) {
+                matchingAmount = true;
+            }
+            if (plain.equals("click to buy now!")) readyToBuy = true;
+        }
+        return matchingItem && matchingAmount && readyToBuy;
     }
 
     boolean shouldConfirm(int menu, int slot, boolean blocked, long now, long delay) {
