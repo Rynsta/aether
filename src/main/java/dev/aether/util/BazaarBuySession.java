@@ -1,11 +1,14 @@
 package dev.aether.util;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
 final class BazaarBuySession {
+    private static final int CONFIRM_SLOT = 13;
     private static final Pattern RECEIPT = Pattern.compile(
             "\\[Bazaar] Bought ([\\d,]+)x (.+?) for [\\d,.]+ coins!", Pattern.CASE_INSENSITIVE);
+    private static final Pattern BUY_ITEM = Pattern.compile("(?:buy )?([\\d,]+)x (.+)");
 
     private final String item;
     private final int count;
@@ -16,6 +19,9 @@ final class BazaarBuySession {
     private int pendingSlot = -1;
     private long readyAt;
     private int alertMenu = -1;
+    private String alertTitle = "";
+
+    record MenuItem(int slot, String name, boolean barrier) {}
 
     BazaarBuySession(String item, int count) {
         this.item = normalize(item);
@@ -32,9 +38,45 @@ final class BazaarBuySession {
 
     boolean completed() { return completed; }
 
-    boolean isAlertMenu(int menu) { return alertMenu == menu; }
+    int confirmationSlot(int menu, String title, List<MenuItem> items, long now, long delay) {
+        String plainTitle = normalize(title);
+        boolean dialog = isPurchaseDialog(title) || (alertMenu == menu && alertTitle.equals(plainTitle));
+        boolean blocked = false;
+        int confirmSlot = -1;
+        for (MenuItem entry : items) {
+            String name = normalize(entry.name());
+            if (entry.barrier() && (name.contains("warning") || name.contains("alert")
+                    || name.contains("wait") || name.contains("second")
+                    || dialog && entry.slot() == CONFIRM_SLOT)) {
+                blocked = true;
+                dialog = true;
+                alertTitle = plainTitle;
+            }
+        }
+        if (dialog) {
+            for (MenuItem entry : items) {
+                if (entry.barrier()) continue;
+                // The custom-amount confirmation displays the purchased item, not a button label.
+                if (entry.slot() == CONFIRM_SLOT && isPurchaseItem(entry.name())) {
+                    confirmSlot = entry.slot();
+                    break;
+                }
+                if (isConfirmation(entry.name())) confirmSlot = entry.slot();
+            }
+        }
+        return shouldConfirm(menu, confirmSlot, blocked, now, delay) ? confirmSlot : -1;
+    }
+
+    private boolean isPurchaseItem(String name) {
+        String plain = normalize(name);
+        if (plain.equals(item) || plain.equals("buy " + item)) return true;
+        var label = BUY_ITEM.matcher(plain);
+        return label.matches() && label.group(2).equals(item)
+                && label.group(1).replace(",", "").equals(Integer.toString(count));
+    }
 
     boolean shouldConfirm(int menu, int slot, boolean blocked, long now, long delay) {
+        if (completed) return false;
         if (blocked || slot < 0) {
             pendingMenu = pendingSlot = -1;
             // A confirmation can open an alert in the same container and slot.
@@ -64,8 +106,9 @@ final class BazaarBuySession {
 
     static boolean isConfirmation(String name) {
         String plain = normalize(name);
-        return plain.contains("confirm") || plain.contains("buy anyway")
-                || plain.contains("proceed") || plain.equals("buy") || plain.equals("buy instantly");
+        return plain.equals("confirm") || plain.startsWith("confirm ") || plain.equals("buy anyway")
+                || plain.startsWith("buy anyway ") || plain.equals("proceed") || plain.startsWith("proceed ")
+                || plain.equals("buy") || plain.equals("buy instantly");
     }
 
     private static String normalize(String text) {

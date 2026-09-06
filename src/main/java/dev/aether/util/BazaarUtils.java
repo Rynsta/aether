@@ -39,9 +39,6 @@ public final class BazaarUtils {
     private static final int SLOT_QTY_64 = 12; // a full stack preset
     private static final int SLOT_QTY_CUSTOM = 16; // "Custom Amount" (sign)
 
-    // Slot inside the "Confirm Instant Buy" page
-    private static final int SLOT_CONFIRM = 13;
-
     private static final long TICK_MS = 50;
 
     private static volatile BazaarBuySession activeBuy;
@@ -374,27 +371,15 @@ public final class BazaarUtils {
 
     private static void pollPurchaseConfirmation(Minecraft client, BazaarBuySession purchase, long guiDelay) {
         if (purchase.completed() || !(client.screen instanceof AbstractContainerScreen<?> screen)) return;
-        boolean dialog = BazaarBuySession.isPurchaseDialog(screen.getTitle().getString())
-                || purchase.isAlertMenu(screen.getMenu().containerId);
-        int confirmSlot = -1;
-        boolean blocked = false;
+        var items = new java.util.ArrayList<BazaarBuySession.MenuItem>();
         for (Slot slot : screen.getMenu().slots) {
             if (client.player == null || slot.container == client.player.getInventory() || !slot.hasItem()) continue;
-            String name = stripColors(slot.getItem().getHoverName().getString());
-            String lower = name.toLowerCase(java.util.Locale.ROOT);
-            if (slot.getItem().is(Items.BARRIER)) {
-                boolean warning = lower.contains("warning") || lower.contains("alert")
-                        || lower.contains("wait") || lower.contains("second");
-                if (warning || dialog && slot.index == SLOT_CONFIRM) {
-                    blocked = true;
-                    dialog = true;
-                }
-            } else if (BazaarBuySession.isConfirmation(name)) {
-                confirmSlot = slot.index;
-            }
+            items.add(new BazaarBuySession.MenuItem(slot.index, slot.getItem().getHoverName().getString(),
+                    slot.getItem().is(Items.BARRIER)));
         }
-        if (dialog && purchase.shouldConfirm(screen.getMenu().containerId, confirmSlot, blocked,
-                System.currentTimeMillis(), guiDelay)) {
+        int confirmSlot = purchase.confirmationSlot(screen.getMenu().containerId, screen.getTitle().getString(),
+                items, System.currentTimeMillis(), guiDelay);
+        if (confirmSlot >= 0) {
             ClientUtils.sendDebugMessage("[BazaarUtils] Confirming unlocked purchase in slot " + confirmSlot);
             ClientUtils.performSlotClick(screen, confirmSlot, 0, ContainerInput.PICKUP);
         }

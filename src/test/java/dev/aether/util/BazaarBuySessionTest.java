@@ -2,9 +2,78 @@ package dev.aether.util;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class BazaarBuySessionTest {
+    @Test
+    void clicksTheActualItemOnTheCustomAmountConfirmation() {
+        for (String label : new String[]{"§aEnchanted Wheat", "§aBuy Enchanted Wheat", "§aBuy 1,234x Enchanted Wheat"}) {
+            var buy = new BazaarBuySession("Enchanted Wheat", 1234);
+            var items = List.of(new BazaarBuySession.MenuItem(13, label, false),
+                    new BazaarBuySession.MenuItem(11, "Cancel", true),
+                    new BazaarBuySession.MenuItem(15, "Go Back", false));
+            assertEquals(-1, buy.confirmationSlot(7, "Confirm Instant Buy", items, 0, 300));
+            assertEquals(13, buy.confirmationSlot(7, "Confirm Instant Buy", items, 300, 300));
+            assertEquals(-1, buy.confirmationSlot(7, "Confirm Instant Buy", items, 1000, 300));
+            assertFalse(buy.completed());
+        }
+    }
+
+    @Test
+    void warningUnlocksToAnItemForEveryQuantity() {
+        for (int quantity : new int[]{1, 64, 123}) {
+            var buy = new BazaarBuySession("Enchanted Wheat", quantity);
+            var locked = List.of(new BazaarBuySession.MenuItem(13, "Warning! Wait 5 seconds", true));
+            var unlocked = List.of(new BazaarBuySession.MenuItem(13, "Buy " + quantity + "x Enchanted Wheat", false),
+                    new BazaarBuySession.MenuItem(11, "Cancel", true));
+            assertEquals(-1, buy.confirmationSlot(7, "Bazaar Alert!", locked, 0, 300));
+            assertEquals(-1, buy.confirmationSlot(7, "Bazaar Alert!", locked, 5000, 300));
+            assertEquals(-1, buy.confirmationSlot(7, "Bazaar Alert!", unlocked, 5050, 300));
+            assertEquals(13, buy.confirmationSlot(7, "Bazaar Alert!", unlocked, 5350, 300));
+            assertEquals(-1, buy.confirmationSlot(7, "Bazaar Alert!", unlocked, 5700, 300));
+        }
+    }
+
+    @Test
+    void pollsNormalConfirmationThenWarningReusingTheSameSlot() {
+        var buy = new BazaarBuySession("Wheat", 123);
+        var item = List.of(new BazaarBuySession.MenuItem(13, "Wheat", false));
+        assertEquals(13, buy.confirmationSlot(7, "Confirm Instant Buy", item, 0, 0));
+        assertEquals(-1, buy.confirmationSlot(7, "Confirm Instant Buy",
+                List.of(new BazaarBuySession.MenuItem(13, "Warning!", true)), 100, 300));
+        assertEquals(-1, buy.confirmationSlot(7, "Confirm Instant Buy", item, 5000, 300));
+        assertEquals(13, buy.confirmationSlot(7, "Confirm Instant Buy", item, 5300, 300));
+        buy.onChat("[Bazaar] Bought 123x Wheat for 1,000 coins!");
+        assertEquals(-1, buy.confirmationSlot(8, "Confirm Instant Buy", item, 6000, 0));
+    }
+
+    @Test
+    void ignoresQuantityMenusAndUnrelatedItemsAndResetsDelayWhenLeavingTheDialog() {
+        var buy = new BazaarBuySession("Wheat", 123);
+        var item = List.of(new BazaarBuySession.MenuItem(13, "Wheat", false));
+        assertEquals(-1, buy.confirmationSlot(7, "Confirm Instant Buy", item, 0, 300));
+        assertEquals(-1, buy.confirmationSlot(7, "How many do you want?", item, 200, 300));
+        assertEquals(-1, buy.confirmationSlot(7, "Confirm Instant Buy", item, 500, 300));
+        assertEquals(13, buy.confirmationSlot(7, "Confirm Instant Buy", item, 800, 300));
+
+        for (String name : new String[]{"Cancel", "Cancel Confirmation", "Enchanted Wheat", "Buy 64x Wheat", " "}) {
+            assertEquals(-1, buy.confirmationSlot(8, "Confirm Instant Buy",
+                    List.of(new BazaarBuySession.MenuItem(13, name, false)), 1000, 0));
+        }
+    }
+
+    @Test
+    void aRememberedWarningCannotAuthorizeAnUnrelatedScreenWithTheSameId() {
+        var buy = new BazaarBuySession("Wheat", 1);
+        assertEquals(-1, buy.confirmationSlot(7, "Expensive purchase",
+                List.of(new BazaarBuySession.MenuItem(13, "Warning!", true)), 0, 0));
+        var item = List.of(new BazaarBuySession.MenuItem(13, "Wheat", false));
+        assertEquals(-1, buy.confirmationSlot(7, "Bazaar ➜ Wheat", item, 5000, 0));
+        assertEquals(13, buy.confirmationSlot(7, "Expensive purchase", item, 5100, 0));
+    }
+
     @Test
     void waitsForBarrierThenDelayAndConfirmsOnlyOnce() {
         for (int quantity : new int[]{1, 64, 123}) {
