@@ -106,8 +106,9 @@ public final class PestEspManager {
         Minecraft client = Minecraft.getInstance();
         if (client == null || client.level == null || client.player == null) return 0;
         for (var pest : PestDisplayTracker.getPests(client)) {
-            Entity visible = pest.skull() != null && !pest.skull().isRemoved() ? pest.skull() : pest.entity();
-            if (visible == entity) return argb(255, pestColor(AetherConfig.PEST_ESP_HIGHLIGHT_COLOR.get()));
+            if (pest.skull() == entity && !entity.isRemoved()) {
+                return argb(255, pestColor(AetherConfig.PEST_ESP_HIGHLIGHT_COLOR.get()));
+            }
         }
         return 0;
     }

@@ -1,20 +1,19 @@
 package dev.aether.mixin;
 
-import dev.aether.bootstrap.AetherBootstrapHooks;
-import net.minecraft.client.renderer.entity.ArmorStandRenderer;
-import net.minecraft.client.renderer.entity.state.ArmorStandRenderState;
-import net.minecraft.world.entity.decoration.ArmorStand;
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.mojang.blaze3d.vertex.PoseStack;
+import dev.aether.renderer.PestOutlineState;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.entity.layers.CustomHeadLayer;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(ArmorStandRenderer.class)
+@Mixin(CustomHeadLayer.class)
 public class MixinPestSkullOutline {
-    @Inject(method = "extractRenderState(Lnet/minecraft/world/entity/decoration/ArmorStand;Lnet/minecraft/client/renderer/entity/state/ArmorStandRenderState;F)V",
-            at = @At("TAIL"))
-    private void aether$hideOutlineStand(ArmorStand entity, ArmorStandRenderState state, float partialTick, CallbackInfo ci) {
-        // Only the equipped skull is the pest; the invisible support stand must not acquire a silhouette.
-        if (entity.isInvisible() && AetherBootstrapHooks.pestOutlineColor(entity) != 0) state.isMarker = true;
+    @WrapMethod(method = "submit(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;ILnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;FF)V")
+    private void aether$submitPestSkull(PoseStack poseStack, SubmitNodeCollector collector, int lightCoords,
+                                      LivingEntityRenderState state, float yRot, float xRot, Operation<Void> original) {
+        PestOutlineState.submitHead(state, () -> original.call(poseStack, collector, lightCoords, state, yRot, xRot));
     }
 }
