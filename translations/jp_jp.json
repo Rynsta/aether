@@ -713,5 +713,8 @@
   "text.aether.wing_animation_speed": "Wing Animation Speed",
   "text.aether.wing_accent": "Wing Accent",
   "text.aether.membrane_glow": "Membrane Glow",
-  "text.aether.wireframe": "Wireframe"
+  "text.aether.wireframe": "Wireframe",
+  "text.aether.recovery_waiting_for_skyblock_and_the_garden_before_resuming": "Recovery: waiting for SkyBlock and the Garden before resuming...",
+  "text.aether.limbo_recovery_waiting_for_skyblock_and_the_garden_before_resuming": "Limbo recovery: waiting for SkyBlock and the Garden before resuming...",
+  "text.aether.recovery_running_s_waiting_for_the_destination_to_load": "Recovery: running %s, waiting for the destination to load..."
 }
