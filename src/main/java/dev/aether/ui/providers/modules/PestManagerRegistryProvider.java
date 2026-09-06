@@ -75,12 +75,6 @@ public final class PestManagerRegistryProvider extends AbstractModulesRegistryPr
                         })
                         .visibleWhen(AetherConfig.PEST_ESP_TRACER::get)));
 
-        groups.add(SettingGroup.of("Pest Target HUD", "Pest icons, health and hunting progress below the crosshair",
-                AetherConfig.SHOW_PEST_TARGET_HUD::get,
-                value -> { AetherConfig.SHOW_PEST_TARGET_HUD.set(value); AetherConfig.save(); })
-                .add(new dev.aether.ui.settings.ActionSetting("Reset Target HUD Position",
-                        dev.aether.hud.PestTargetHudElement::resetLayout)));
-
         groups.add(SettingGroup.of(
                         "Pest Destroyer",
                         "Cleans pests once past the threshold",
