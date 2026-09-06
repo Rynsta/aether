@@ -868,6 +868,16 @@ public final class AetherConfig {
                         Config.floatVal("flyBrakingLookaheadTicks", 2.0f).range(0.0f, 6.0f);
         public static final IntEntry PATHFINDER_MAX_JUMP_HEIGHT = Config.integer("pathfinderMaxJumpHeight", 1)
                         .range(1, 6);
+        public static final BooleanEntry PATHFINDER_RAYCAST_JUMP = Config.bool("pathfinderRaycastJump", true);
+        public static final FloatEntry PATHFINDER_JUMP_LOOKAHEAD_TICKS =
+                        Config.floatVal("pathfinderJumpLookaheadTicks", 2.0f).range(0.0f, 5.0f);
+        public static final FloatEntry PATHFINDER_AIM_LOOKAHEAD =
+                        Config.floatVal("pathfinderAimLookahead", 3.5f).range(1.0f, 8.0f);
+        public static final FloatEntry PATHFINDER_TURN_SPEED =
+                        Config.floatVal("pathfinderTurnSpeed", 240.0f).range(60.0f, 720.0f);
+        public static final BooleanEntry PATHFINDER_SPRINT = Config.bool("pathfinderSprint", true);
+        public static final IntEntry PATHFINDER_STUCK_TIMEOUT_MS =
+                        Config.integer("pathfinderStuckTimeoutMs", 1800).range(750, 5000);
 
         // -- AUTO CARNIVAL ---------------------------------------------------------
 

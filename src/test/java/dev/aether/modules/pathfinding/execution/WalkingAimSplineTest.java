@@ -1,0 +1,107 @@
+package dev.aether.modules.pathfinding.execution;
+
+import net.minecraft.world.phys.Vec3;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class WalkingAimSplineTest {
+    @Test
+    void followsArcDistanceIndependentlyOfWaypointDensity() {
+        WalkingAimSpline sparse = new WalkingAimSpline(List.of(Vec3.ZERO, new Vec3(0, 0, 10)));
+        WalkingAimSpline dense = new WalkingAimSpline(List.of(Vec3.ZERO, new Vec3(0, 0, 2),
+                new Vec3(0, 0, 4), new Vec3(0, 0, 6), new Vec3(0, 0, 10)));
+        Vec3 feet = new Vec3(0, 0, 3);
+        Vec3 expected = new Vec3(0, 1.62, 6.5);
+        assertPoint(expected, sparse.aimPoint(feet, 0, 3.5, 1.62));
+        assertPoint(expected, dense.aimPoint(feet, 1, 3.5, 1.62));
+    }
+
+    @Test
+    void followsRoundedCornersContinuouslyInsteadOfSnappingBetweenNodes() {
+        WalkingAimSpline spline = new WalkingAimSpline(List.of(Vec3.ZERO,
+                new Vec3(0, 0, 5), new Vec3(5, 0, 5)));
+        Vec3 before = spline.aimPoint(new Vec3(0, 0, 3), 0, 1.5, 1.62);
+        assertTrue(before.x > 0.0 && before.x < 1.0);
+        assertTrue(before.z > 4.0 && before.z < 5.0);
+        Vec3 after = spline.aimPoint(new Vec3(0, 0, 3.02), 0, 1.5, 1.62);
+        assertTrue(after.distanceTo(before) <= 0.020001);
+        assertTrue(after.x > before.x);
+        assertEquals(1.62, after.y, 1.0e-9);
+    }
+
+    @Test
+    void doesNotJumpToANearbyReturningPathSegment() {
+        WalkingAimSpline spline = new WalkingAimSpline(List.of(Vec3.ZERO, new Vec3(0, 0, 8),
+                new Vec3(1, 0, 8), new Vec3(1, 0, 0)));
+        Vec3 aim = spline.aimPoint(new Vec3(0.9, 0, 2), 0, 2.0, 1.62);
+        assertPoint(new Vec3(0, 1.62, 4), aim);
+    }
+
+    @Test
+    void remainsContinuousWhenPursuitAdvancesPastAnUnequalLengthCorner() {
+        WalkingAimSpline spline = new WalkingAimSpline(List.of(Vec3.ZERO, new Vec3(0, 0, 8),
+                new Vec3(1, 0, 8), new Vec3(1, 0, 12)));
+        Vec3 before = spline.aimPoint(new Vec3(0, 0, 7.74), 0, 0.3, 1.62);
+        Vec3 after = spline.aimPoint(new Vec3(0, 0, 7.76), 1, 0.3, 1.62);
+        assertTrue(before.distanceTo(after) < 0.05, "Camera jumped when the movement waypoint advanced");
+    }
+
+    @Test
+    void jumpHeightDoesNotPushAimForwardOnAnAscendingPath() {
+        List<Vec3> path = List.of(Vec3.ZERO, new Vec3(0, 2, 6));
+        Vec3 grounded = new WalkingAimSpline(path).aimPoint(new Vec3(0, 1, 3), 0, 1.5, 1.62);
+        Vec3 jumping = new WalkingAimSpline(path).aimPoint(new Vec3(0, 2.2, 3), 0, 1.5, 1.62);
+        assertPoint(grounded, jumping);
+        assertEquals(1.62 + grounded.z / 3.0, grounded.y, 1.0e-9);
+    }
+
+    @Test
+    void preservesVerticalSegmentsAndUsesFeetHeightForTheirProgress() {
+        WalkingAimSpline spline = new WalkingAimSpline(List.of(Vec3.ZERO, new Vec3(0, 4, 0)));
+        assertPoint(new Vec3(0, 4.12, 0), spline.aimPoint(new Vec3(0, 1, 0), 0, 1.5, 1.62));
+        assertPoint(new Vec3(0, 5.62, 0), spline.aimPoint(new Vec3(0, 3, 0), 0, 1.5, 1.62));
+    }
+
+    @Test
+    void aimDoesNotMoveBackwardWhenRecoveryBacksUp() {
+        WalkingAimSpline spline = new WalkingAimSpline(List.of(Vec3.ZERO, new Vec3(0, 0, 10)));
+        Vec3 forward = spline.aimPoint(new Vec3(0, 0, 4), 0, 2, 1.62);
+        Vec3 backup = spline.aimPoint(new Vec3(0, 0, 3.5), 0, 2, 1.62);
+        assertPoint(forward, backup);
+    }
+
+    @Test
+    void clampsAtTheEndpointAndHandlesDegeneratePaths() {
+        Vec3 end = new Vec3(2, 3, 4);
+        WalkingAimSpline single = new WalkingAimSpline(List.of(end));
+        assertPoint(end.add(0, 1.62, 0), single.aimPoint(Vec3.ZERO, 0, 8, 1.62));
+        WalkingAimSpline duplicates = new WalkingAimSpline(List.of(end, end, end));
+        assertPoint(end.add(0, 1.62, 0), duplicates.aimPoint(end, 1, 8, 1.62));
+        WalkingAimSpline empty = new WalkingAimSpline(List.of());
+        assertPoint(end.add(0, 1.62, 0), empty.aimPoint(end, 0, 8, 1.62));
+        assertTrue(empty.points(1.62).isEmpty());
+    }
+
+    @Test
+    void splineRemainsWithinPathBoundsThroughElevationChanges() {
+        WalkingAimSpline spline = new WalkingAimSpline(List.of(Vec3.ZERO, new Vec3(0, 1, 4),
+                new Vec3(4, 2, 4), new Vec3(4, 3, 0)));
+        double previousHeight = 0.0;
+        for (Vec3 point : spline.points(0.0)) {
+            assertTrue(point.x >= 0.0 && point.x <= 4.0 + 1.0e-9);
+            assertTrue(point.z >= 0.0 && point.z <= 4.0 + 1.0e-9);
+            assertTrue(point.y >= previousHeight - 1.0e-9);
+            previousHeight = point.y;
+        }
+        assertEquals(3.0, previousHeight, 1.0e-9);
+    }
+
+    private static void assertPoint(Vec3 expected, Vec3 actual) {
+        assertEquals(expected.x, actual.x, 1.0e-6);
+        assertEquals(expected.y, actual.y, 1.0e-6);
+        assertEquals(expected.z, actual.z, 1.0e-6);
+    }
+}
