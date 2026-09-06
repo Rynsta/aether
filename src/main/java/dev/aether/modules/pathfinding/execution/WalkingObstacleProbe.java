@@ -3,12 +3,12 @@ package dev.aether.modules.pathfinding.execution;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.CollisionContext;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 public final class WalkingObstacleProbe {
     private static final double EPSILON = 0.02;
@@ -18,10 +18,10 @@ public final class WalkingObstacleProbe {
     public record Result(boolean obstacleAhead, boolean jumpRequired, double clearance,
                          double obstacleHeight, boolean headroomClear) {}
 
-    record Collision(Vec3 position, double top) {}
+    private record Sweep(AABB bounds, double enter, double exit) {}
 
     interface CollisionSpace {
-        Collision raycast(Vec3 from, Vec3 to);
+        Iterable<AABB> collisions(AABB bounds);
         boolean clear(AABB bounds);
     }
 
@@ -55,33 +55,50 @@ public final class WalkingObstacleProbe {
         double reach = Math.min(MAX_LOOKAHEAD, Math.max(0.05, baseLookahead)
                 + closingSpeed * Math.max(0.0, predictionTicks));
         Vec3 travel = direction.scale(reach);
-        double minX = bounds.minX + EPSILON;
-        double maxX = bounds.maxX - EPSILON;
-        double minZ = bounds.minZ + EPSILON;
-        double maxZ = bounds.maxZ - EPSILON;
-        double feetY = bounds.minY + EPSILON;
-        Vec3[] origins = {
-                new Vec3((minX + maxX) * 0.5, feetY, (minZ + maxZ) * 0.5),
-                new Vec3(minX, feetY, minZ), new Vec3(minX, feetY, maxZ),
-                new Vec3(maxX, feetY, minZ), new Vec3(maxX, feetY, maxZ)
-        };
+        List<Sweep> collisions = new ArrayList<>();
+        AABB search = bounds.expandTowards(travel).expandTowards(0, reach + maxJumpHeight, 0).inflate(EPSILON);
+        for (AABB obstacle : space.collisions(search)) {
+            Sweep collision = sweep(bounds, obstacle, direction, reach);
+            if (collision != null) collisions.add(collision);
+        }
+        collisions.sort(Comparator.comparingDouble(Sweep::enter));
         double nearestDistance = Double.POSITIVE_INFINITY;
         double obstacleHeight = 0.0;
-        for (Vec3 from : origins) {
-            Collision collision = space.raycast(from, from.add(travel));
-            if (collision == null) {
-                continue;
+        double walkingY = bounds.minY;
+        double supportedUntil = reach;
+        for (Sweep collision : collisions) {
+            double distance = collision.enter();
+            if (walkingY > bounds.minY + EPSILON && distance > supportedUntil + EPSILON) {
+                walkingY = bounds.minY;
+                supportedUntil = reach;
             }
-            double height = collision.top() - bounds.minY;
-            if (height <= stepHeight + EPSILON) {
-                continue;
+            double top = walkingY;
+            for (Sweep candidate : collisions) {
+                if (candidate.enter() <= distance + EPSILON && candidate.exit() > distance + 1.0e-6
+                        && candidate.bounds().minY < walkingY + bounds.getYsize() - EPSILON) {
+                    top = Math.max(top, candidate.bounds().maxY);
+                }
             }
-            double distance = Math.max(0.0, collision.position().subtract(from).dot(direction) - EPSILON);
-            if (distance < nearestDistance - EPSILON) {
-                nearestDistance = distance;
-                obstacleHeight = height;
-            } else if (distance <= nearestDistance + EPSILON) {
-                obstacleHeight = Math.max(obstacleHeight, height);
+            double step = top - walkingY;
+            if (step > stepHeight + EPSILON) {
+                nearestDistance = Math.max(0, distance);
+                obstacleHeight = top - bounds.minY;
+                break;
+            }
+            if (step > EPSILON) {
+                AABB atStep = bounds.move(direction.scale(distance + 2 * EPSILON)).move(0, walkingY - bounds.minY, 0);
+                if (!hasHeadroom(space, atStep, step)
+                        || !space.clear(atStep.deflate(EPSILON).move(0, step, 0))) {
+                    return new Result(true, false, distance, top - bounds.minY, false);
+                }
+                walkingY = top;
+                supportedUntil = distance;
+            }
+            for (Sweep candidate : collisions) {
+                if (candidate.enter() <= supportedUntil + EPSILON
+                        && Math.abs(candidate.bounds().maxY - walkingY) <= EPSILON) {
+                    supportedUntil = Math.max(supportedUntil, candidate.exit());
+                }
             }
         }
         if (!Double.isFinite(nearestDistance)) {
@@ -102,6 +119,27 @@ public final class WalkingObstacleProbe {
             }
         }
         return new Result(true, heightReachable && headroomClear, nearestDistance, obstacleHeight, headroomClear);
+    }
+
+    private static Sweep sweep(AABB bounds, AABB obstacle, Vec3 direction, double reach) {
+        double enter = 0;
+        double exit = reach;
+        double[] minimum = {obstacle.minX - bounds.maxX, obstacle.minZ - bounds.maxZ};
+        double[] maximum = {obstacle.maxX - bounds.minX, obstacle.maxZ - bounds.minZ};
+        double[] movement = {direction.x, direction.z};
+        for (int axis = 0; axis < movement.length; axis++) {
+            double speed = movement[axis];
+            if (Math.abs(speed) < 1.0e-6) {
+                if (minimum[axis] >= 0 || maximum[axis] <= 0) return null;
+            } else {
+                double first = minimum[axis] / speed;
+                double last = maximum[axis] / speed;
+                enter = Math.max(enter, Math.min(first, last));
+                exit = Math.min(exit, Math.max(first, last));
+                if (exit <= enter + 1.0e-6) return null;
+            }
+        }
+        return new Sweep(obstacle, enter, exit);
     }
 
     static double jumpHeight(double initialVelocity, double gravity) {
@@ -137,30 +175,12 @@ public final class WalkingObstacleProbe {
     private static CollisionSpace collisionSpace(Minecraft client) {
         return new CollisionSpace() {
             @Override
-            public Collision raycast(Vec3 from, Vec3 to) {
-                BlockHitResult hit = client.level.clip(new ClipContext(from, to,
-                        ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, client.player));
-                if (hit.getType() != HitResult.Type.BLOCK) {
-                    return null;
+            public Iterable<AABB> collisions(AABB bounds) {
+                List<AABB> boxes = new ArrayList<>();
+                for (var shape : client.level.getBlockCollisions(client.player, bounds)) {
+                    boxes.addAll(shape.toAabbs());
                 }
-                BlockPos position = hit.getBlockPos();
-                var shape = client.level.getBlockState(position).getCollisionShape(client.level, position,
-                        CollisionContext.of(client.player));
-                if (shape.isEmpty()) {
-                    return null;
-                }
-                Vec3 inside = hit.getLocation().add(to.subtract(from).normalize().scale(0.001))
-                        .subtract(position.getX(), position.getY(), position.getZ());
-                double top = Double.NEGATIVE_INFINITY;
-                for (AABB box : shape.toAabbs()) {
-                    if (box.inflate(0.001).contains(inside)) {
-                        top = Math.max(top, box.maxY);
-                    }
-                }
-                if (!Double.isFinite(top)) {
-                    top = shape.bounds().maxY;
-                }
-                return new Collision(hit.getLocation(), position.getY() + top);
+                return boxes;
             }
 
             @Override

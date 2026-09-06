@@ -60,6 +60,89 @@ class WalkingObstacleProbeTest {
     }
 
     @Test
+    void detectsStackedSlabsAsOneObstacle() {
+        var result = probe(Vec3.ZERO,
+                new AABB(-0.5, 0, 0.7, 0.5, 0.5, 1.7),
+                new AABB(-0.5, 0.5, 0.7, 0.5, 1, 1.7));
+        assertTrue(result.jumpRequired());
+        assertEquals(1.0, result.obstacleHeight());
+    }
+
+    @Test
+    void detectsObstaclesBeginningAboveTheFeet() {
+        var result = probe(Vec3.ZERO, new AABB(-0.5, 0.5, 0.7, 0.5, 1, 1.7));
+        assertTrue(result.jumpRequired());
+        assertEquals(1.0, result.obstacleHeight());
+    }
+
+    @Test
+    void detectsTheMiddleOfThePlayerFootprint() {
+        var result = probe(Vec3.ZERO, new AABB(0.08, 0, 0.7, 0.18, 1, 1.7));
+        assertTrue(result.jumpRequired());
+    }
+
+    @Test
+    void detectsATallObstacleBehindAWalkableSlab() {
+        var result = probe(Vec3.ZERO,
+                new AABB(-0.5, 0, 0.6, 0.5, 0.5, 1.6),
+                new AABB(-0.5, 0.5, 1, 0.5, 1.5, 2));
+        assertTrue(result.obstacleAhead());
+        assertFalse(result.jumpRequired());
+        assertEquals(1.5, result.obstacleHeight());
+    }
+
+    @Test
+    void walksSuccessiveStairTreadsWithinThePredictedMovement() {
+        var result = probe(new Vec3(0, 0, 0.4),
+                new AABB(-0.5, 0, 0.6, 0.5, 0.5, 1.6),
+                new AABB(-0.5, 0.5, 1.1, 0.5, 1, 2.1),
+                new AABB(-0.5, 1, 1.6, 0.5, 1.5, 2.6));
+        assertFalse(result.obstacleAhead());
+    }
+
+    @Test
+    void detectsBlocksAlreadyTouchingThePlayer() {
+        var result = probe(Vec3.ZERO, new AABB(-0.5, 0, 0.3, 0.5, 1, 1.3));
+        assertTrue(result.jumpRequired());
+        assertEquals(0, result.clearance(), 0.001);
+    }
+
+    @Test
+    void doesNotCarryStepHeightAcrossAnUnsupportedGap() {
+        var result = probe(new Vec3(0, 0, 0.4),
+                new AABB(-0.5, 0, 0.4, 0.5, 0.5, 0.5),
+                new AABB(-0.5, 0, 1.2, 0.5, 1, 2.2));
+        assertTrue(result.jumpRequired());
+        assertEquals(1.0, result.obstacleHeight());
+    }
+
+    @Test
+    void excludesParallelWallsThatOnlyTouchThePlayer() {
+        var result = probe(Vec3.ZERO, new AABB(0.3, 0, -0.5, 1.3, 2, 2));
+        assertFalse(result.obstacleAhead());
+    }
+
+    @Test
+    void sweepsDiagonallyInBothDirections() {
+        var northeast = world(new AABB(0.7, 0, 0.7, 1.7, 1, 1.7));
+        var southwest = world(new AABB(-1.7, 0, -1.7, -0.7, 1, -0.7));
+        assertTrue(WalkingObstacleProbe.probe(northeast, PLAYER, new Vec3(1, 0, 1),
+                Vec3.ZERO, 0.6, 1.2, 0.75, 2).jumpRequired());
+        assertTrue(WalkingObstacleProbe.probe(southwest, PLAYER, new Vec3(-1, 0, -1),
+                Vec3.ZERO, 0.6, 1.2, 0.75, 2).jumpRequired());
+    }
+
+    @Test
+    void rejectsSteppingIntoALowCeiling() {
+        var result = probe(Vec3.ZERO,
+                new AABB(-0.5, 0, 0.6, 0.5, 0.5, 1.6),
+                new AABB(-0.5, 2, 0.6, 0.5, 3, 1.6));
+        assertTrue(result.obstacleAhead());
+        assertFalse(result.headroomClear());
+        assertFalse(result.jumpRequired());
+    }
+
+    @Test
     void rejectsFencesTallWallsAndLowCeilings() {
         assertFalse(probe(Vec3.ZERO, new AABB(-0.5, 0, 0.7, 0.5, 1.5, 1.7)).jumpRequired());
         assertFalse(probe(Vec3.ZERO, new AABB(-0.5, 0, 0.7, 0.5, 2, 1.7)).jumpRequired());
@@ -115,16 +198,8 @@ class WalkingObstacleProbeTest {
     private static WalkingObstacleProbe.CollisionSpace world(AABB... obstacles) {
         return new WalkingObstacleProbe.CollisionSpace() {
             @Override
-            public WalkingObstacleProbe.Collision raycast(Vec3 from, Vec3 to) {
-                WalkingObstacleProbe.Collision nearest = null;
-                for (AABB obstacle : obstacles) {
-                    Vec3 hit = obstacle.contains(from) ? from : obstacle.clip(from, to).orElse(null);
-                    if (hit != null && (nearest == null
-                            || from.distanceToSqr(hit) < from.distanceToSqr(nearest.position()))) {
-                        nearest = new WalkingObstacleProbe.Collision(hit, obstacle.maxY);
-                    }
-                }
-                return nearest;
+            public Iterable<AABB> collisions(AABB bounds) {
+                return Arrays.stream(obstacles).filter(bounds::intersects).toList();
             }
 
             @Override

@@ -4,6 +4,7 @@ import net.minecraft.world.phys.Vec3;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -59,6 +60,49 @@ class WalkingRouteTest {
         WalkingRoute route = new WalkingRoute(List.of(new Vec3(0, 20, 0), new Vec3(0, 15, 0),
                 new Vec3(0, 5, 0), new Vec3(1, 5, 0)));
         assertEquals(1, route.advance(new Vec3(0, 10, 0), 0));
+    }
+
+    @Test
+    void advancesThroughVerticalFallNodesWithLateralDrift() {
+        List<Vec3> points = IntStream.rangeClosed(0, 40)
+                .mapToObj(i -> new Vec3(0.5, 40 - i, 0.5)).toList();
+        WalkingRoute route = new WalkingRoute(points);
+        int segment = 0;
+        double previousProgress = -1;
+        for (double height = 39.2; height >= 0.0; height -= 2.8) {
+            Vec3 feet = new Vec3(0.95, height, 0.8);
+            segment = route.advance(feet, segment);
+            assertTrue(points.get(segment).y <= height + 1,
+                    "A passed fall node held pursuit above " + feet);
+            double progress = route.progress(feet, segment);
+            assertTrue(progress > previousProgress);
+            previousProgress = progress;
+        }
+    }
+
+    @Test
+    void leavesTheLedgeBehindAfterFallingBeforeReachingItsCenter() {
+        WalkingRoute route = new WalkingRoute(List.of(new Vec3(0.5, 20, 0.5), new Vec3(1.5, 20, 0.5),
+                new Vec3(1.5, 19, 0.5), new Vec3(1.5, 18, 0.5), new Vec3(1.5, 0, 0.5)));
+        assertEquals(3, route.advance(new Vec3(1.3, 10, 0.8), 0));
+    }
+
+    @Test
+    void continuesAlongTheLandingAfterAnOffCenterVerticalFall() {
+        WalkingRoute route = new WalkingRoute(List.of(new Vec3(0.5, 3, 0.5), new Vec3(0.5, 2, 0.5),
+                new Vec3(0.5, 1, 0.5), new Vec3(0.5, 0, 0.5), new Vec3(4.5, 0, 0.5)));
+        Vec3 feet = new Vec3(0.95, 0, 0.8);
+        int segment = route.advance(feet, 0);
+        assertEquals(3, segment);
+        assertTrue(route.steeringTarget(feet, segment, 1).x > feet.x);
+    }
+
+    @Test
+    void doesNotAdvanceAClimbOrAnUnrelatedFallUsingLateralTolerance() {
+        WalkingRoute climb = new WalkingRoute(List.of(Vec3.ZERO, new Vec3(0, 5, 0), new Vec3(1, 5, 0)));
+        assertEquals(0, climb.advance(new Vec3(0.6, 5, 0), 0));
+        WalkingRoute fall = new WalkingRoute(List.of(new Vec3(0, 5, 0), Vec3.ZERO, new Vec3(1, 0, 0)));
+        assertEquals(0, fall.advance(new Vec3(2, 0, 0), 0));
     }
 
     @Test

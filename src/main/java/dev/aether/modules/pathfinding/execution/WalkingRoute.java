@@ -8,6 +8,7 @@ final class WalkingRoute {
     private static final double HEIGHT_TOLERANCE = 0.65;
     private static final double WAYPOINT_RADIUS = 0.25;
     private static final double ROUTE_HALF_WIDTH = 0.45;
+    private static final double FALL_CORRIDOR_RADIUS = 0.75;
 
     private final List<Vec3> points;
     private final double[] distances;
@@ -26,8 +27,11 @@ final class WalkingRoute {
             Vec3 to = points.get(segment + 1);
             boolean heightReached = to.y < from.y
                     ? feet.y <= to.y + HEIGHT_TOLERANCE : feet.y >= to.y - HEIGHT_TOLERANCE;
-            if (!heightReached && (to.y > from.y || !fallingPast(feet, segment + 1))) break;
-            if (!passedHorizontally(feet, from, to)) break;
+            if (!heightReached) {
+                if (to.y > from.y || !fallingPast(feet, segment + 1)) break;
+            } else if (!passedHorizontally(feet, from, to)) {
+                break;
+            }
             segment++;
         }
         return segment;
@@ -84,7 +88,7 @@ final class WalkingRoute {
             if (to.y > from.y) return false;
             if (to.y < from.y && feet.y >= to.y - HEIGHT_TOLERANCE) {
                 double t = Math.clamp(horizontalProjection(feet, from, to), 0.0, 1.0);
-                return feet.subtract(from.lerp(to, t)).horizontalDistance() <= 0.75;
+                return feet.subtract(from.lerp(to, t)).horizontalDistance() <= FALL_CORRIDOR_RADIUS;
             }
             if (!passedHorizontally(feet, from, to)) return false;
         }
@@ -92,8 +96,10 @@ final class WalkingRoute {
     }
 
     private static boolean passedHorizontally(Vec3 feet, Vec3 from, Vec3 to) {
-        return feet.subtract(to).horizontalDistance() <= WAYPOINT_RADIUS
-                || (to.subtract(from).horizontalDistanceSqr() > 1.0e-12
+        double horizontalLength = to.subtract(from).horizontalDistanceSqr();
+        double radius = to.y < from.y && horizontalLength < 1.0e-12 ? FALL_CORRIDOR_RADIUS : WAYPOINT_RADIUS;
+        return feet.subtract(to).horizontalDistance() <= radius
+                || (horizontalLength > 1.0e-12
                 && horizontalProjection(feet, from, to) >= 1.0
                 && lateralDistance(feet, from, to) <= ROUTE_HALF_WIDTH);
     }

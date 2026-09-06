@@ -3,7 +3,9 @@ package dev.aether.modules.pathfinding.execution;
 import net.minecraft.world.phys.Vec3;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -114,6 +116,49 @@ class WalkingAimSplineTest {
         assertTrue(first.y < 13.62);
         assertTrue(second.y < 7.62);
         assertTrue(second.y < first.y - 5);
+    }
+
+    @Test
+    void projectsThroughoutAVerticalFallStackWhileMovementCorrectsLateralDrift() {
+        List<Vec3> points = IntStream.rangeClosed(0, 40)
+                .mapToObj(i -> new Vec3(0.5, 40 - i, 0.5)).toList();
+        WalkingAimSpline spline = new WalkingAimSpline(points);
+        Vec3 first = spline.aimPoint(new Vec3(1.3, 25, 0.5), 0, 2, 1.62);
+        Vec3 second = spline.aimPoint(new Vec3(1.1, 10, 0.5), 0, 2, 1.62);
+        assertPoint(new Vec3(0.5, 24.62, 0.5), first);
+        assertPoint(new Vec3(0.5, 9.62, 0.5), second);
+    }
+
+    @Test
+    void followsAFullVerticalFallAndTurnsAlongTheLanding() {
+        List<Vec3> points = new ArrayList<>();
+        points.add(new Vec3(-0.5, 40, 0.5));
+        for (int height = 40; height >= 0; height--) points.add(new Vec3(0.5, height, 0.5));
+        points.add(new Vec3(5.5, 0, 0.5));
+        WalkingRoute route = new WalkingRoute(points);
+        WalkingAimSpline spline = new WalkingAimSpline(points);
+        int segment = 0;
+        for (double height = 38; height > 2; height -= 3.1) {
+            Vec3 feet = new Vec3(0.95, height, 0.8);
+            segment = route.advance(feet, segment);
+            Vec3 aim = spline.aimPoint(feet, segment, 2, 1.62);
+            assertTrue(aim.y < feet.y + 1.62, "Aim remained above the falling player at " + feet);
+            assertTrue(aim.y > feet.y - 1);
+        }
+        Vec3 feet = new Vec3(0.95, 0, 0.8);
+        segment = route.advance(feet, segment);
+        Vec3 aim = spline.aimPoint(feet, segment, 2, 1.62);
+        assertTrue(aim.x > feet.x);
+        assertEquals(1.62, aim.y, 1.0e-6);
+    }
+
+    @Test
+    void doesNotProjectPastALandingIntoAnotherDrop() {
+        WalkingAimSpline spline = new WalkingAimSpline(List.of(new Vec3(0, 30, 0), new Vec3(0, 25, 0),
+                new Vec3(0, 20, 0), new Vec3(5, 20, 0), new Vec3(5, 0, 0)));
+        Vec3 aim = spline.aimPoint(new Vec3(0.5, 5, 0), 0, 2, 1.62);
+        assertTrue(aim.x <= 3.0 + 1.0e-6, "Aim projected beyond the first landing: " + aim);
+        assertEquals(21.62, aim.y, 1.0e-6);
     }
 
     @Test

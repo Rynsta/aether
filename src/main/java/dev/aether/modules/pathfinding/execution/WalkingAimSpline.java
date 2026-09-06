@@ -55,8 +55,14 @@ public final class WalkingAimSpline {
                 anchors.get(segment + 1).subtract(anchors.get(segment)));
         double minParameter = segment == 0 ? 0.0
                 : segment - cornerRatio(anchors.get(segment - 1), anchors.get(segment));
-        double maxParameter = segment + 2 >= anchors.size() ? anchors.size() - 1.0
-                : segment + 1.0 + cornerRatio(anchors.get(segment + 1), anchors.get(segment + 2));
+        int end = Math.min(segment + 1, anchors.size() - 1);
+        while (end + 1 < anchors.size() && anchors.get(end).y < anchors.get(end - 1).y) {
+            Vec3 nextDirection = anchors.get(end + 1).subtract(anchors.get(end));
+            if (nextDirection.y >= 0.0 || nextDirection.horizontalDistanceSqr() > 1.0e-12) break;
+            end++;
+        }
+        double maxParameter = end + 1 >= anchors.size() ? anchors.size() - 1.0
+                : end + cornerRatio(anchors.get(end), anchors.get(end + 1));
         double closestDistance = Double.POSITIVE_INFINITY;
         double projectedProgress = progress;
         for (int i = lowerSample(minParameter); i + 1 < samples.size(); i++) {
