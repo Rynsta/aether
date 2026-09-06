@@ -26,10 +26,8 @@ public final class WalkingAimSpline {
             Vec3 before = anchors.get(i - 1);
             Vec3 corner = anchors.get(i);
             Vec3 after = anchors.get(i + 1);
-            double incoming = before.distanceTo(corner);
-            double outgoing = corner.distanceTo(after);
-            double entryRatio = incoming > 1.0e-6 ? Math.min(0.5, CORNER_RADIUS / incoming) : 0.0;
-            double exitRatio = outgoing > 1.0e-6 ? Math.min(0.5, CORNER_RADIUS / outgoing) : 0.0;
+            double entryRatio = cornerRatio(before, corner);
+            double exitRatio = cornerRatio(corner, after);
             Vec3 entry = corner.lerp(before, entryRatio);
             Vec3 exit = corner.lerp(after, exitRatio);
             append(entry, i - entryRatio);
@@ -53,8 +51,10 @@ public final class WalkingAimSpline {
             return playerFeet.add(0.0, eyeHeight, 0.0);
         }
         int segment = Math.max(0, Math.min(pursuitSegment, anchors.size() - 1));
-        double minParameter = Math.max(0.0, segment - 0.5);
-        double maxParameter = Math.min(anchors.size() - 1.0, segment + 1.5);
+        double minParameter = segment == 0 ? 0.0
+                : segment - cornerRatio(anchors.get(segment - 1), anchors.get(segment));
+        double maxParameter = segment + 2 >= anchors.size() ? anchors.size() - 1.0
+                : segment + 1.0 + cornerRatio(anchors.get(segment + 1), anchors.get(segment + 2));
         double closestDistance = Double.POSITIVE_INFINITY;
         double projectedProgress = progress;
         for (int i = lowerSample(minParameter); i + 1 < samples.size(); i++) {
@@ -68,6 +68,10 @@ public final class WalkingAimSpline {
                     ? Math.max(0.0, (minParameter - parameters.get(i)) / parameterSpan) : 0.0;
             double maxT = parameterSpan > 1.0e-9
                     ? Math.min(1.0, (maxParameter - parameters.get(i)) / parameterSpan) : 1.0;
+            double distanceSpan = distances.get(i + 1) - distances.get(i);
+            if (distanceSpan > 1.0e-9) {
+                minT = Math.max(minT, (progress - distances.get(i)) / distanceSpan);
+            }
             if (minT > maxT) {
                 continue;
             }
@@ -101,6 +105,11 @@ public final class WalkingAimSpline {
 
     public List<Vec3> points(double eyeHeight) {
         return samples.stream().map(point -> point.add(0.0, eyeHeight, 0.0)).toList();
+    }
+
+    private static double cornerRatio(Vec3 from, Vec3 to) {
+        double length = from.distanceTo(to);
+        return length > 1.0e-6 ? Math.min(0.5, CORNER_RADIUS / length) : 0.0;
     }
 
     public int index() {

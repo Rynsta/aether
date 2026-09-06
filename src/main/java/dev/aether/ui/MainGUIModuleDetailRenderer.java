@@ -12,6 +12,8 @@ import java.util.List;
 
 final class MainGUIModuleDetailRenderer {
     private final MainGUI owner;
+    private final SelectionAnimation categorySelection = new SelectionAnimation();
+    private ModulesTab.SubTab categorySubTab;
 
     MainGUIModuleDetailRenderer(MainGUI owner) {
         this.owner = owner;
@@ -73,9 +75,13 @@ final class MainGUIModuleDetailRenderer {
 
         int totalItems = skipAll ? groups.size() : groups.size() + 1;
         int selectedRow = skipAll ? Math.max(0, owner.getActiveCategoryIndex() - 1) : owner.getActiveCategoryIndex();
-        owner.syncModuleCategoryBarAnimation(itemsStart + selectedRow * itemHeight);
-        context = owner.context();
-        nvg.roundedRect(categoryX + 8f, context.animation.catBarAnimY + 3f, categoryW - 16f, 30f, 6f,
+        long nowNanos = System.nanoTime();
+        if (categorySubTab != activeSubTab) {
+            categorySelection.reset(selectedRow * itemHeight, nowNanos);
+            categorySubTab = activeSubTab;
+        }
+        float highlightY = categorySelection.update(selectedRow * itemHeight, Theme.ANIM_TIME_MS, nowNanos);
+        nvg.roundedRect(categoryX + 8f, itemsStart + highlightY + 3f, categoryW - 16f, 30f, 6f,
                 Theme.withAlpha(Theme.ACCENT_PRIMARY, subtabEnabled ? 0.12f : 0.06f));
 
         for (int i = 0; i < totalItems; i++) {

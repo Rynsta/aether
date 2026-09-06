@@ -74,6 +74,30 @@ class WalkingAimSplineTest {
     }
 
     @Test
+    void leavesPassedSplinePointsBehindOnANearbyReturningLeg() {
+        WalkingAimSpline spline = new WalkingAimSpline(List.of(Vec3.ZERO,
+                new Vec3(0, 0, 10), new Vec3(0.2, 0, 0)));
+        spline.aimPoint(new Vec3(0, 0, 8), 0, 1, 1.62);
+
+        Vec3 aim = spline.aimPoint(new Vec3(0.05, 0, 6), 1, 1, 1.62);
+
+        assertTrue(aim.z < 6, "Aim remained on the already passed incoming leg");
+        assertTrue(aim.x > 0.05);
+        Vec3 next = spline.aimPoint(new Vec3(0.05, 0, 5), 1, 1, 1.62);
+        assertTrue(next.z < aim.z);
+    }
+
+    @Test
+    void staysOnTheReturningLegWhenItOverlapsAnEarlierLeg() {
+        WalkingAimSpline spline = new WalkingAimSpline(List.of(Vec3.ZERO,
+                new Vec3(0, 0, 20), Vec3.ZERO));
+        spline.aimPoint(new Vec3(0, 0, 18), 0, 0.5, 1.62);
+
+        assertPoint(new Vec3(0, 1.62, 9.5),
+                spline.aimPoint(new Vec3(0, 0, 10), 1, 0.5, 1.62));
+    }
+
+    @Test
     void clampsAtTheEndpointAndHandlesDegeneratePaths() {
         Vec3 end = new Vec3(2, 3, 4);
         WalkingAimSpline single = new WalkingAimSpline(List.of(end));

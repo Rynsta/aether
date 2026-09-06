@@ -276,13 +276,6 @@ public class MainGUI extends NVGScreen {
     private final IdentityHashMap<Object, Float> catHoverAnim = new IdentityHashMap<>();
     private final IdentityHashMap<Object, Float> subTabBarAnim = new IdentityHashMap<>();
     boolean suppressNestedContentScissor = false;
-    /** Animated Y position for the selected category bar. */
-    private float catBarAnimY = 0f;
-    private float catBarFromY = 0f;
-    private float catBarTargetY = 0f;
-    private float catBarAnimT = 1f;
-    private boolean catBarInited = false;
-    private long catBarStartNanos = 0L;
 
     // -- Panel drag ------------------------------------------------------------
 
@@ -336,7 +329,7 @@ public class MainGUI extends NVGScreen {
     @Override
     protected void initNVG() {
         Minecraft client = Minecraft.getInstance();
-        if (MacroStateManager.isMacroRunning()) {
+        if (MacroStateManager.isAutomationRunning()) {
             MacroStateManager.stopMacro(client, "MainGUI opened", false);
         }
         MainGUIRegistry.refresh();
@@ -932,34 +925,6 @@ public class MainGUI extends NVGScreen {
         contentRenderer.renderModuleDetailBody(nvg, mx, my);
     }
 
-
-    private void syncCategoryBarAnimation(float targetY) {
-        if (!catBarInited) {
-            catBarAnimY = targetY;
-            catBarFromY = targetY;
-            catBarTargetY = targetY;
-            catBarAnimT = 1f;
-            catBarStartNanos = System.nanoTime();
-            catBarInited = true;
-            return;
-        }
-
-        if (Math.abs(catBarTargetY - targetY) > 0.5f) {
-            catBarFromY = catBarAnimY;
-            catBarTargetY = targetY;
-            catBarStartNanos = System.nanoTime();
-        }
-
-        float durationMs = Math.max(1f, Theme.ANIM_TIME_MS);
-        float elapsedMs = Math.max(0f, (System.nanoTime() - catBarStartNanos) / 1_000_000f);
-        float rawT = Math.max(0f, Math.min(1f, elapsedMs / durationMs));
-        catBarAnimT = rawT * rawT * (3f - 2f * rawT);
-        catBarAnimY = catBarFromY + (catBarTargetY - catBarFromY) * catBarAnimT;
-        if (rawT >= 1f) {
-            catBarFromY = catBarTargetY;
-            catBarAnimT = 1f;
-        }
-    }
 
     // -- Module card grid (View 1) ----------------------------------------------
 
@@ -1634,12 +1599,6 @@ public class MainGUI extends NVGScreen {
         context.animation.filterBarTargetW = filterBarTargetW;
         context.animation.filterBarInited = filterBarInited;
         context.animation.ddAnimAmt = ddAnimAmt;
-        context.animation.catBarAnimY = catBarAnimY;
-        context.animation.catBarFromY = catBarFromY;
-        context.animation.catBarTargetY = catBarTargetY;
-        context.animation.catBarAnimT = catBarAnimT;
-        context.animation.catBarInited = catBarInited;
-        context.animation.catBarStartNanos = catBarStartNanos;
 
         context.editor.activeSliderField = activeSliderField;
         context.editor.activeText = activeText;
@@ -2115,10 +2074,6 @@ public class MainGUI extends NVGScreen {
 
     int getActiveCategoryIndex() {
         return activeCategoryIdx;
-    }
-
-    void syncModuleCategoryBarAnimation(float targetY) {
-        syncCategoryBarAnimation(targetY);
     }
 
     Object moduleCategoryAnimationKey(SettingGroup group, boolean isAll) {
