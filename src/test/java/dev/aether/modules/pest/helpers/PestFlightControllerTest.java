@@ -9,11 +9,13 @@ class PestFlightControllerTest {
     @Test
     void brakingKeepsTheCapturedApproachUntilTheTargetIsReset() {
         PestFlightController controller = new PestFlightController();
-        double fastHandoff = controller.handoffDistance(new Vec3(0, 0, 1.5));
+        double fastHandoff = controller.handoffDistance(new Vec3(0, 0, 1.5), 12);
         assertTrue(fastHandoff > 20);
-        assertEquals(fastHandoff, controller.handoffDistance(Vec3.ZERO));
+        assertEquals(fastHandoff, controller.handoffDistance(Vec3.ZERO, 12));
         controller.reset();
-        assertEquals(12, controller.handoffDistance(Vec3.ZERO));
+        assertEquals(12, controller.handoffDistance(Vec3.ZERO, 12));
+        assertEquals(15, controller.handoffDistance(Vec3.ZERO, 15));
+        assertEquals(12, controller.handoffDistance(Vec3.ZERO, 5));
     }
 
     @Test

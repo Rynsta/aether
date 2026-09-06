@@ -137,11 +137,7 @@ public class MainStatusHudElement extends HudElement {
                 ? locStr
                 : locStr + " - " + stateStr;
         HudStyle.text(nvg, Fonts.REGULAR, subtitle, textX, stateY + STATE_SZ + 2f,
-                W - textX - PAD_H - 18f, LOC_SZ, Theme.HUD_LABEL);
-
-        // Status dot
-        int dotColor = HudStyle.stateColor(st);
-        nvg.circle(W - PAD_H - 4f, ry + ICON_BOX / 2f, 4f, dotColor);
+                W - textX - PAD_H, LOC_SZ, HudStyle.stateColor(st));
 
         ry += ICON_BOX + PAD_V;
 
@@ -233,8 +229,7 @@ public class MainStatusHudElement extends HudElement {
             nvg.roundedRect(bpsX, ry, bpsBoxW, gridH, BOX_R, Theme.HUD_BAR_BG);
             nvg.text(Fonts.REGULAR, "BPS", bpsX + BOX_PAD_H, ry + BOX_PAD_V, LABEL_SZ, Theme.HUD_LABEL);
             nvg.text(Fonts.BOLD, bpsStr,
-                    bpsX + BOX_PAD_H, ry + BOX_PAD_V + LABEL_SZ + 4f, SES_SZ, Theme.HUD_VALUE);
-            nvg.circle(bpsX + bpsBoxW - 9f, ry + 10f, 2f, bpsClr);
+                    bpsX + BOX_PAD_H, ry + BOX_PAD_V + LABEL_SZ + 4f, SES_SZ, bpsClr);
             nvg.restore();
         }
 

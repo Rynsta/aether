@@ -59,7 +59,7 @@ public class MainGUI extends NVGScreen {
     private static final float GROUP_GAP   = 12f;
     static final float HEADER_H    = 46f;
     static final float HEADER_TO_FIRST_SETTING_GAP = 5f;
-    /** Height of the toggle pill bounding box. Track is 38x21 px. */
+    /** Height reserved for boolean controls. */
     static final float PILL_H      = 21f;
     /** Height of a compact group-section label row used in the flat Colors/Settings renderer. */
     static final float FLAT_LABEL_H = 32f;
@@ -1045,11 +1045,9 @@ public class MainGUI extends NVGScreen {
                                    boolean interactive) {
         nvg.roundedRect(x, y, w, HEADER_H, 6f, Theme.BG_SECONDARY);
 
-        int stripe;
         float lerp = subTabBarAnimValue(group, (group.isEnabled() && !group.isAlwaysOn()) || (group.isAlwaysOn() && interactive));
-        stripe = Theme.blend(0xFFFFFFFF, Theme.ACCENT_PRIMARY, lerp);
-
-        nvg.rectOutlineVerticalSides(x, y, w, HEADER_H, 7f, 1f, Theme.withAlpha(stripe, 0.15f + 0.25f * lerp), lerp * 0.4f);
+        nvg.rectOutline(x, y, w, HEADER_H, 6f, 0.8f,
+                Theme.blend(Theme.SEPARATOR, Theme.withAlpha(Theme.ACCENT_PRIMARY, 0.22f), lerp));
 
         int titleColor = interactive ? Theme.TEXT_PRIMARY : Theme.withAlpha(Theme.TEXT_DIM, 210);
         int descColor = interactive ? Theme.TEXT_SECONDARY : Theme.withAlpha(Theme.TEXT_DIM, 170);
@@ -3142,4 +3140,3 @@ public class MainGUI extends NVGScreen {
         return cpHexH;
     }
 }
-

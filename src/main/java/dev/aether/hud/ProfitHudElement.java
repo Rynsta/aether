@@ -28,6 +28,7 @@ public class ProfitHudElement extends HudElement {
 
     /** Panel mode: {@code "session"}, {@code "lifetime"}, or {@code "daily"}. */
     private final String mode;
+    private final ProfitGraph graph = new ProfitGraph();
 
     public ProfitHudElement(String mode) { this.mode = mode; }
 
@@ -102,6 +103,7 @@ public class ProfitHudElement extends HudElement {
 
     float computeHeight() {
         float h = HudStyle.CONTENT_Y + 50f;
+        if (showGraph()) h += ProfitGraph.HEIGHT;
         int itemCount;
         if (AetherConfig.COMPACT_PROFIT_CALCULATOR.get()) {
             itemCount = (int) ProfitManager.getCompactDrops(mode).values()
@@ -126,6 +128,10 @@ public class ProfitHudElement extends HudElement {
         return isSession()
                 && AetherConfig.FARMING_XP_HUD.get()
                 && dev.aether.modules.profit.helpers.FarmingXpTracker.hasData();
+    }
+
+    private boolean showGraph() {
+        return isSession() && AetherConfig.SESSION_PROFIT_GRAPH.get();
     }
 
     // -- Rendering -------------------------------------------------------------
@@ -153,6 +159,13 @@ public class ProfitHudElement extends HudElement {
                     W - PAD_H - rateX - 8f, 12f, Theme.HUD_ACCENT);
         }
         ry += 50f;
+
+        if (showGraph()) {
+            long now = System.nanoTime();
+            graph.render(nvg, PAD_H, ry, contentWidth, ProfitManager.getSessionProfitHistory(now),
+                    AetherConfig.SESSION_PROFIT_GRAPH_MINUTES.get() * 60_000L, now);
+            ry += ProfitGraph.HEIGHT;
+        }
 
         // Profit rows
         float startRy = ry;

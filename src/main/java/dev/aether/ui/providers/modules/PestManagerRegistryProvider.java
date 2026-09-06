@@ -152,6 +152,12 @@ public final class PestManagerRegistryProvider extends AbstractModulesRegistryPr
                 .add(FarmingSettingsFactory.pestFovRangeSetting())
                 .add(FarmingSettingsFactory.pestAboveAimPitchRangeSetting())
                 .add(FarmingSettingsFactory.pestMaxTurnSpeedSetting())
+                .add(new ToggleSetting("Respect Vacuum True Range",
+                        AetherConfig.RESPECT_VACUUM_TRUE_RANGE::get,
+                        v -> {
+                            AetherConfig.RESPECT_VACUUM_TRUE_RANGE.set(v);
+                            AetherConfig.save();
+                        }))
                 .add(new SliderSetting("Vacuum Follow Distance", 2, 7,
                         AetherConfig.PEST_VACUUM_FOLLOW_DISTANCE::get,
                         v -> {

@@ -175,14 +175,13 @@ public class TaskGroupHudElement extends HudElement {
             float badgeX = W - HudStyle.PAD - badgeWidth;
             nvg.roundedRect(HudStyle.PAD, y - 2f, W - HudStyle.PAD * 2, rowHeight - 5f,
                     5f, HudStyle.alpha(Theme.HUD_BAR_BG, 0.45f));
-            nvg.circle(HudStyle.PAD + 7f, y + 6f, 2.5f, color);
-            HudStyle.text(nvg, Fonts.BOLD, row.name, HudStyle.PAD + 16f, y + 1f,
-                    badgeX - HudStyle.PAD - 22f, LABEL_SZ, Theme.HUD_VALUE);
+            HudStyle.text(nvg, Fonts.BOLD, row.name, HudStyle.PAD + 8f, y + 1f,
+                    badgeX - HudStyle.PAD - 14f, LABEL_SZ, Theme.HUD_VALUE);
             nvg.roundedRect(badgeX, y - 1f, badgeWidth, 15f, 4f, HudStyle.alpha(color, 0.14f));
             nvg.textCentered(Fonts.BOLD, row.badge, badgeX, y - 1f, badgeWidth, 15f, DETAIL_SZ, color);
             for (int i = 0; i < row.detailLines.length; i++) {
-                HudStyle.text(nvg, Fonts.REGULAR, row.detailLines[i], HudStyle.PAD + 16f,
-                        y + 16f + i * DETAIL_LINE_H, W - HudStyle.PAD * 2 - 22f, DETAIL_SZ, Theme.HUD_LABEL);
+                HudStyle.text(nvg, Fonts.REGULAR, row.detailLines[i], HudStyle.PAD + 8f,
+                        y + 16f + i * DETAIL_LINE_H, W - HudStyle.PAD * 2 - 14f, DETAIL_SZ, Theme.HUD_LABEL);
             }
             y += rowHeight;
         }

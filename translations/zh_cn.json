@@ -723,5 +723,11 @@
   "text.aether.sage": "Sage",
   "text.aether.dusk": "Dusk",
   "text.aether.ember": "Ember",
-  "text.aether.default_colours": "Default Colours"
+  "text.aether.default_colours": "Default Colours",
+  "text.aether.respect_vacuum_true_range": "Respect Vacuum True Range",
+  "text.aether.rolling_profit_graph": "Rolling Profit Graph",
+  "text.aether.graph_window": "Graph Window",
+  "text.aether.net_profit_coins": "Net profit (coins)",
+  "text.aether.active_time": "Active time",
+  "text.aether.axis_offset": "Axis offset"
 }

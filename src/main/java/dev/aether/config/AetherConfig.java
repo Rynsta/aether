@@ -471,6 +471,7 @@ public final class AetherConfig {
                         Config.floatVal("pestMaxTurnSpeed", 300.0f).range(60.0f, 1200.0f);
         public static final FloatEntry PEST_VACUUM_FOLLOW_DISTANCE =
                         Config.floatVal("pestVacuumFollowDistance", 5.0f).range(2.0f, 7.0f);
+        public static final BooleanEntry RESPECT_VACUUM_TRUE_RANGE = Config.bool("respectVacuumTrueRange", true);
         public static final FloatEntry PEST_APPROACH_SPEED =
                         Config.floatVal("pestApproachSpeed", 0.35f).range(0.15f, 0.8f);
         public static final FloatEntry PEST_TRACKING_SMOOTHING_MS =
@@ -773,6 +774,8 @@ public final class AetherConfig {
         public static final FloatEntry SESSION_PROFIT_HUD_SCALE = Config.floatVal("sessionProfitHudScale", 0.5f)
                         .range(0.5f, 3.0f);
         public static final BooleanEntry SHOW_SESSION_PROFIT_HUD = Config.bool("showSessionProfitHud", true);
+        public static final BooleanEntry SESSION_PROFIT_GRAPH = Config.bool("sessionProfitGraph", false);
+        public static final IntEntry SESSION_PROFIT_GRAPH_MINUTES = Config.integer("sessionProfitGraphMinutes", 5).range(1, 15);
 
         public static final IntEntry DAILY_HUD_X = Config.integer("dailyHudX", 10);
         public static final IntEntry DAILY_HUD_Y = Config.integer("dailyHudY", 290);

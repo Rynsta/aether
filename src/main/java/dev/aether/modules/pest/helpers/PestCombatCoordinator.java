@@ -124,7 +124,7 @@ final class PestCombatCoordinator {
         // few movement ticks, making every stuck recovery forget its goal.
 
         boolean lassoTarget = PestHuntingController.shouldLassoTarget(client, currentTarget);
-        boolean directApproach = !lassoTarget && context.runtime().flightController.canApproachDirectly(client, currentTarget);
+        boolean directApproach = !lassoTarget && context.runtime().flightController.canApproachDirectly(client, currentTarget, context.getVacuumRange());
         if (directApproach || lassoTarget && dist <= targetReachDistance) {
             PathfindingManager.stop();
             context.setState(PestDestroyer.State.APPROACH_PEST);
@@ -176,7 +176,7 @@ final class PestCombatCoordinator {
 
         boolean lassoTarget = PestHuntingController.shouldLassoTarget(client, currentTarget);
         double terminalRange = PestHuntingController.handoffRange(client, currentTarget, context.getVacuumRange());
-        boolean directApproach = !lassoTarget && context.runtime().flightController.canApproachDirectly(client, currentTarget);
+        boolean directApproach = !lassoTarget && context.runtime().flightController.canApproachDirectly(client, currentTarget, context.getVacuumRange());
         if (dist <= terminalRange && (lassoTarget || directApproach)) {
             context.beginTerminalState(client);
             if (!lassoTarget) {
@@ -226,7 +226,7 @@ final class PestCombatCoordinator {
         }
 
         double dist = client.player.distanceTo(currentTarget);
-        boolean directApproach = context.runtime().flightController.canApproachDirectly(client, currentTarget);
+        boolean directApproach = context.runtime().flightController.canApproachDirectly(client, currentTarget, context.getVacuumRange());
         if (PathfindingManager.isNavigating()) {
             PathfindingManager.stop();
         }

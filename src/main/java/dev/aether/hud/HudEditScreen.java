@@ -179,11 +179,9 @@ public class HudEditScreen extends Screen {
                 snapHov ? Theme.BG_HOVER : Theme.BG_FIELD);
         nvg.rectOutline(btnSnapX, btnBaseY, BTN_W, BTN_H, 5f, 1f,
                 snapOn ? Theme.ACCENT_PRIMARY : Theme.BORDER_DEFAULT);
-        // Small indicator dot
-        if (snapOn) nvg.circle(btnSnapX + 14f, btnBaseY + BTN_H / 2f, 4f, Theme.ACCENT_PRIMARY);
         nvg.textCentered(Fonts.REGULAR,
                 "Snap: " + (snapOn ? "ON" : "OFF"),
-                btnSnapX + 10f, btnBaseY, BTN_W - 10f, BTN_H, 11f,
+                btnSnapX, btnBaseY, BTN_W, BTN_H, 11f,
                 snapOn ? Theme.ACCENT_PRIMARY : Theme.TEXT_SECONDARY);
 
         // Done button

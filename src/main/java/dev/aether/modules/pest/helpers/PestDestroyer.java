@@ -190,6 +190,9 @@ public class PestDestroyer {
         if (!runtime.active || client.player == null || client.level == null)
             return;
 
+        int killSlot = runtime.killVacuumSlot >= 0 ? runtime.killVacuumSlot : runtime.vacuumSlot;
+        if (killSlot >= 0) runtime.vacuumRange = PestLoadoutHelper.detectVacuumRange(client, killSlot);
+
         if (FailsafeManager.shouldSuppressPestCleanerRotation(client)) {
             RotationManager.cancelRotation();
         }

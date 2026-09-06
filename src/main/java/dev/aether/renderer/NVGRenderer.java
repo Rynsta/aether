@@ -343,6 +343,17 @@ public class NVGRenderer {
         nvgStroke(vg);
     }
 
+    public void polyline(float[] points, int count, float thickness, int color) {
+        if (count < 2) return;
+        nvgBeginPath(vg);
+        nvgMoveTo(vg, points[0], points[1]);
+        for (int i = 1; i < count; i++) nvgLineTo(vg, points[i * 2], points[i * 2 + 1]);
+        nvgStrokeWidth(vg, thickness);
+        color(color, c1);
+        nvgStrokeColor(vg, c1);
+        nvgStroke(vg);
+    }
+
     // -- Gradients -------------------------------------------------------------
 
     /**

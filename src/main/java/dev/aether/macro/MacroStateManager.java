@@ -138,6 +138,7 @@ public class MacroStateManager {
         }
 
         currentState = state;
+        ProfitManager.updateSessionGraphClock();
 
         if (prevState == MacroState.State.FARMING && state != MacroState.State.FARMING) {
             runOnClientThread(client, () -> FarmingMacroManager.releaseInputs(client));

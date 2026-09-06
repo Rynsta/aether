@@ -41,17 +41,17 @@ final class PestFlightController {
         return targetVelocity;
     }
 
-    double handoffDistance(Vec3 velocity) {
+    double handoffDistance(Vec3 velocity, double vacuumRange) {
         // Retain the capture range as we slow down, or braking immediately hands control back to the route.
         approachRange = Math.max(approachRange, AetherConfig.PEST_VACUUM_FOLLOW_DISTANCE.get()
                 + velocity.horizontalDistance() * FlightMotion.coastTicks(
                         AetherConfig.FLY_BRAKING_LOOKAHEAD_TICKS.get()) + 2.0);
-        return approachRange;
+        return Math.max(vacuumRange, approachRange);
     }
 
-    boolean canApproachDirectly(Minecraft client, Entity target) {
+    boolean canApproachDirectly(Minecraft client, Entity target, double vacuumRange) {
         if (client.level == null || client.player == null
-                || client.player.distanceTo(target) > handoffDistance(client.player.getDeltaMovement())) {
+                || client.player.distanceTo(target) > handoffDistance(client.player.getDeltaMovement(), vacuumRange)) {
             return false;
         }
         Vec3 eye = target.position().add(0, target.getEyeHeight(target.getPose()), 0);
