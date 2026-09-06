@@ -10,15 +10,16 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ProfitGraphTest {
     @Test
-    void clipsTheWindowWithTheActualBalanceAtItsLeftBoundary() {
+    void convertsVisibleSessionBalancesToCoinsPerHour() {
         var snapshot = new SessionProfitHistory.Snapshot(120_000, List.of(
                 new SessionProfitHistory.Point(0, 0),
                 new SessionProfitHistory.Point(30_000, 1_000),
                 new SessionProfitHistory.Point(80_000, -200)), 1);
-        var points = ProfitGraph.visiblePoints(snapshot, 60_000);
-        assertEquals(List.of(new SessionProfitHistory.Point(60_000, 1_000),
-                new SessionProfitHistory.Point(80_000, -200),
-                new SessionProfitHistory.Point(120_000, -200)), points);
+        var points = ProfitGraph.visibleRates(snapshot, 60_000);
+        assertEquals(List.of(new ProfitGraph.RatePoint(60_000, 60_000),
+                new ProfitGraph.RatePoint(80_000, 45_000),
+                new ProfitGraph.RatePoint(80_000, -9_000),
+                new ProfitGraph.RatePoint(120_000, -6_000)), points);
     }
 
     @Test
@@ -26,9 +27,19 @@ class ProfitGraphTest {
         var history = new SessionProfitHistory();
         history.reset(0, true);
         history.record(1_000_000_000L, 50);
-        var points = ProfitGraph.visiblePoints(history.snapshot(2_000_000_000L), 300_000);
+        var points = ProfitGraph.visibleRates(history.snapshot(2_000_000_000L), 300_000);
         assertEquals(0, points.getFirst().timeMillis());
-        assertEquals(new SessionProfitHistory.Point(2_000, 50), points.getLast());
+        assertEquals(new ProfitGraph.RatePoint(2_000, 90_000), points.getLast());
+    }
+
+    @Test
+    void rateFallsAsActiveTimePassesWithoutNewProfit() {
+        var snapshot = new SessionProfitHistory.Snapshot(7_200_000,
+                List.of(new SessionProfitHistory.Point(3_600_000, 1_000)), 1);
+        var points = ProfitGraph.visibleRates(snapshot, 7_200_000);
+        assertEquals(new ProfitGraph.RatePoint(3_600_000, 0), points.get(1));
+        assertEquals(new ProfitGraph.RatePoint(3_600_000, 1_000), points.get(2));
+        assertEquals(new ProfitGraph.RatePoint(7_200_000, 500), points.getLast());
     }
 
     @Test
