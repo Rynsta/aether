@@ -91,6 +91,18 @@ public final class PestManagerRegistryProvider extends AbstractModulesRegistryPr
                         })
                         .withDecimals(0))
                 .add(FarmingSettingsFactory.pestDestroyerTriggerDelaySetting())
+                .add(new ToggleSetting("Use Pest Tracker Ability",
+                        AetherConfig.USE_PEST_TRACKER_ABILITY::get,
+                        v -> {
+                            AetherConfig.USE_PEST_TRACKER_ABILITY.set(v);
+                            AetherConfig.save();
+                        }))
+                .add(new ToggleSetting("Draw Arc",
+                        AetherConfig.PEST_TRACKER_DRAW_ARC::get,
+                        v -> {
+                            AetherConfig.PEST_TRACKER_DRAW_ARC.set(v);
+                            AetherConfig.save();
+                        }))
                 .add(new ToggleSetting("Estimate Pest Destroyer Completion",
                         AetherConfig.ESTIMATE_PEST_DESTROYER_COMPLETION::get,
                         v -> {

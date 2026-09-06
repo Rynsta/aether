@@ -31,13 +31,16 @@ final class ScoreboardGraphicsExtractor extends GuiGraphicsExtractor {
     @Override
     public void text(Font font, FormattedCharSequence text, int x, int y, int color, boolean shadow) {
         if ((color >>> 24) == 0) return;
+        boolean heading = !drawList.hasText() || ScoreboardText.isServerAddress(text);
         FormattedCharSequence display = ScoreboardText.customize(text, !drawList.hasText(),
                 AetherConfig.SCOREBOARD_TITLE_TEXT.get(), AetherConfig.SCOREBOARD_SERVER_TEXT.get());
         if (AetherConfig.NICK_HIDER_MASTER_ENABLED.get() && AetherConfig.HIDE_SERVER_ID.get()) {
             display = ServerIdHider.replace(display, AetherConfig.CUSTOM_SERVER_ID.get());
         }
-        drawList.text(ScoreboardText.prepare(font, display, color, shadow), x, y, font.width(text),
-                display == text ? 0 : Math.min(font.width(display), Math.max(0, width - 32)));
+        int displayWidth = heading ? (int) Math.ceil(font.width(display) * ScoreboardText.HEADING_SIZE / ScoreboardText.SIZE)
+                : display == text ? 0 : font.width(display);
+        drawList.text(ScoreboardText.prepare(font, display, color, shadow, heading), x, y, font.width(text),
+                Math.min(displayWidth, Math.max(0, width - 32)));
     }
 
     ScoreboardDrawList drawList() { return drawList; }

@@ -1,10 +1,28 @@
 package dev.aether.hud;
 
+import net.minecraft.network.chat.Component;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class ScoreboardDrawListTest {
+    @Test
+    void largerHeadingsReserveHeightWithoutSeparatingBodyNamesFromScores() {
+        var heading = ScoreboardText.prepare(null, Component.literal("Heading").getVisualOrderText(), -1, false, true);
+        var list = new ScoreboardDrawList();
+        list.fill(0, 0, 100, 37, 0);
+        list.text(heading, 40, 1, 20);
+        list.text(null, 2, 10, 40);
+        list.text(null, 94, 10, 6);
+        list.text(null, 2, 19, 40);
+        list.text(heading, 2, 28, 40);
+        assertEquals(1, list.lineY(1));
+        assertEquals(12, list.lineY(10));
+        assertEquals(22, list.lineY(19));
+        assertEquals(32, list.lineY(28));
+        assertEquals(62, list.panelHeight());
+    }
+
     @Test
     void addsOnePixelBetweenRowsWithoutSeparatingNamesFromScores() {
         var list = new ScoreboardDrawList();

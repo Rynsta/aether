@@ -13,33 +13,49 @@ import java.util.List;
 
 final class ScoreboardText {
     static final float SIZE = 9f;
+    static final float HEADING_SIZE = SIZE + 1f;
     private final List<Part> parts;
+    private final boolean heading;
 
-    private ScoreboardText(List<Part> parts) {
+    private ScoreboardText(List<Part> parts, boolean heading) {
         this.parts = List.copyOf(parts);
+        this.heading = heading;
     }
 
     static FormattedCharSequence customize(FormattedCharSequence original, boolean title, String titleText, String serverText) {
         List<Run> runs = split(original);
-        StringBuilder plain = new StringBuilder();
-        for (Run run : runs) plain.append(run.text());
-        String replacement = title ? titleText
-                : plain.toString().strip().matches("(?i)(?:www\\.)?hypixel\\.net") ? serverText : "";
+        String replacement = title ? titleText : isServerAddress(original) ? serverText : "";
         if (replacement == null || replacement.isBlank()) return original;
         Style style = runs.isEmpty() ? Style.EMPTY : runs.getFirst().style();
         return FormattedCharSequence.forward(replacement.replace('\n', ' ').replace('\r', ' '), style);
     }
 
     static ScoreboardText prepare(Font font, FormattedCharSequence text, int color, boolean shadow) {
+        return prepare(font, text, color, shadow, false);
+    }
+
+    static boolean isServerAddress(FormattedCharSequence text) {
+        StringBuilder plain = new StringBuilder();
+        text.accept((index, style, codePoint) -> {
+            plain.appendCodePoint(codePoint);
+            return true;
+        });
+        return plain.toString().strip().matches("(?i)(?:www\\.)?hypixel\\.net");
+    }
+
+    static ScoreboardText prepare(Font font, FormattedCharSequence text, int color, boolean shadow, boolean heading) {
         List<Part> parts = new ArrayList<>();
         for (Run run : split(text)) {
+            if (heading) run = new Run(run.text(), run.style().withBold(true), run.nativeGlyph());
             FormattedCharSequence sequence = FormattedCharSequence.forward(run.text(), run.style());
-            parts.add(new Part(run, color,
+            parts.add(new Part(run, color, heading ? HEADING_SIZE : SIZE,
                     run.nativeGlyph() ? font.prepareText(sequence, 0, 0, color, shadow, false, 0) : null,
                     run.nativeGlyph() ? font.width(sequence) : 0));
         }
-        return new ScoreboardText(parts);
+        return new ScoreboardText(parts, heading);
     }
+
+    boolean isHeading() { return heading; }
 
     static List<Run> split(FormattedCharSequence text) {
         List<Run> runs = new ArrayList<>();
@@ -109,13 +125,13 @@ final class ScoreboardText {
 
     record Run(String text, Style style, boolean nativeGlyph) { }
 
-    private record Part(Run run, int color, Font.PreparedText glyphs, float nativeWidth) {
+    private record Part(Run run, int color, float size, Font.PreparedText glyphs, float nativeWidth) {
         private String font(boolean title) {
             return run.style().isBold() ? Fonts.SCOREBOARD_BOLD : Fonts.REGULAR;
         }
 
         float width(NVGRenderer nvg, boolean title) {
-            return glyphs != null ? nativeWidth : nvg.textWidthLiteral(font(title), run.text(), SIZE);
+            return glyphs != null ? nativeWidth * size / SIZE : nvg.textWidthLiteral(font(title), run.text(), size);
         }
 
         void render(NVGRenderer nvg, float x, boolean title) {
@@ -123,18 +139,19 @@ final class ScoreboardText {
             try {
                 nvg.translate(x, 0);
                 if (glyphs != null) {
+                    nvg.scale(size / SIZE, size / SIZE);
                     nvg.minecraftText(glyphs);
                     return;
                 }
                 int tint = textColor(run.style(), color, title);
                 if (run.style().isItalic()) {
-                    nvg.translate(SIZE * 0.2f, 0);
+                    nvg.translate(size * 0.2f, 0);
                     nvg.skewX(-0.2f);
                 }
-                nvg.textLiteral(font(title), run.text(), 0, 0, SIZE, tint);
+                nvg.textLiteral(font(title), run.text(), 0, 0, size, tint);
                 float width = width(nvg, title);
-                if (run.style().isUnderlined()) nvg.rect(0, SIZE - 1, width, 0.6f, tint);
-                if (run.style().isStrikethrough()) nvg.rect(0, SIZE * 0.5f, width, 0.6f, tint);
+                if (run.style().isUnderlined()) nvg.rect(0, size - 1, width, 0.6f, tint);
+                if (run.style().isStrikethrough()) nvg.rect(0, size * 0.5f, width, 0.6f, tint);
             } finally {
                 nvg.restore();
             }

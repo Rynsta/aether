@@ -11,6 +11,7 @@ final class ScoreboardDrawList {
     private static final float EXTRA_LINE_SPACING = 1f;
     private final List<Line> lines = new ArrayList<>();
     private final List<Integer> rowYs = new ArrayList<>();
+    private final List<Integer> headingYs = new ArrayList<>();
     private int minimumWidth;
     private int left = Integer.MAX_VALUE;
     private int top = Integer.MAX_VALUE;
@@ -36,6 +37,7 @@ final class ScoreboardDrawList {
         Alignment alignment = lines.isEmpty() ? Alignment.CENTER : x == left + 2 ? Alignment.LEFT : Alignment.RIGHT;
         lines.add(new Line(text, x, y, vanillaWidth, alignment));
         if (!rowYs.contains(y)) rowYs.add(y);
+        if (text != null && text.isHeading() && !headingYs.contains(y)) headingYs.add(y);
         if (replacementWidth > 0) minimumWidth = Math.max(minimumWidth, replacementWidth + 4);
     }
 
@@ -47,10 +49,12 @@ final class ScoreboardDrawList {
     int height() { return isEmpty() ? 0 : bottom - top; }
     private int contentWidth() { return Math.max(width(), minimumWidth); }
     float panelWidth() { return isEmpty() ? 0 : contentWidth() + PADDING * 2; }
-    float panelHeight() { return isEmpty() ? 0 : height() + Math.max(0, rowYs.size() - 1) * EXTRA_LINE_SPACING + PADDING * 2; }
+    float panelHeight() { return isEmpty() ? 0 : height() + Math.max(0, rowYs.size() - 1) * EXTRA_LINE_SPACING
+            + headingYs.size() * (ScoreboardText.HEADING_SIZE - ScoreboardText.SIZE) + PADDING * 2; }
 
     float lineY(int vanillaY) {
-        return vanillaY + rowYs.stream().filter(y -> y < vanillaY).count() * EXTRA_LINE_SPACING;
+        return vanillaY + rowYs.stream().filter(y -> y < vanillaY).count() * EXTRA_LINE_SPACING
+                + headingYs.stream().filter(y -> y < vanillaY).count() * (ScoreboardText.HEADING_SIZE - ScoreboardText.SIZE);
     }
 
     void render(NVGRenderer nvg) {

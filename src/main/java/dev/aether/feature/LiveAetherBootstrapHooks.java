@@ -17,6 +17,7 @@ import dev.aether.modules.performance.MuteManager;
 import dev.aether.modules.performance.PerformanceModeManager;
 import dev.aether.modules.pest.helpers.PestDestroyer;
 import dev.aether.modules.pest.helpers.VacuumParticleDebug;
+import dev.aether.modules.pest.helpers.PestTrackerAbility;
 import dev.aether.modules.rotation.RotationManager;
 import dev.aether.modules.visuals.FreecamManager;
 import dev.aether.modules.visuals.FreelookManager;
@@ -60,6 +61,7 @@ public final class LiveAetherBootstrapHooks implements AetherBootstrapHooks.Feat
     @Override
     public void onAttack(Minecraft minecraft) {
         SqueakyMousematManager.onAttack(minecraft);
+        PestTrackerAbility.onAttack(minecraft);
     }
 
     @Override
@@ -397,7 +399,9 @@ public final class LiveAetherBootstrapHooks implements AetherBootstrapHooks.Feat
 
     @Override
     public void onParticlePacket(Minecraft minecraft, ClientboundLevelParticlesPacket packet) {
+        if (!minecraft.isSameThread()) return;
         VacuumParticleDebug.onParticlePacket(packet);
+        PestTrackerAbility.onParticlePacket(minecraft, packet);
     }
 
     @Override

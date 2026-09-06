@@ -82,6 +82,7 @@ public class PestDestroyer {
     public static void start(Minecraft client, String initialPlot) {
         if (runtime.active)
             return;
+        PestTrackerAbility.clear();
         int[] vacuumSlots = PestLoadoutHelper.findAutomaticVacuumSlots(client);
         runtime.beginRun(
                 vacuumSlots[1],
@@ -166,6 +167,8 @@ public class PestDestroyer {
         if (!runtime.active)
             return;
         PestHuntingController.clearHunt(client, runtime);
+        runtime.navigation.trackerSearch.stopLooking();
+        PestTrackerAbility.clear();
         runtime.stopRun();
         PathfindingManager.stop();
         PestAotvManager.resetState();
@@ -178,6 +181,8 @@ public class PestDestroyer {
     }
 
     public static void reset() {
+        runtime.navigation.trackerSearch.stopLooking();
+        PestTrackerAbility.clear();
         PestLeaveOneController.clearRememberedPlots(runtime);
         runtime.resetAll();
     }
@@ -198,6 +203,7 @@ public class PestDestroyer {
         }
 
         if (ClientUtils.isInventoryScreenOpen()) {
+            runtime.navigation.trackerSearch.stopLooking();
             ClientUtils.forceReleaseMovementKeys();
             return;
         }
@@ -505,6 +511,8 @@ public class PestDestroyer {
     // Predictive finish logic removed in favor of chat detection
 
     public static void finish(Minecraft client) {
+        runtime.navigation.trackerSearch.stopLooking();
+        PestTrackerAbility.clear();
         ClientUtils.setKeyMappingState(client.options.keyUse, false);
         ClientUtils.setKeyMappingState(client.options.keyDown, false);
         ClientUtils.setKeyMappingState(client.options.keyAttack, false);
@@ -599,6 +607,8 @@ public class PestDestroyer {
     }
 
     public static void setState(State newState) {
+        if (newState != State.GET_LOCATION) runtime.navigation.trackerSearch.stopLooking();
+        if (newState != State.GET_LOCATION && newState != State.FLY_TO_WAYPOINT) PestTrackerAbility.clear();
         runtime.transitionTo(newState, System.currentTimeMillis());
     }
 

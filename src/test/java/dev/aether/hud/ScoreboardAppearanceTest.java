@@ -153,7 +153,8 @@ class ScoreboardAppearanceTest {
     }
 
     private static void add(ScoreboardDrawList list, Font font, Component text, int x, int y) {
-        list.text(ScoreboardText.prepare(font, text.getVisualOrderText(), -1, false), x, y, font.width(text));
+        boolean heading = !list.hasText() || ScoreboardText.isServerAddress(text.getVisualOrderText());
+        list.text(ScoreboardText.prepare(font, text.getVisualOrderText(), -1, false, heading), x, y, font.width(text));
     }
 
     private static Font measurementFont() {

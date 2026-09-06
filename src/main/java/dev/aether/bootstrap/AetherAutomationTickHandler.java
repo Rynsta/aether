@@ -27,6 +27,7 @@ import dev.aether.modules.pest.helpers.AutoSprayonatorManager;
 import dev.aether.modules.pest.helpers.PestAotvManager;
 import dev.aether.modules.pest.helpers.PestBonusManager;
 import dev.aether.modules.pest.helpers.PestDestroyer;
+import dev.aether.modules.pest.helpers.PestTrackerAbility;
 import dev.aether.modules.pest.helpers.PestOnTheTrackManager;
 import dev.aether.modules.pest.helpers.PestReturnManager;
 import dev.aether.modules.pest.helpers.VacuumParticleDebug;
@@ -57,7 +58,8 @@ public final class AetherAutomationTickHandler {
 
     public static void register() {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-                        if (client.player == null) {
+            PestTrackerAbility.tick(client);
+            if (client.player == null) {
                 return;
             }
 

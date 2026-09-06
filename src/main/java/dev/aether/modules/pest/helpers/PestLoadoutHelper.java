@@ -50,8 +50,8 @@ final class PestLoadoutHelper {
         return new int[] {lowestSlot, highestSlot < 0 ? lowestSlot : highestSlot};
     }
 
-    private static boolean isVacuum(ItemStack stack) {
-        return stack.getHoverName().getString().toLowerCase(Locale.ROOT).contains("vacuum");
+    static boolean isVacuum(ItemStack stack) {
+        return !stack.isEmpty() && stack.getHoverName().getString().toLowerCase(Locale.ROOT).contains("vacuum");
     }
 
     private static int vacuumQuality(ItemStack stack) {

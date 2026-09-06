@@ -136,6 +136,7 @@ final class PestDestroyerRuntime {
     }
 
     void transitionTo(PestDestroyer.State newState, long now) {
+        if (newState == PestDestroyer.State.GET_LOCATION) navigation.trackerSearch.beginSearch();
         state = newState;
         stateEnteredAt = now;
         stuckTicks = 0;
