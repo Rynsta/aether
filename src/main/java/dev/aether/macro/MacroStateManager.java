@@ -125,6 +125,13 @@ public class MacroStateManager {
         MacroState.State prevState = currentState;
         Minecraft client = Minecraft.getInstance();
 
+        // Late worker callbacks must not leave recovery before arrival is confirmed.
+        if (prevState == MacroState.State.RECOVERING
+                && state != MacroState.State.OFF && state != MacroState.State.RECOVERING
+                && !RecoveryManager.isResumeReady()) {
+            return;
+        }
+
         if (state == MacroState.State.FARMING && prevState != MacroState.State.FARMING) {
             MacroWorkerThread.getInstance().clearPendingTasks();
             PathfindingManager.stop();

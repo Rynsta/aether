@@ -71,8 +71,6 @@ public final class AetherChatEvents {
 
             LoadoutManager.onChatMessage(plainText);
 
-            RecoveryManager.handleRecoveryCommandSuccess(lowerPlainText);
-            RecoveryManager.handleRecoveryCommandFailure(lowerPlainText);
             CommandUtils.onChatMessage(plainText);
 
             try {
@@ -195,9 +193,7 @@ public final class AetherChatEvents {
         if (MacroStateManager.getCurrentState() != MacroState.State.OFF
                 && MacroStateManager.getCurrentState() != MacroState.State.RECOVERING) {
             ClientUtils.sendMessage("Disconnect detected! Starting recovery sequence...");
-            MacroStateManager.stopMacro(Minecraft.getInstance());
             RecoveryManager.beginLimboRecovery();
-            MacroStateManager.setCurrentState(MacroState.State.RECOVERING);
         }
         return true;
     }
