@@ -388,16 +388,20 @@ public class Theme {
 
     /** Restores every user-editable theme value to the built-in defaults. */
     public static void resetToDefaults() {
+        resetColorsToDefaults();
+        ANIM_TIME_MS = 250f;
+        SETTING_SPACING = 4;
+        UI_SCALE = 1.5f;
+        TEXT_SCALE = 1.0f;
+    }
+
+    public static void resetColorsToDefaults() {
         for (int i = 0; i < ENTRIES.size(); i++) {
             ENTRIES.get(i).setter.accept(DEFAULT_MENU_COLORS[i]);
         }
         for (int i = 0; i < HUD_ENTRIES.size(); i++) {
             HUD_ENTRIES.get(i).setter.accept(DEFAULT_HUD_COLORS[i]);
         }
-        ANIM_TIME_MS = 250f;
-        SETTING_SPACING = 4;
-        UI_SCALE = 1.5f;
-        TEXT_SCALE = 1.0f;
         rainbowEntries.clear();
     }
 

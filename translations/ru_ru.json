@@ -716,5 +716,12 @@
   "text.aether.wireframe": "Wireframe",
   "text.aether.recovery_waiting_for_skyblock_and_the_garden_before_resuming": "Recovery: waiting for SkyBlock and the Garden before resuming...",
   "text.aether.limbo_recovery_waiting_for_skyblock_and_the_garden_before_resuming": "Limbo recovery: waiting for SkyBlock and the Garden before resuming...",
-  "text.aether.recovery_running_s_waiting_for_the_destination_to_load": "Recovery: running %s, waiting for the destination to load..."
+  "text.aether.recovery_running_s_waiting_for_the_destination_to_load": "Recovery: running %s, waiting for the destination to load...",
+  "text.aether.colour_presets": "Colour Presets",
+  "text.aether.apply_coordinated_menu_and_hud_colours": "Apply coordinated menu and HUD colours",
+  "text.aether.slate": "Slate",
+  "text.aether.sage": "Sage",
+  "text.aether.dusk": "Dusk",
+  "text.aether.ember": "Ember",
+  "text.aether.default_colours": "Default Colours"
 }
