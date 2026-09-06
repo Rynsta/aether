@@ -18,7 +18,7 @@ class CosmeticMeshTest {
         var up = new Vector3f(0, 1, 0);
         for (int frame = 0; frame < 100; frame++) {
             mesh.clear();
-            wing.append(mesh, body, frame * 0.063f, 0.42f, frame / 100f, 0xFFB080F5, true);
+            wing.append(mesh, body, frame * 0.063f, 0.42f, frame / 100f, 0xFFB080F5, true, frame % 2 == 1);
             int vertices = mesh.size();
             assertTrue(vertices > 0 && vertices < 3100);
             for (int i = 0; i < DefeatEffectPool.MAX_ACTIVE; i++) {

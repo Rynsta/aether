@@ -29,6 +29,11 @@ public final class DragonWingMesh {
 
     public void append(CosmeticMesh mesh, Matrix4f body, float phase, float amplitude,
                        float fold, int tint, boolean glow) {
+        append(mesh, body, phase, amplitude, fold, tint, glow, false);
+    }
+
+    public void append(CosmeticMesh mesh, Matrix4f body, float phase, float amplitude,
+                       float fold, int tint, boolean glow, boolean wireframe) {
         if (!mesh.hasRoom(3100)) return;
         pose(phase, fold);
         for (int side = -1; side <= 1; side += 2) {
@@ -36,25 +41,34 @@ public final class DragonWingMesh {
                     .scale(side, 1, 1).rotateZ(0.12f + (float) Math.sin(phase) * amplitude)
                     .rotateY(fold * 0.35f);
             // Skin lies behind the raised bones, giving the wing a readable silhouette on both sides.
-            skinVertex(mesh, joints[0], 0, 0, tint, phase, glow);
-            skinVertex(mesh, joints[2], 1, 0, tint, phase, glow);
-            skinVertex(mesh, joints[7], 0, 1, tint, phase, glow);
+            if (!wireframe) {
+                skinVertex(mesh, joints[0], 0, 0, tint, phase, glow);
+                skinVertex(mesh, joints[2], 1, 0, tint, phase, glow);
+                skinVertex(mesh, joints[7], 0, 1, tint, phase, glow);
+            }
             for (int panel = 3; panel < 7; panel++) {
                 scallop(panel, 0, edgeA, phase);
                 for (int step = 1; step <= EDGE_STEPS; step++) {
                     float t = step / (float) EDGE_STEPS;
                     scallop(panel, t, edgeB, phase);
-                    skinVertex(mesh, joints[2], 0.5f, 0, tint, phase, glow);
-                    skinVertex(mesh, edgeA, (step - 1f) / EDGE_STEPS, 1, tint, phase, glow);
-                    skinVertex(mesh, edgeB, t, 1, tint, phase, glow);
-                    bone(mesh, edgeA, edgeB, 0.009f, 0.009f, tint, true);
+                    if (!wireframe) {
+                        skinVertex(mesh, joints[2], 0.5f, 0, tint, phase, glow);
+                        skinVertex(mesh, edgeA, (step - 1f) / EDGE_STEPS, 1, tint, phase, glow);
+                        skinVertex(mesh, edgeB, t, 1, tint, phase, glow);
+                    }
+                    bone(mesh, edgeA, edgeB, 0.009f, 0.009f, tint, wireframe ? 1f : 0.5f);
                     edgeA.set(edgeB);
                 }
             }
-            bone(mesh, joints[0], joints[1], 0.075f, 0.055f, tint, false);
-            bone(mesh, joints[1], joints[2], 0.055f, 0.041f, tint, false);
+            int boneColor = wireframe ? tint : 0xFF756777;
+            bone(mesh, joints[0], joints[1], wireframe ? 0.018f : 0.075f, wireframe ? 0.014f : 0.055f, boneColor, 1f);
+            bone(mesh, joints[1], joints[2], wireframe ? 0.014f : 0.055f, wireframe ? 0.012f : 0.041f, boneColor, 1f);
             for (int finger = 3; finger <= 7; finger++) {
-                bone(mesh, joints[2], joints[finger], finger == 3 ? 0.036f : 0.026f, 0.006f, tint, false);
+                bone(mesh, joints[2], joints[finger], wireframe ? 0.012f : finger == 3 ? 0.036f : 0.026f,
+                        0.006f, boneColor, 1f);
+            }
+            if (wireframe) {
+                bone(mesh, joints[7], joints[0], 0.009f, 0.009f, tint, 1f);
             }
         }
     }
@@ -83,13 +97,13 @@ public final class DragonWingMesh {
         mesh.vertex(wing, point.x, point.y, point.z - 0.012f, u, v, tint | 0xFF000000, 1, 0, phase, glow ? 1 : 0);
     }
 
-    private void bone(CosmeticMesh mesh, Vector3f a, Vector3f b, float start, float end, int tint, boolean rim) {
+    private void bone(CosmeticMesh mesh, Vector3f a, Vector3f b, float start, float end, int tint, float brightness) {
         along.set(b).sub(a).normalize();
         normal.set(0, 0, 1).cross(along).normalize();
         tangent.set(along).cross(normal);
         for (int side = 0; side < BONE_SIDES; side++) {
             float light = 0.52f + 0.48f * Math.max(0, COS[side] * 0.765f + SIN[side] * 0.644f);
-            int color = rim ? shade(tint, light * 0.5f) : shade(0xFF756777, light);
+            int color = shade(tint, light * brightness);
             boneVertex(mesh, a, start, side, color);
             boneVertex(mesh, b, end, side, color);
             boneVertex(mesh, b, end, side + 1, color);

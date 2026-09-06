@@ -122,14 +122,15 @@ class CosmeticShaderTest {
         var wings = new DragonWingMesh();
         var body = new Matrix4f();
         var view = perspective().lookAt(3.4f, 2.7f, -6.5f, 0, 1.1f, 0, 0, 1, 0);
-        for (int frame = 0; frame < 4; frame++) {
+        for (int frame = 0; frame < 8; frame++) {
             clear();
             mesh.clear();
-            wings.append(mesh, body, frame * (float) Math.PI / 2, 0.36f, 0.25f, 0xFFB080F5, true);
+            boolean wireframe = frame >= 4;
+            wings.append(mesh, body, (frame % 4) * (float) Math.PI / 2, 0.36f, 0.25f, 0xFFB080F5, true, wireframe);
             avatar();
             shader.draw(mesh, view, 0, WIDTH, HEIGHT, mesh.size());
             assertFalse(shader.isFailed());
-            assertTrue(coloredPixels(capture("dragon-wings-" + frame)) > 4000);
+            assertTrue(coloredPixels(capture((wireframe ? "dragon-wings-wireframe-" : "dragon-wings-") + frame % 4)) > 4000);
         }
         long[] cpu = new long[80], submit = new long[80], gpu = new long[80];
         var right = new Vector3f(1, 0, 0);

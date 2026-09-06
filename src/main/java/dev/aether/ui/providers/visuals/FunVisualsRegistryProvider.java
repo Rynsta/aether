@@ -37,6 +37,8 @@ public final class FunVisualsRegistryProvider extends AbstractVisualsRegistryPro
         groups.add(SettingGroup.of("Dragon Wings", "Animated dragon wings on your back in third person",
                         AetherConfig.DRAGON_WINGS_ENABLED::get,
                         value -> { AetherConfig.DRAGON_WINGS_ENABLED.set(value); AetherConfig.save(); })
+                .add(new ToggleSetting("Wireframe", AetherConfig.DRAGON_WINGS_WIREFRAME::get,
+                        value -> { AetherConfig.DRAGON_WINGS_WIREFRAME.set(value); AetherConfig.save(); }))
                 .add(new SliderSetting("Wingspan", 0.5f, 1.4f, AetherConfig.DRAGON_WINGS_SCALE::get,
                         value -> { AetherConfig.DRAGON_WINGS_SCALE.set(value); AetherConfig.save(); }).withDecimals(2))
                 .add(new SliderSetting("Wing Animation Speed", 0.4f, 2f, AetherConfig.DRAGON_WINGS_SPEED::get,
@@ -44,7 +46,8 @@ public final class FunVisualsRegistryProvider extends AbstractVisualsRegistryPro
                 .add(new ColorSetting("Wing Accent", AetherConfig.DRAGON_WINGS_COLOR::get,
                         value -> { AetherConfig.DRAGON_WINGS_COLOR.set(value); AetherConfig.save(); }))
                 .add(new ToggleSetting("Membrane Glow", AetherConfig.DRAGON_WINGS_GLOW::get,
-                        value -> { AetherConfig.DRAGON_WINGS_GLOW.set(value); AetherConfig.save(); })));
+                        value -> { AetherConfig.DRAGON_WINGS_GLOW.set(value); AetherConfig.save(); })
+                        .visibleWhen(() -> !AetherConfig.DRAGON_WINGS_WIREFRAME.get())));
         groups.add(SettingGroup.of(
                         "Hat",
                         "Renders a chroma pyramid above your head",

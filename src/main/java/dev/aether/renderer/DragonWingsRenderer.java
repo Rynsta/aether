@@ -48,6 +48,6 @@ public final class DragonWingsRenderer {
         float scale = AetherConfig.DRAGON_WINGS_SCALE.get();
         body.translate(0, 1.38f, -0.18f).scale(scale).translate(0, -1.38f, 0.18f);
         model.append(mesh, body, phase, amplitude, fold, AetherConfig.DRAGON_WINGS_COLOR.get(),
-                AetherConfig.DRAGON_WINGS_GLOW.get());
+                AetherConfig.DRAGON_WINGS_GLOW.get(), AetherConfig.DRAGON_WINGS_WIREFRAME.get());
     }
 }
