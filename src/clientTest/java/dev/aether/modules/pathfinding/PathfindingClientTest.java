@@ -56,7 +56,7 @@ public final class PathfindingClientTest implements FabricClientGameTest {
                     runRoute(context, course, speed, route);
                 }
             }
-            System.out.println(LOG_PREFIX + "PASS all six generated movement courses");
+            System.out.println(LOG_PREFIX + "PASS all seven generated movement courses");
         }
     }
 
@@ -70,6 +70,24 @@ public final class PathfindingClientTest implements FabricClientGameTest {
                         level.setBlockAndUpdate(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState());
                     }
                     switch (course) {
+                        case CARPET_LEDGE -> {
+                            if (z <= 0) {
+                                level.setBlockAndUpdate(new BlockPos(x, 100, z), Blocks.LIGHT_BLUE_CARPET.defaultBlockState());
+                            } else if (z == 1) {
+                                level.setBlockAndUpdate(new BlockPos(x, 100, z), Blocks.OAK_PLANKS.defaultBlockState());
+                                if (Math.abs(x) == 2) {
+                                    level.setBlockAndUpdate(new BlockPos(x, 101, z), Blocks.FLOWER_POT.defaultBlockState());
+                                }
+                            }
+                            if (z <= 1) {
+                                level.setBlockAndUpdate(new BlockPos(x, 103, z), Blocks.OAK_PLANKS.defaultBlockState());
+                                if (Math.abs(x) == 3) {
+                                    for (int y = 100; y <= 102; y++) {
+                                        level.setBlockAndUpdate(new BlockPos(x, y, z), Blocks.OAK_LOG.defaultBlockState());
+                                    }
+                                }
+                            }
+                        }
                         case SLABS -> {
                             if (z >= 1 && z <= 10) {
                                 level.setBlockAndUpdate(new BlockPos(x, 100 + (z - 1) / 2, z),
@@ -110,8 +128,11 @@ public final class PathfindingClientTest implements FabricClientGameTest {
     private static void preparePlayer(ClientGameTestContext context, TestSingleplayerContext world,
                                       Course course, double speed) {
         world.getServer().runCommand("attribute @p minecraft:movement_speed base set " + speed);
-        world.getServer().runCommand(course == Course.DROP
-                ? "tp @p 0.95 140 -1.5 0 0" : "tp @p 0.8 100 0.5 0 0");
+        world.getServer().runCommand(switch (course) {
+            case DROP -> "tp @p 0.95 140 -1.5 0 0";
+            case CARPET_LEDGE -> "tp @p 0.8 100.0625 0.5 0 0";
+            default -> "tp @p 0.8 100 0.5 0 0";
+        });
         context.waitFor(client -> client.player != null
                 && Math.abs(client.player.getY() - course.start().y) < 0.1);
         context.waitTicks(20);
@@ -151,7 +172,8 @@ public final class PathfindingClientTest implements FabricClientGameTest {
     }
 
     private static void verifyCourseRoute(Course course, List<Node> route) {
-        if (course == Course.JUMP && route.stream().noneMatch(node -> node.position.flooredZ() == 1
+        if ((course == Course.JUMP || course == Course.CARPET_LEDGE)
+                && route.stream().noneMatch(node -> node.position.flooredZ() == 1
                 && node.position.flooredY() == 101 && Math.abs(node.position.flooredX()) <= 3)) {
             throw new AssertionError("Jump route bypassed the full-block ledge: " + route);
         }
@@ -204,7 +226,9 @@ public final class PathfindingClientTest implements FabricClientGameTest {
                     System.out.println(LOG_PREFIX + course + " speed=" + speed + " tick=" + tick + " " + sample);
                 }
                 if (sample.state() == PathExecutor.State.FINISHED) {
-                    if (course == Course.JUMP && !requestedJump) throw new AssertionError("Ledge was never jumped");
+                    if ((course == Course.JUMP || course == Course.CARPET_LEDGE) && !requestedJump) {
+                        throw new AssertionError("Ledge was never jumped");
+                    }
                     if (course == Course.DROP && fallingSamples == 0) throw new AssertionError("Fall was never observed");
                     System.out.println(LOG_PREFIX + "PASS " + course + " speed=" + speed + " ticks=" + tick);
                     return;
@@ -221,7 +245,7 @@ public final class PathfindingClientTest implements FabricClientGameTest {
     }
 
     private enum Course {
-        SLABS(105, 14), STAIRS(106, 14), JUMP(102, 10), DROP(100, 8);
+        CARPET_LEDGE(100, 8), SLABS(105, 14), STAIRS(106, 14), JUMP(102, 10), DROP(100, 8);
 
         private final int goalY;
         private final int goalZ;

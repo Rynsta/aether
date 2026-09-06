@@ -178,6 +178,37 @@ class WalkingObstacleProbeTest {
     }
 
     @Test
+    void jumpsFromCarpetOntoACounterBetweenPostsAndFlowerpots() {
+        var world = world(
+                new AABB(-2, 0, -1, 2, 0.0625, 0.6),
+                new AABB(-1.5, 0, 0.6, 1.5, 1, 1.6),
+                new AABB(-2.5, 0, 0.6, -1.5, 4, 1.6),
+                new AABB(1.5, 0, 0.6, 2.5, 4, 1.6),
+                new AABB(-1.1875, 1, 0.9125, -0.8125, 1.375, 1.2875),
+                new AABB(0.8125, 1, 0.9125, 1.1875, 1.375, 1.2875),
+                new AABB(-2.5, 3, -1, 2.5, 4, 1.6));
+        var result = WalkingObstacleProbe.probe(world, PLAYER.move(0, 0.0625, 0), FORWARD,
+                Vec3.ZERO, 0.6, 1.125, 0.35, 2);
+        assertTrue(result.obstacleAhead());
+        assertTrue(result.jumpRequired());
+        assertTrue(result.headroomClear());
+        assertEquals(0.9375, result.obstacleHeight());
+    }
+
+    @Test
+    void rejectsACarpetToCounterJumpBlockedByALowBeam() {
+        var world = world(
+                new AABB(-2, 0, -1, 2, 0.0625, 0.6),
+                new AABB(-1.5, 0, 0.6, 1.5, 1, 1.6),
+                new AABB(-2.5, 2.5, -1, 2.5, 3.5, 1.6));
+        var result = WalkingObstacleProbe.probe(world, PLAYER.move(0, 0.0625, 0), FORWARD,
+                Vec3.ZERO, 0.6, 1.125, 0.35, 2);
+        assertTrue(result.obstacleAhead());
+        assertFalse(result.jumpRequired());
+        assertFalse(result.headroomClear());
+    }
+
+    @Test
     void calculatesVanillaAndBoostedJumpApex() {
         assertEquals(1.2522, WalkingObstacleProbe.jumpHeight(0.42, 0.08), 0.0001);
         assertTrue(WalkingObstacleProbe.jumpHeight(0.62, 0.08) > 2.0);

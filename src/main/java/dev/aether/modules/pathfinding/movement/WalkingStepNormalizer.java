@@ -17,7 +17,7 @@ final class WalkingStepNormalizer {
                     && !verticalTravel(node, checker);
         }, node -> {
             var pos = node.position;
-            return checker.getTopY(pos.flooredX(), pos.flooredY() - 1, pos.flooredZ()) == 0.0
+            return checker.isPassable(pos.flooredX(), pos.flooredY() - 1, pos.flooredZ())
                     && !verticalTravel(node, checker);
         });
     }
