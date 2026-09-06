@@ -122,6 +122,7 @@ public final class AetherChatEvents {
 
     private static void handlePestCaught(String lowerPlainText) {
         if (isPestCatchMessage(lowerPlainText)) {
+            dev.aether.modules.visuals.PestDefeatEffects.onCatchChat();
             PestDestroyer.onPestCaught();
         }
         // Hypixel puts the escape on the overlay, but route the chat copy too:

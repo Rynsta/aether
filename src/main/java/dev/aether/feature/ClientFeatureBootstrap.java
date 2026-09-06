@@ -21,6 +21,7 @@ import dev.aether.modules.visuals.StreamerModeManager;
 import dev.aether.modules.visuals.PestEspManager;
 import dev.aether.notification.NotificationManager;
 import dev.aether.renderer.FunRenderer;
+import dev.aether.renderer.CosmeticWorldRenderer;
 import dev.aether.renderer.PositionHighlighter;
 import dev.aether.telemetry.AetherAuthService;
 import dev.aether.telemetry.AetherTelemetryService;
@@ -90,6 +91,7 @@ public final class ClientFeatureBootstrap {
         });
 
         ClientLifecycleEvents.CLIENT_STOPPING.register(PerformanceModeManager::stop);
+        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> CosmeticWorldRenderer.close());
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> AetherConfig.flush());
 
         AetherScreenHooks.register();
@@ -114,6 +116,7 @@ public final class ClientFeatureBootstrap {
         NotificationManager.clearAll();
         HudRegistry.reset();
         PathVisualizer.clear();
+        CosmeticWorldRenderer.close();
         ReconnectScheduler.clearState();
         MacroWorkerThread.getInstance().cancelCurrent();
         MacroWorkerThread.getInstance().clearPendingTasks();

@@ -294,6 +294,7 @@ final class PestTargetController {
         if (!runtime.claimKilledPestEntityId(entity.getId())) {
             return false;
         }
+        dev.aether.modules.visuals.PestDefeatEffects.onDefeat(entity);
         PestManager.decrementPredictedAliveCount(client);
         return PestLeaveOneController.recordTrackedKill(client, runtime, context)
                 || !runtime.active;

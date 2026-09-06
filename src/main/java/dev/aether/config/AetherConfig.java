@@ -1049,6 +1049,15 @@ public final class AetherConfig {
         public static final IntEntry HAT_VERTICES = Config.integer("hatVertices", 20).range(3, 30);
         public static final FloatEntry HAT_Y_OFFSET = Config.floatVal("hatYOffset", 0.2f).range(0.0f, 3.0f);
         public static final BooleanEntry FUNNY_DYNAMIC_REST = Config.bool("funnyDynamicRest", true);
+        public static final BooleanEntry PEST_DEFEAT_EFFECTS = Config.bool("pestDefeatEffects", false);
+        public static final IntEntry PEST_DEFEAT_STYLE = Config.integer("pestDefeatStyle", 0).range(0, 2);
+        public static final FloatEntry PEST_DEFEAT_SCALE = Config.floatVal("pestDefeatScale", 1f).range(0.5f, 2f);
+        public static final IntEntry PEST_DEFEAT_PARTICLES = Config.integer("pestDefeatParticles", 18).range(8, 24);
+        public static final BooleanEntry DRAGON_WINGS_ENABLED = Config.bool("dragonWingsEnabled", false);
+        public static final FloatEntry DRAGON_WINGS_SCALE = Config.floatVal("dragonWingsScale", 0.85f).range(0.5f, 1.4f);
+        public static final FloatEntry DRAGON_WINGS_SPEED = Config.floatVal("dragonWingsSpeed", 1f).range(0.4f, 2f);
+        public static final IntEntry DRAGON_WINGS_COLOR = Config.integer("dragonWingsColor", 0xFFB080F5);
+        public static final BooleanEntry DRAGON_WINGS_GLOW = Config.bool("dragonWingsGlow", true);
         public static final BooleanEntry FREECAM_ENABLED = Config.bool("freecamEnabled", true);
         public static final FloatEntry FREECAM_SPEED = Config.floatVal("freecamSpeed", 0.45f).range(0.1f, 2.5f);
         public static final BooleanEntry FREELOOK_ENABLED = Config.bool("freelookEnabled", true);
