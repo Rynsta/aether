@@ -6,24 +6,24 @@ import dev.aether.ui.theme.Theme;
 import dev.aether.ui.util.Fonts;
 import dev.aether.util.AetherLang;
 
-final class HudStyle {
+public final class HudStyle {
     static final float RADIUS = 8f;
-    static final float PAD = 12f;
+    public static final float PAD = 12f;
     static final float CONTENT_Y = 38f;
 
     private HudStyle() {}
 
-    static int alpha(int color, float opacity) {
+    public static int alpha(int color, float opacity) {
         return Theme.withAlpha(color, Math.round((color >>> 24) * Math.clamp(opacity, 0f, 1f)));
     }
 
-    static void panel(NVGRenderer nvg, float width, float height) {
+    public static void panel(NVGRenderer nvg, float width, float height) {
         nvg.shadow(0, 2, width, height, RADIUS, 10f, alpha(Theme.HUD_BG & 0xFF000000, 0.3f));
         nvg.roundedRect(0, 0, width, height, RADIUS, Theme.HUD_BG);
         nvg.rectOutline(0, 0, width, height, RADIUS, 0.8f, Theme.HUD_BORDER);
     }
 
-    static void accent(NVGRenderer nvg, float width, int left, int right) {
+    public static void accent(NVGRenderer nvg, float width, int left, int right) {
         float length = width - PAD * 2;
         if (length <= 0) return;
         float fade = Math.min(28f, length * 0.25f);
@@ -50,7 +50,7 @@ final class HudStyle {
         nvg.textRight(Fonts.MONO, fittedValue, x, y, width, size, valueColor);
     }
 
-    static void text(NVGRenderer nvg, String font, String value, float x, float y,
+    public static void text(NVGRenderer nvg, String font, String value, float x, float y,
                      float width, float size, int color) {
         if (width <= 0) return;
         nvg.text(font, fit(nvg, font, value, size, width), x, y, size, color);

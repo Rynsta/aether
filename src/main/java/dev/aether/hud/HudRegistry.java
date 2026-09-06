@@ -111,7 +111,6 @@ public class HudRegistry {
             var win = mc.getWindow();
             float sw = win.getGuiScaledWidth();
             float sh = win.getGuiScaledHeight();
-            float frameDelta = delta.getGameTimeDeltaTicks();
 
             // Keep themed inventory surfaces below the native item and player-model pass.
             if (alpha > FADE_EPSILON) {
@@ -120,7 +119,7 @@ public class HudRegistry {
                     AetherRenderQueue.enqueueBeforeGui(() -> renderBackgroundFrame(sw, sh, alpha));
                 }
             }
-            AetherRenderQueue.enqueue(() -> renderGameplayFrame(sw, sh, alpha, frameDelta));
+            AetherRenderQueue.enqueue(() -> renderGameplayFrame(sw, sh, alpha));
         });
     }
 
@@ -221,7 +220,7 @@ public class HudRegistry {
         // the Fabric HUD extraction callback and flushed from GameRenderer.render.
     }
 
-    private static void renderGameplayFrame(float width, float height, float alpha, float deltaTicks) {
+    private static void renderGameplayFrame(float width, float height, float alpha) {
         if (StreamerModeManager.isEnabled()) {
             return;
         }
@@ -236,7 +235,7 @@ public class HudRegistry {
         NVGRenderer nvg = NanoVGManager.getRenderer();
         try {
             renderHudElements(nvg, alpha);
-            NotificationRenderer.render(nvg, width, height, deltaTicks);
+            NotificationRenderer.render(nvg, width, height);
             if (alpha > FADE_EPSILON) {
                 renderOverlayElements(nvg, alpha);
             }

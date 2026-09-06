@@ -2715,7 +2715,7 @@ public class MainGUI extends NVGScreen {
 
     private void renderOptionalFeatureHud(NVGRenderer nvg, float dt) {
         AetherBootstrapHooks.renderConfigScreenOverlay(nvg, (float) width, (float) height, dt);
-        NotificationRenderer.render(nvg, (float) width, (float) height, dt);
+        NotificationRenderer.render(nvg, (float) width, (float) height);
     }
 
     private void openOptionalHudEditor(Minecraft minecraft) {
