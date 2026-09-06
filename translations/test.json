@@ -697,5 +697,20 @@
   "text.aether.pest_icons_health_and_hunting_progress_below_the_crosshair": "Pest icons, health and hunting progress below the crosshair",
   "text.aether.reset_target_hud_position": "Reset Target HUD Position",
   "text.aether.hunting_tracking_smoothing": "Hunting Tracking Smoothing",
-  "text.aether.hunting_max_turn_speed": "Hunting Max Turn Speed"
+  "text.aether.hunting_max_turn_speed": "Hunting Max Turn Speed",
+  "text.aether.pest_defeat_effects": "Pest Defeat Effects",
+  "text.aether.shader_bursts_when_a_pest_is_defeated_or_caught": "Shader bursts when a pest is defeated or caught",
+  "text.aether.effect_style": "Effect Style",
+  "text.aether.ender_rift": "Ender Rift",
+  "text.aether.arcane_bloom": "Arcane Bloom",
+  "text.aether.solar_flare": "Solar Flare",
+  "text.aether.effect_size": "Effect Size",
+  "text.aether.particle_count": "Particle Count",
+  "text.aether.preview_effect": "Preview Effect",
+  "text.aether.dragon_wings": "Dragon Wings",
+  "text.aether.animated_dragon_wings_on_your_back_in_third_person": "Animated dragon wings on your back in third person",
+  "text.aether.wingspan": "Wingspan",
+  "text.aether.wing_animation_speed": "Wing Animation Speed",
+  "text.aether.wing_accent": "Wing Accent",
+  "text.aether.membrane_glow": "Membrane Glow"
 }
