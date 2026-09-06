@@ -23,6 +23,9 @@ public final class AetherBootstrapHooks {
             return false;
         }
 
+        default void onAttack(Minecraft minecraft) {
+        }
+
         default void onConfigProfileLoaded(File profileFile) {
         }
 
@@ -223,6 +226,10 @@ public final class AetherBootstrapHooks {
 
     public static boolean isAttackSuppressed() {
         return hooks.isAttackSuppressed();
+    }
+
+    public static void onAttack(Minecraft minecraft) {
+        hooks.onAttack(minecraft);
     }
 
     public static void onUnexpectedDisconnect() {

@@ -10,6 +10,7 @@ import dev.aether.macro.MacroStateManager;
 import dev.aether.macro.ReconnectScheduler;
 import dev.aether.modules.failsafe.FailsafeColourFlashManager;
 import dev.aether.modules.failsafe.FailsafeManager;
+import dev.aether.modules.farming.SqueakyMousematManager;
 import dev.aether.modules.farming.UngrabMouse;
 import dev.aether.modules.pathfinding.rotation.RotationExecutor;
 import dev.aether.modules.performance.MuteManager;
@@ -54,6 +55,11 @@ public final class LiveAetherBootstrapHooks implements AetherBootstrapHooks.Feat
     @Override
     public boolean isAttackSuppressed() {
         return PestDestroyer.isCatchInProgress();
+    }
+
+    @Override
+    public void onAttack(Minecraft minecraft) {
+        SqueakyMousematManager.onAttack(minecraft);
     }
 
     @Override
