@@ -98,6 +98,25 @@ class WalkingAimSplineTest {
     }
 
     @Test
+    void followsAFallBelowTheRoundedLedgeInsteadOfLookingBackUp() {
+        WalkingAimSpline spline = new WalkingAimSpline(List.of(new Vec3(0, 20, 0), new Vec3(1, 20, 0),
+                new Vec3(1, 0, 0), new Vec3(5, 0, 0)));
+        Vec3 feet = new Vec3(1, 8, 0);
+        Vec3 aim = spline.aimPoint(feet, 1, 2, 1.62);
+        assertPoint(new Vec3(1, 7.62, 0), aim);
+    }
+
+    @Test
+    void followsHeightProgressOnSteepSlopedDrops() {
+        WalkingAimSpline spline = new WalkingAimSpline(List.of(new Vec3(0, 20, 0), new Vec3(1, 0, 0)));
+        Vec3 first = spline.aimPoint(new Vec3(0.2, 12, 0), 0, 2, 1.62);
+        Vec3 second = spline.aimPoint(new Vec3(0.2, 6, 0), 0, 2, 1.62);
+        assertTrue(first.y < 13.62);
+        assertTrue(second.y < 7.62);
+        assertTrue(second.y < first.y - 5);
+    }
+
+    @Test
     void clampsAtTheEndpointAndHandlesDegeneratePaths() {
         Vec3 end = new Vec3(2, 3, 4);
         WalkingAimSpline single = new WalkingAimSpline(List.of(end));

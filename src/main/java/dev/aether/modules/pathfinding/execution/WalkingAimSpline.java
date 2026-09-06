@@ -51,6 +51,8 @@ public final class WalkingAimSpline {
             return playerFeet.add(0.0, eyeHeight, 0.0);
         }
         int segment = Math.max(0, Math.min(pursuitSegment, anchors.size() - 1));
+        boolean useHeight = segment + 1 < anchors.size() && WalkingRoute.useHeightForProjection(
+                anchors.get(segment + 1).subtract(anchors.get(segment)));
         double minParameter = segment == 0 ? 0.0
                 : segment - cornerRatio(anchors.get(segment - 1), anchors.get(segment));
         double maxParameter = segment + 2 >= anchors.size() ? anchors.size() - 1.0
@@ -77,16 +79,16 @@ public final class WalkingAimSpline {
             }
             Vec3 offset = playerFeet.subtract(a);
             double horizontalLength = delta.horizontalDistanceSqr();
-            boolean vertical = horizontalLength < 1.0e-12;
-            double length = vertical ? delta.lengthSqr() : horizontalLength;
+            boolean projectHeight = useHeight || horizontalLength < 1.0e-12;
+            double length = projectHeight ? delta.lengthSqr() : horizontalLength;
             if (length < 1.0e-12) {
                 continue;
             }
-            double t = vertical ? offset.dot(delta) / length
+            double t = projectHeight ? offset.dot(delta) / length
                     : (offset.x * delta.x + offset.z * delta.z) / length;
             t = Math.max(minT, Math.min(maxT, t));
             Vec3 error = offset.subtract(delta.scale(t));
-            double distance = vertical ? error.lengthSqr() : error.horizontalDistanceSqr();
+            double distance = projectHeight ? error.lengthSqr() : error.horizontalDistanceSqr();
             if (distance < closestDistance - 1.0e-9) {
                 closestDistance = distance;
                 projectedProgress = distances.get(i) + (distances.get(i + 1) - distances.get(i)) * t;

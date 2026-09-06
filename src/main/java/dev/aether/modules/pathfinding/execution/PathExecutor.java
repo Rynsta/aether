@@ -19,6 +19,7 @@ public final class PathExecutor {
     private static final int JUMP_COOLDOWN_TICKS = 8;
     private static final int BACKUP_TICKS = 6;
     private static final double MOVEMENT_DEADZONE = 0.08;
+    private static final double STEERING_LOOKAHEAD = 1.0;
     private static final double PROGRESS_EPSILON = 0.08;
     private static final double GOAL_REACHED_DISTANCE = 1.2;
     private static final long REPLAN_COOLDOWN_MS = 1500;
@@ -209,7 +210,7 @@ public final class PathExecutor {
 
         Node waypoint = path.get(Math.min(path.size() - 1, pursuitSegment + 1));
         boolean atRouteEnd = pursuitSegment >= path.size() - 1;
-        Vec3 target = atRouteEnd ? goal : feetCenter(waypoint);
+        Vec3 target = atRouteEnd ? goal : route.steeringTarget(playerPos, pursuitSegment, STEERING_LOOKAHEAD);
         boolean centering = route.endsAt(goal) && (precise || exactGoalCentering || strictGoalCompletion)
                 && goalDistance < 1.5 && Math.abs(playerPos.y - goal.y) <= 0.75
                 && pursuitSegment >= path.size() - 2;
