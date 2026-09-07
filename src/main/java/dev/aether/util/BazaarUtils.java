@@ -43,6 +43,8 @@ public final class BazaarUtils {
     private static final int SLOT_QTY_CUSTOM = 16; // "Custom Amount" (sign)
 
     private static final long TICK_MS = 50;
+    private static final long SELL_SETTLE_MS = 750;
+    private static final long SELL_SETTLE_TIMEOUT_MS = 4000;
 
     private static volatile BazaarBuySession activeBuy;
 
@@ -333,10 +335,39 @@ public final class BazaarUtils {
             }
 
             closeScreen(client);
+            // Hypixel reopens the Bazaar home page after the sale, sometimes after our close packet,
+            // and a lingering container trips the unexpected-inventory failsafe once farming resumes.
+            awaitScreenClosed(client, SELL_SETTLE_MS, SELL_SETTLE_TIMEOUT_MS);
             MacroWorkerThread.sleep(fastDelay);
             return isInstantSellFinished(detectedInstantSell, detectedNoItemsToSell, completionTitle);
         } finally {
             isSellingBazaar = false;
+        }
+    }
+
+    private static void awaitScreenClosed(Minecraft client, long settleMs, long timeoutMs) {
+        if (client.isSameThread()) {
+            return;
+        }
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        long closedSince = -1L;
+        while (!MacroWorkerThread.getInstance().isCancelled() && System.currentTimeMillis() < deadline) {
+            if (client.screen instanceof AbstractContainerScreen<?>) {
+                ClientUtils.sendDebugMessage("[BazaarUtils] Container reopened after the sale, closing it again.");
+                closedSince = -1L;
+                closeScreen(client);
+                continue;
+            }
+            long now = System.currentTimeMillis();
+            if (closedSince < 0L) {
+                closedSince = now;
+            } else if (now - closedSince >= settleMs) {
+                return;
+            }
+            MacroWorkerThread.sleep(TICK_MS);
+        }
+        if (client.screen instanceof AbstractContainerScreen<?>) {
+            ClientUtils.sendDebugMessage("[BazaarUtils] Container still open after the sell settle timeout.");
         }
     }
 
@@ -597,7 +628,13 @@ public final class BazaarUtils {
     }
 
     private static void closeScreen(Minecraft client) {
-        MacroWorkerThread.runOnClient(client, () -> ClientUtils.closeGui(client));
+        // closeGui polls for a stabilisation window; on the render thread that stalls the game and
+        // no packet can reopen a container until it returns, so the re-close loop never sees one.
+        if (client.isSameThread()) {
+            ClientUtils.closeGuiAsync(client);
+        } else {
+            ClientUtils.closeGui(client);
+        }
     }
 
     private static String stripColors(String s) {
