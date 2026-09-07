@@ -21,6 +21,8 @@ public final class PestTargetHudElement extends HudElement {
     private static final float COLUMN_WIDTH = PestHudLayout.COLUMN_WIDTH;
     private static final float ROW_HEIGHT = PestHudLayout.ROW_HEIGHT;
     private static final float HEADER_HEIGHT = PestHudLayout.HEADER_HEIGHT;
+    private static final float ICON_TILE = 27f;
+    private static final float ICON_SIZE = 20f;
     private final Map<Integer, Float> bars = new HashMap<>();
     private long lastFrame;
     private Object lastLevel;
@@ -102,7 +104,7 @@ public final class PestTargetHudElement extends HudElement {
         float x = index / rows() * COLUMN_WIDTH;
         float y = HEADER_HEIGHT + index % rows() * ROW_HEIGHT;
         int accent = hunting ? Theme.HUD_ACCENT : Theme.blend(Theme.HUD_ERROR, Theme.HUD_SUCCESS, Math.max(0, fraction));
-        nvg.roundedRect(x + 8f, y, 27f, 27f, 6f, HudStyle.alpha(Theme.HUD_BORDER, 0.5f));
+        nvg.roundedRect(x + 8f, y, ICON_TILE, ICON_TILE, 6f, HudStyle.alpha(Theme.HUD_BORDER, 0.5f));
         float detailWidth = nvg.textWidth(Fonts.MONO, detail, 8f);
         HudStyle.text(nvg, Fonts.BOLD, name, x + 42f, y + 1f, COLUMN_WIDTH - 58f - detailWidth, 10f, Theme.HUD_TITLE);
         nvg.textRight(Fonts.MONO, detail, x + 42f, y + 2f, COLUMN_WIDTH - 52f, 8f, Theme.HUD_LABEL);
@@ -125,10 +127,15 @@ public final class PestTargetHudElement extends HudElement {
         graphics.pose().translate(getX(), getY());
         graphics.pose().scale(getScale());
         try {
+            float inset = (ICON_TILE - ICON_SIZE) / 2f;
             for (int i = 0; i < Math.max(editMode ? 1 : 0, entries.size()); i++) {
                 ItemStack icon = entries.isEmpty() ? new ItemStack(Items.PLAYER_HEAD) : entries.get(i).icon();
-                graphics.item(icon, (int) (i / rows() * COLUMN_WIDTH + 13f),
-                        (int) (HEADER_HEIGHT + i % rows() * ROW_HEIGHT + 5f));
+                graphics.pose().pushMatrix();
+                graphics.pose().translate(i / rows() * COLUMN_WIDTH + 8f + inset,
+                        HEADER_HEIGHT + i % rows() * ROW_HEIGHT + inset);
+                graphics.pose().scale(ICON_SIZE / 16f);
+                graphics.item(icon, 0, 0);
+                graphics.pose().popMatrix();
             }
         } finally {
             graphics.pose().popMatrix();
