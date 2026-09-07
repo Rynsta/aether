@@ -212,8 +212,11 @@ final class PestCombatCoordinator {
         Entity currentTarget = context.getCurrentTarget();
         if (currentTarget == null || currentTarget.isRemoved() || (currentTarget instanceof LivingEntity le && le.isDeadOrDying())) {
             ClientUtils.setKeyMappingState(client.options.keyUse, false);
-            if (currentTarget != null && (currentTarget.isRemoved() || (currentTarget instanceof LivingEntity le2 && le2.isDeadOrDying()))) {
+            if (currentTarget != null) {
                 if (context.recordTrackedPestKill(client, currentTarget)) {
+                    return;
+                }
+                if (context.switchToNextQueuedTarget(client)) {
                     return;
                 }
             }
@@ -529,13 +532,17 @@ final class PestCombatCoordinator {
         if (PestHuntingController.shouldLassoTarget(client, target)) {
             return target.position().add(0, target.getEyeHeight(target.getPose()), 0);
         }
-        return buildVacuumAimTarget(client, target);
+        return PestAimTracker.trackingAim(client, target);
     }
 
     /** Builds the high aim point that lets the vacuum beam connect from above. */
     static Vec3 buildVacuumAimTarget(Minecraft client, Entity target) {
+        return buildVacuumAimTarget(
+                client, target, getEntityEyePosition(target));
+    }
+
+    static Vec3 buildVacuumAimTarget(Minecraft client, Entity target, Vec3 targetEye) {
         Vec3 eyePos = client.player.getEyePosition();
-        Vec3 targetEye = target.position().add(0, target.getEyeHeight(target.getPose()), 0);
         if (eyePos.y > targetEye.y) {
             double horizontalDistance = Math.sqrt(
                     (targetEye.x - eyePos.x) * (targetEye.x - eyePos.x)

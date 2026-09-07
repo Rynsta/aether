@@ -94,7 +94,7 @@ final class PestFlightController {
                 ? FlightMotion.verticalInput(offset.y + 3.0, velocity.y, 0.5) : 0;
         ClientUtils.setKeyMappingState(client.options.keyJump, vertical > 0);
         ClientUtils.setKeyMappingState(client.options.keyShift, vertical < 0);
-        RotationManager.trackRotation(client, PestCombatCoordinator.buildVacuumAimTarget(client, target),
+        RotationManager.trackRotation(client, PestAimTracker.trackingAim(client, target),
                 AetherConfig.PEST_TRACKING_SMOOTHING_MS.get(), AetherConfig.PEST_MAX_TURN_SPEED.get());
     }
 

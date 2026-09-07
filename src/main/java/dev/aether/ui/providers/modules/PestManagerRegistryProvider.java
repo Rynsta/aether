@@ -187,7 +187,8 @@ public final class PestManagerRegistryProvider extends AbstractModulesRegistryPr
                         v -> {
                             AetherConfig.PEST_TRACKING_SMOOTHING_MS.set(v);
                             AetherConfig.save();
-                        }).withDecimals(0).withSuffix("ms")));
+                        }).withDecimals(0).withSuffix("ms"))
+                .add(FarmingSettingsFactory.pestAimDriftSetting()));
         groups.add(SettingGroup.of(
                         "Pest Hunting",
                         "Lassos pests for guaranteed shards instead of vacuuming them (needs a lasso in your hotbar)",

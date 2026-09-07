@@ -172,6 +172,7 @@ public final class HumanizationPresetManager {
         addEntry(entries, AetherConfig.PEST_HUNTING_MAX_DISTANCE);
         addEntry(entries, AetherConfig.PEST_HUNTING_TRACKING_SMOOTHING_MS);
         addEntry(entries, AetherConfig.PEST_HUNTING_MAX_TURN_SPEED);
+        addEntry(entries, AetherConfig.PEST_AIM_DRIFT);
         addEntry(entries, AetherConfig.PEST_ABOVE_TARGET_PITCH_MIN);
         addEntry(entries, AetherConfig.PEST_ABOVE_TARGET_PITCH_MAX);
         addEntry(entries, AetherConfig.VISITOR_FOV_RANGE);

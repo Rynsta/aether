@@ -40,6 +40,7 @@
   "macroCustomYawHumanization": 0,
   "aotvRoofPitchHumanization": 3,
   "pestFovRange": 7,
+  "pestAimDrift": 0.7,
   "pestAboveTargetPitchMin": 28,
   "pestAboveTargetPitchMax": 36,
   "visitorFovRange": 4,

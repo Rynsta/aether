@@ -172,6 +172,8 @@ public class PestDestroyer {
         runtime.stopRun();
         PathfindingManager.stop();
         PestAotvManager.resetState();
+        PestAimTracker.reset();
+        RotationManager.cancelRotation();
         if (client != null && client.options != null) {
             ClientUtils.setKeyMappingState(client.options.keyUse, false);
             ClientUtils.setKeyMappingState(client.options.keyAttack, false);
@@ -521,6 +523,8 @@ public class PestDestroyer {
         ClientUtils.sendMessage("\u00A7aPest destroyer finished. Tracked " + killed + " pest(s).", false);
         runtime.resetAll();
         PathfindingManager.stop();
+        PestAimTracker.reset();
+        RotationManager.cancelRotation();
 
         PestManager.handlePestCleaningFinished(client);
     }

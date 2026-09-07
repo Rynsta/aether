@@ -275,7 +275,12 @@ final class PestTargetController {
                 ClientUtils.setKeyMappingState(client.options.keyUse, false);
                 ClientUtils.setKeyMappingState(client.options.keyDown, false);
             }
-            context.setState(PestDestroyer.State.CHECK_NEXT);
+            PathfindingManager.stop();
+            // Bouncing off CHECK_NEXT costs a full tick parked on the corpse before
+            // the next pest is even picked; choose it here so the swing starts now.
+            if (!switchToNextQueuedTarget(client, runtime, context)) {
+                context.setState(PestDestroyer.State.CHECK_NEXT);
+            }
         }
         return true;
     }

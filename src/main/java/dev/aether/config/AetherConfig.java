@@ -478,6 +478,7 @@ public final class AetherConfig {
                         Config.floatVal("pestApproachSpeed", 0.35f).range(0.15f, 0.8f);
         public static final FloatEntry PEST_TRACKING_SMOOTHING_MS =
                         Config.floatVal("pestTrackingSmoothingMs", 220.0f).range(100.0f, 500.0f);
+        public static final FloatEntry PEST_AIM_DRIFT = Config.floatVal("pestAimDrift", 1.0f).range(0.0f, 2.0f);
         public static final FloatEntry PEST_ABOVE_TARGET_PITCH_MIN = Config.floatVal("pestAboveTargetPitchMin", 25.0f)
                         .range(20.0f, 40.0f);
         public static final FloatEntry PEST_ABOVE_TARGET_PITCH_MAX = Config.floatVal("pestAboveTargetPitchMax", 40.0f)
