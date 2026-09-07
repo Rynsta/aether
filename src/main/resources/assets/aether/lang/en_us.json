@@ -1,4 +1,4 @@
-﻿{
+{
   "text.aether.respect_vacuum_true_range": "Respect Vacuum True Range",
   "text.aether.rolling_profit_graph": "Rolling Profit Graph",
   "text.aether.graph_window": "Graph Window",
@@ -740,5 +740,17 @@
   "text.aether.sage": "Sage",
   "text.aether.dusk": "Dusk",
   "text.aether.ember": "Ember",
-  "text.aether.default_colours": "Default Colours"
+  "text.aether.default_colours": "Default Colours",
+  "text.aether.skybox": "Skybox",
+  "text.aether.sky_shader": "Sky Shader",
+  "text.aether.choose_a_sky_and_adjust_its_motion_and_brightness": "Choose a sky and adjust its motion and brightness",
+  "text.aether.shader": "Shader",
+  "text.aether.animation_speed": "Animation Speed",
+  "text.aether.sky_brightness": "Sky Brightness",
+  "text.aether.cirrus": "Cirrus",
+  "text.aether.golden_hour": "Golden Hour",
+  "text.aether.twilight": "Twilight",
+  "text.aether.aurora": "Aurora",
+  "text.aether.starfield": "Starfield",
+  "text.aether.animated_shader_skies": "Animated shader skies"
 }

@@ -1057,6 +1057,10 @@ public final class AetherConfig {
         public static final IntEntry CUSTOM_SB_LEVEL = Config.integer("customSbLevel", 0);
 
         // -- FUN -----------------------------------------------------------------
+        public static final BooleanEntry SKYBOX_ENABLED = Config.bool("skyboxEnabled", false);
+        public static final IntEntry SKYBOX_PRESET = Config.integer("skyboxPreset", 0).range(0, 4);
+        public static final FloatEntry SKYBOX_SPEED = Config.floatVal("skyboxSpeed", 1f).range(0f, 2f);
+        public static final FloatEntry SKYBOX_BRIGHTNESS = Config.floatVal("skyboxBrightness", 1f).range(0.5f, 1.5f);
         public static final BooleanEntry HAT_ENABLED = Config.bool("hatEnabled", true);
         public static final BooleanEntry HAT_FILLED = Config.bool("hatFilled", true);
         public static final BooleanEntry HAT_RENDER_FIRST_PERSON = Config.bool("hatRenderFirstPerson", false);

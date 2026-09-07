@@ -97,6 +97,7 @@ public final class ClientFeatureBootstrap {
 
         ClientLifecycleEvents.CLIENT_STOPPING.register(PerformanceModeManager::stop);
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> CosmeticWorldRenderer.close());
+        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> dev.aether.renderer.SkyboxRenderer.close());
         ClientLifecycleEvents.CLIENT_STOPPING.register(client -> AetherConfig.flush());
 
         AetherScreenHooks.register();
@@ -122,6 +123,7 @@ public final class ClientFeatureBootstrap {
         HudRegistry.reset();
         PathVisualizer.clear();
         CosmeticWorldRenderer.close();
+        dev.aether.renderer.SkyboxRenderer.close();
         ReconnectScheduler.clearState();
         MacroWorkerThread.getInstance().cancelCurrent();
         MacroWorkerThread.getInstance().clearPendingTasks();

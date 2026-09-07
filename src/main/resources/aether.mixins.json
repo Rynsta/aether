@@ -30,6 +30,8 @@
         "MixinFreecamInteractionBlocker",
         "MixinClientLevel",
         "MixinGameRenderer",
+        "MixinSkybox",
+        "MixinSkyboxClouds",
         "MixinCamera",
         "MixinMouseHandler",
         "MixinLocalPlayer",

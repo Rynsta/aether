@@ -740,5 +740,17 @@
   "text.aether.stuck_recovery_delay": "Stuck Recovery Delay",
   "text.aether.use_pest_tracker_ability": "Use Pest Tracker Ability",
   "text.aether.draw_arc": "Draw Arc",
-  "text.aether.pest_aim_drift": "Pest Aim Drift"
+  "text.aether.pest_aim_drift": "Pest Aim Drift",
+  "text.aether.skybox": "Skybox",
+  "text.aether.sky_shader": "Sky Shader",
+  "text.aether.choose_a_sky_and_adjust_its_motion_and_brightness": "Choose a sky and adjust its motion and brightness",
+  "text.aether.shader": "Shader",
+  "text.aether.animation_speed": "Animation Speed",
+  "text.aether.sky_brightness": "Sky Brightness",
+  "text.aether.cirrus": "Cirrus",
+  "text.aether.golden_hour": "Golden Hour",
+  "text.aether.twilight": "Twilight",
+  "text.aether.aurora": "Aurora",
+  "text.aether.starfield": "Starfield",
+  "text.aether.animated_shader_skies": "Animated shader skies"
 }
