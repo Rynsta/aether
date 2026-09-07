@@ -1,5 +1,6 @@
 package dev.aether.modules.pest.helpers;
 
+import com.mojang.authlib.properties.Property;
 import dev.aether.util.ClientUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponents;
@@ -291,7 +292,7 @@ public final class PestTargetTracker {
         List<ArmorStand> markers = rawEntities.stream()
                 .filter(ArmorStand.class::isInstance)
                 .map(ArmorStand.class::cast)
-                .filter(marker -> !marker.isRemoved() && marker.getY() >= 50 && isPestArmorStand(marker))
+                .filter(marker -> !marker.isRemoved() && marker.getY() >= 50 && isPestArmorStand(marker, rawEntities))
                 .toList();
         Map<Integer, Entity> targetsById = new LinkedHashMap<>();
         for (Entity entity : rawEntities) {
@@ -334,9 +335,9 @@ public final class PestTargetTracker {
         return closest;
     }
 
-    private static boolean isPestArmorStand(ArmorStand armorStand) {
+    private static boolean isPestArmorStand(ArmorStand armorStand, List<Entity> entities) {
         ItemStack headItem = armorStand.getItemBySlot(EquipmentSlot.HEAD);
-        if (headItem.isEmpty() || headItem.has(DataComponents.CUSTOM_NAME)) {
+        if (headItem.isEmpty()) {
             return false;
         }
         ResolvableProfile profile = headItem.get(DataComponents.PROFILE);
@@ -344,11 +345,18 @@ public final class PestTargetTracker {
             return false;
         }
         var textures = profile.partialProfile().properties().get("textures");
-        if (textures == null) {
+        if (textures == null || textures.isEmpty()) {
             return false;
         }
+        if (!headItem.has(DataComponents.CUSTOM_NAME) && hasKnownPestTexture(textures)) {
+            return true;
+        }
+        // Hypixel swaps skull textures without notice; a custom head riding a pest mob is its skull.
+        return findRealEntityNear(entities, armorStand) != null;
+    }
 
-        for (var property : textures) {
+    private static boolean hasKnownPestTexture(Collection<Property> textures) {
+        for (Property property : textures) {
             try {
                 String decoded = new String(
                         java.util.Base64.getDecoder().decode(property.value()),
