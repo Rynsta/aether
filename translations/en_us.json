@@ -9,6 +9,7 @@
   "text.aether.vacuum_follow_distance": "Vacuum Follow Distance",
   "text.aether.pest_approach_speed": "Pest Approach Speed",
   "text.aether.pest_tracking_smoothing": "Pest Tracking Smoothing",
+  "text.aether.pest_aim_drift": "Pest Aim Drift",
   "text.aether.flight_braking_lookahead": "Flight Braking Lookahead",
   "text.aether.style_the_scoreboard_to_match_your_hud": "Style the scoreboard to match your HUD",
   "text.aether.scoreboard_title_text": "Scoreboard Title Text",
