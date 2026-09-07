@@ -347,14 +347,14 @@ public class Theme {
         }
         obj.addProperty("animSpeed", ANIM_TIME_MS);
         obj.addProperty("settingSpacing", SETTING_SPACING);
-        obj.addProperty("uiScale", UI_SCALE);
-        obj.addProperty("textScale", TEXT_SCALE);
         JsonArray rainbowArr2 = new JsonArray();
         for (String s : rainbowEntries) rainbowArr2.add(s);
         obj.add("rainbowEntries", rainbowArr2);
         return GSON.toJson(obj);
     }
 
+    // Scale is a per-display preference restored only by loadTheme(), so shared themes
+    // (presets, profiles, old exports carrying uiScale) cannot rescale the panel.
     public static void importJson(String json) {
         try {
             JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
@@ -372,8 +372,6 @@ public class Theme {
             }
             if (obj.has("animSpeed"))     ANIM_TIME_MS    = parseAnimationTime(obj.get("animSpeed").getAsFloat());
             if (obj.has("settingSpacing")) SETTING_SPACING = obj.get("settingSpacing").getAsInt();
-            if (obj.has("uiScale"))       UI_SCALE        = Math.max(UI_SCALE_MIN, Math.min(UI_SCALE_MAX, obj.get("uiScale").getAsFloat()));
-            if (obj.has("textScale"))     TEXT_SCALE      = Math.max(TEXT_SCALE_MIN, Math.min(TEXT_SCALE_MAX, obj.get("textScale").getAsFloat()));
             rainbowEntries.clear();
             if (obj.has("rainbowEntries")) {
                 obj.get("rainbowEntries").getAsJsonArray()

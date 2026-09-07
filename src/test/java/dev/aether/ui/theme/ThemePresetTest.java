@@ -13,6 +13,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ThemePresetTest {
     private String savedTheme;
+    private float savedUiScale;
+    private float savedTextScale;
 
     @BeforeAll
     static void configureLoader() throws Exception {
@@ -25,11 +27,28 @@ class ThemePresetTest {
     @BeforeEach
     void saveTheme() {
         savedTheme = Theme.exportJson();
+        savedUiScale = Theme.UI_SCALE;
+        savedTextScale = Theme.TEXT_SCALE;
     }
 
     @AfterEach
     void restoreTheme() {
         Theme.importJson(savedTheme);
+        Theme.UI_SCALE = savedUiScale;
+        Theme.TEXT_SCALE = savedTextScale;
+    }
+
+    @Test
+    void sharedThemesNeverCarryOrApplyGuiScale() {
+        Theme.UI_SCALE = 1.75f;
+        Theme.TEXT_SCALE = 1.1f;
+        Theme.importJson("{\"Accent\":\"FF112233\",\"uiScale\":0.5,\"textScale\":2.0}");
+        assertEquals(0xFF112233, Theme.ACCENT_PRIMARY);
+        assertEquals(1.75f, Theme.UI_SCALE);
+        assertEquals(1.1f, Theme.TEXT_SCALE);
+        var exported = JsonParser.parseString(Theme.exportJson()).getAsJsonObject();
+        assertFalse(exported.has("uiScale"));
+        assertFalse(exported.has("textScale"));
     }
 
     @Test

@@ -75,8 +75,6 @@ public final class ThemeOptionsSettingsRegistryProvider extends AbstractSettings
                     String json = Minecraft.getInstance().keyboardHandler.getClipboard();
                     if (json != null && !json.isBlank()) {
                         Theme.importJson(json);
-                        MainGUI.uiScale = Theme.UI_SCALE; // apply imported scale to the live panel
-                        MainGUI.uiTextScale = Theme.TEXT_SCALE; // apply imported text scale immediately
                         Theme.saveTheme();
                     }
                 })));
