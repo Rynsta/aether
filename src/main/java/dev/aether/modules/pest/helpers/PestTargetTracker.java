@@ -21,8 +21,8 @@ import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.IdentityHashMap;
 import java.util.function.Predicate;
+import java.util.function.ToDoubleFunction;
 
 public final class PestTargetTracker {
     private static final List<String> PEST_TEXTURE_FRAGMENTS = List.of(
@@ -53,15 +53,12 @@ public final class PestTargetTracker {
             Collection<Entity> killedEntities,
             Predicate<Entity> eligible
     ) {
-        while (!pestTargetQueue.isEmpty()) {
-            Entity next = pestTargetQueue.peekFirst();
-            if (isUnavailable(client, next, killedEntities) || !eligible.test(next)) {
-                pestTargetQueue.pollFirst();
-                continue;
-            }
-            return next;
+        if (client == null || client.player == null) {
+            return null;
         }
-        return null;
+        return nearestQueuedTarget(pestTargetQueue,
+                target -> !isUnavailable(client, target, killedEntities) && eligible.test(target),
+                client.player::distanceToSqr);
     }
 
     static Entity getNextQueuedPest(
@@ -70,13 +67,30 @@ public final class PestTargetTracker {
             Collection<Entity> killedEntities,
             Predicate<Entity> eligible
     ) {
-        while (!pestTargetQueue.isEmpty()) {
-            Entity next = pestTargetQueue.pollFirst();
-            if (!isUnavailable(client, next, killedEntities) && eligible.test(next)) {
-                return next;
+        Entity next = peekNextQueuedPest(client, pestTargetQueue, killedEntities, eligible);
+        if (next != null) {
+            pestTargetQueue.remove(next);
+        }
+        return next;
+    }
+
+    static <T> T nearestQueuedTarget(Deque<T> queue, Predicate<T> eligible, ToDoubleFunction<T> distanceSquared) {
+        T closest = null;
+        double closestDistance = Double.POSITIVE_INFINITY;
+        var iterator = queue.iterator();
+        while (iterator.hasNext()) {
+            T candidate = iterator.next();
+            if (!eligible.test(candidate)) {
+                iterator.remove();
+                continue;
+            }
+            double distance = distanceSquared.applyAsDouble(candidate);
+            if (distance < closestDistance) {
+                closest = candidate;
+                closestDistance = distance;
             }
         }
-        return null;
+        return closest;
     }
 
     static void rebuildPestTargetQueue(
@@ -88,16 +102,9 @@ public final class PestTargetTracker {
     ) {
         List<Entity> pests = availableTargets(client, killedEntities, eligible);
         if (reservedEntityId != -1) {
-            Map<Entity, Double> nearestNeighborDistances = new IdentityHashMap<>();
-            List<Vec3> positions = pests.stream().map(Entity::position).toList();
-            for (int i = 0; i < pests.size(); i++) {
-                nearestNeighborDistances.put(pests.get(i), nearestNeighborDistanceSqr(i, positions));
-            }
             pests.removeIf(pest -> pest.getId() == reservedEntityId);
-            pests.sort(Comparator
-                    .comparingDouble((Entity pest) -> nearestNeighborDistances.get(pest))
-                    .thenComparingDouble(client.player::distanceToSqr));
-        } else if (client.player != null) {
+        }
+        if (client != null && client.player != null) {
             pests.sort(Comparator.comparingDouble(client.player::distanceToSqr));
         }
         pestTargetQueue.clear();

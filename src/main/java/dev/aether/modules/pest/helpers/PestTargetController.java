@@ -126,11 +126,8 @@ final class PestTargetController {
             return true;
         }
 
+        rebuildQueue(client, runtime, context);
         Entity next = nextQueuedPest(client, runtime);
-        if (next == null) {
-            rebuildQueue(client, runtime, context);
-            next = nextQueuedPest(client, runtime);
-        }
         if (next == null) {
             return false;
         }
@@ -155,7 +152,7 @@ final class PestTargetController {
 
     static Entity peekNextQueuedPest(Minecraft client, PestDestroyerRuntime runtime) {
         return PestTargetTracker.peekNextQueuedPest(
-                client, runtime.pestTargetQueue, runtime.killedEntities, eligibleTarget(client, runtime));
+                client, runtime.pestTargetQueue, runtime.killedEntities, queuedTarget(client, runtime));
     }
 
     static void rebuildQueue(
@@ -173,7 +170,12 @@ final class PestTargetController {
 
     static Entity nextQueuedPest(Minecraft client, PestDestroyerRuntime runtime) {
         return PestTargetTracker.getNextQueuedPest(
-                client, runtime.pestTargetQueue, runtime.killedEntities, eligibleTarget(client, runtime));
+                client, runtime.pestTargetQueue, runtime.killedEntities, queuedTarget(client, runtime));
+    }
+
+    private static Predicate<Entity> queuedTarget(Minecraft client, PestDestroyerRuntime runtime) {
+        return eligibleTarget(client, runtime).and(entity -> entity != runtime.currentTarget
+                && entity.getId() != runtime.navigation.leaveOneReservedEntityId);
     }
 
     static Entity findClosestPest(
