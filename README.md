@@ -38,10 +38,6 @@
 
 > `/aether` opens the GUI.........
 
-The **Profit Tracker → Profit HUD → Rolling Profit Graph** option adds a scrolling graph of session net profit. **Graph Window** selects 1–15 minutes of active session time (default: 5). Pauses and recovery stop the graph clock; resetting the session clears its history. Values use the same price estimates and costs as the profit HUD. The graph retains the first, lowest, highest, and last observed balances each second, with labeled coin and time axes. Large balances with small changes use a labeled axis offset.
-
-**Pest Manager → Pest Destroyer → Respect Vacuum True Range** is enabled by default. Garden vacuum ranges are 5, 7.5, 10, 12.5, and 15 blocks, as listed on the [SkyBlock Wiki](https://hypixel-skyblock.fandom.com/wiki/Vacuums). Detection reads the item lore and vacuum model; recombobulation does not increase ability range. Disabling the option retains a conservative range margin. The setting applies to the pest destroyer and On-The-Track mode; lasso capture distances stay independent.
-
 ## contributing
 contributions are welcome, so feel free to make a PR!
 if your PR adds a new feature, for example a new farm design or a new meta, please attach a video of the feature in your PR.
