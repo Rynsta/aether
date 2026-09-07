@@ -335,8 +335,7 @@ public final class BazaarUtils {
             }
 
             closeScreen(client);
-            // Hypixel reopens the Bazaar home page after the sale, sometimes after our close packet,
-            // and a lingering container trips the unexpected-inventory failsafe once farming resumes.
+            // Hypixel may reopen the Bazaar home page after our close, which trips the GUI failsafe.
             awaitScreenClosed(client, SELL_SETTLE_MS, SELL_SETTLE_TIMEOUT_MS);
             MacroWorkerThread.sleep(fastDelay);
             return isInstantSellFinished(detectedInstantSell, detectedNoItemsToSell, completionTitle);
@@ -628,8 +627,7 @@ public final class BazaarUtils {
     }
 
     private static void closeScreen(Minecraft client) {
-        // closeGui polls for a stabilisation window; on the render thread that stalls the game and
-        // no packet can reopen a container until it returns, so the re-close loop never sees one.
+        // closeGui blocks while re-closing reopened GUIs, so it must stay off the render thread.
         if (client.isSameThread()) {
             ClientUtils.closeGuiAsync(client);
         } else {

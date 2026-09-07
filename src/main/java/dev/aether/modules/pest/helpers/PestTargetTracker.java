@@ -351,7 +351,7 @@ public final class PestTargetTracker {
         if (!headItem.has(DataComponents.CUSTOM_NAME) && hasKnownPestTexture(textures)) {
             return true;
         }
-        // Hypixel swaps skull textures without notice; a custom head riding a pest mob is its skull.
+        // Texture hashes drift; any custom head riding a pest mob is its skull.
         return findRealEntityNear(entities, armorStand) != null;
     }
 

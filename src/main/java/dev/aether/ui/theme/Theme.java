@@ -353,8 +353,7 @@ public class Theme {
         return GSON.toJson(obj);
     }
 
-    // Scale is a per-display preference restored only by loadTheme(), so shared themes
-    // (presets, profiles, old exports carrying uiScale) cannot rescale the panel.
+    // Scale is a display preference, not theme content; only loadTheme() restores it.
     public static void importJson(String json) {
         try {
             JsonObject obj = JsonParser.parseString(json).getAsJsonObject();
