@@ -1,0 +1,69 @@
+package dev.aether.modules.pathfinding.execution;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Function;
+
+public final class FlightPathClearance {
+    private static final double EPSILON = 1.0e-6;
+    private static final double SEGMENT_LENGTH = 4.0;
+
+    private FlightPathClearance() {}
+
+    public static boolean isClear(Minecraft client, Vec3 from, Vec3 to) {
+        if (client.player == null || client.level == null) {
+            return false;
+        }
+        AABB bounds = client.player.getBoundingBox().move(from.subtract(client.player.position()));
+        return isClear(bounds, to.subtract(from), search -> {
+            List<AABB> obstacles = new ArrayList<>();
+            for (var shape : client.level.getBlockCollisions(client.player, search)) {
+                obstacles.addAll(shape.toAabbs());
+            }
+            return obstacles;
+        });
+    }
+
+    static boolean isClear(AABB bounds, Vec3 travel, Function<AABB, Iterable<AABB>> collisions) {
+        int segments = Math.max(1, (int) Math.ceil(travel.length() / SEGMENT_LENGTH));
+        Vec3 step = travel.scale(1.0 / segments);
+        AABB body = bounds.deflate(EPSILON);
+        for (int segment = 0; segment < segments; segment++) {
+            AABB start = body.move(step.scale(segment));
+            for (AABB obstacle : collisions.apply(start.expandTowards(step))) {
+                if (intersectsSweep(start, step, obstacle)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private static boolean intersectsSweep(AABB bounds, Vec3 travel, AABB obstacle) {
+        double enter = 0.0;
+        double exit = 1.0;
+        double[] minimum = {obstacle.minX - bounds.maxX, obstacle.minY - bounds.maxY, obstacle.minZ - bounds.maxZ};
+        double[] maximum = {obstacle.maxX - bounds.minX, obstacle.maxY - bounds.minY, obstacle.maxZ - bounds.minZ};
+        double[] movement = {travel.x, travel.y, travel.z};
+        for (int axis = 0; axis < movement.length; axis++) {
+            if (Math.abs(movement[axis]) < EPSILON) {
+                if (minimum[axis] >= 0.0 || maximum[axis] <= 0.0) {
+                    return false;
+                }
+            } else {
+                double first = minimum[axis] / movement[axis];
+                double last = maximum[axis] / movement[axis];
+                enter = Math.max(enter, Math.min(first, last));
+                exit = Math.min(exit, Math.max(first, last));
+                if (exit <= enter) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+}

@@ -2,6 +2,8 @@ package dev.aether.modules.pathfinding;
 
 import dev.aether.config.AetherConfig;
 import dev.aether.modules.pathfinding.execution.PathExecutor;
+import dev.aether.modules.pathfinding.execution.FlightPathClearance;
+import dev.aether.modules.pathfinding.execution.FlyExecutor;
 import dev.aether.modules.pathfinding.movement.PathSmoother;
 import dev.aether.modules.pathfinding.movement.WalkabilityChecker;
 import dev.aether.modules.pathfinding.pathfinder.AStarPathfinder;
@@ -57,6 +59,68 @@ public final class PathfindingClientTest implements FabricClientGameTest {
                 }
             }
             System.out.println(LOG_PREFIX + "PASS all seven generated movement courses");
+            runFlightObstacleCourse(context, world);
+        }
+    }
+
+    private static void runFlightObstacleCourse(ClientGameTestContext context, TestSingleplayerContext world) {
+        buildCourse(world, Course.JUMP);
+        world.getServer().runCommand("fill -3 100 -4 3 108 16 air");
+        world.getServer().runCommand("fill -2 100 3 2 103 4 stone");
+        world.getServer().runCommand("gamemode creative @p");
+        world.getServer().runCommand("tp @p 0.5 100.15 0.5 0 0");
+        context.waitFor(client -> client.player != null && Math.abs(client.player.getY() - 100.15) < 0.2);
+        context.runOnClient(client -> {
+            client.player.getAbilities().flying = true;
+            client.player.onUpdateAbilities();
+            client.player.setDeltaMovement(Vec3.ZERO);
+        });
+        context.waitTicks(5);
+
+        List<Node> route = List.of(new Node(new PathPosition(0, 100, 0)),
+                new Node(new PathPosition(0, 104, 1)), new Node(new PathPosition(0, 104, 6)),
+                new Node(new PathPosition(0, 100, 9)));
+        FlyExecutor executor = new FlyExecutor();
+        context.runOnClient(client -> {
+            if (FlightPathClearance.isClear(client, client.player.position(), new Vec3(0.5, 100.15, 12.5))) {
+                throw new AssertionError("AOTV hop through the structure was considered clear");
+            }
+            executor.start(List.of(route.getLast()), 0, 100, 9);
+            executor.tick(client);
+            if (executor.getState() != FlyExecutor.State.IDLE) {
+                throw new AssertionError("Blocked flight did not stop immediately for replanning");
+            }
+            executor.start(route, 0, 100, 9);
+        });
+        try {
+            for (int tick = 0; tick < MAX_ROUTE_TICKS; tick++) {
+                FlyExecutor.State state = context.computeOnClient(client -> {
+                    if (!client.player.getAbilities().flying) {
+                        client.player.getAbilities().flying = true;
+                        client.player.onUpdateAbilities();
+                    }
+                    executor.tick(client);
+                    if (client.player.tickCount % 20 == 0) {
+                        System.out.println(LOG_PREFIX + "FLY feet=" + client.player.position()
+                                + " velocity=" + client.player.getDeltaMovement() + " state=" + executor.getState());
+                    }
+                    if (client.player.horizontalCollision) {
+                        throw new AssertionError("Fly route hit the structure at " + client.player.position());
+                    }
+                    return executor.getState();
+                });
+                if (state == FlyExecutor.State.FINISHED) {
+                    System.out.println(LOG_PREFIX + "PASS flight over structure ticks=" + tick);
+                    return;
+                }
+                if (state == FlyExecutor.State.IDLE) {
+                    throw new AssertionError("Clear fly route stopped before reaching the goal");
+                }
+                context.waitTick();
+            }
+            throw new AssertionError("Fly route did not finish within " + MAX_ROUTE_TICKS + " ticks");
+        } finally {
+            context.runOnClient(executor::stop);
         }
     }
 

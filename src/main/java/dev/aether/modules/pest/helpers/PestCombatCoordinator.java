@@ -4,6 +4,7 @@ import dev.aether.config.AetherConfig;
 import dev.aether.mixin.AccessorInventory;
 import dev.aether.modules.failsafe.FailsafeManager;
 import dev.aether.modules.pathfinding.PathfindingManager;
+import dev.aether.modules.pathfinding.execution.FlightPathClearance;
 import dev.aether.modules.rotation.RotationManager;
 import dev.aether.util.ClientUtils;
 
@@ -340,18 +341,12 @@ final class PestCombatCoordinator {
 
         Vec3 aimPos = getEntityEyePosition(currentTarget);
 
-        // If we're below the current target and don't have line-of-sight to it, try
-        // to gain vision first (avoid firing AOTV blindly).
-        Vec3 currentTargetPos = currentTarget.position().add(0, currentTarget.getEyeHeight(currentTarget.getPose()), 0);
-        if (client.player.getY() < currentTargetPos.y && !ClientUtils.hasLineOfSight(client.player, currentTargetPos)) {
-            ClientUtils.sendDebugMessage("[PestDestroyer] No LOS and below pest (" + currentTarget.getDisplayName().getString() + "), flying up for vision...");
-            ClientUtils.setKeyMappingState(client.options.keyJump, true);
-            ClientUtils.setKeyMappingState(client.options.keyUp, false);
-            ClientUtils.setKeyMappingState(client.options.keySprint, false);
+        Vec3 hopDirection = aimPos.subtract(client.player.getEyePosition()).normalize();
+        if (!hasClearAotvHop(client, hopDirection, aotvRange)) {
+            pathAroundAotvObstacle(client, context, currentTarget);
             return;
-        } else {
-            ClientUtils.setKeyMappingState(client.options.keyJump, false);
         }
+        ClientUtils.setKeyMappingState(client.options.keyJump, false);
 
         if (context.getAotvSlot() != -1 && ((AccessorInventory) client.player.getInventory()).getSelected() != context.getAotvSlot()) {
             client.execute(() -> FailsafeManager.selectHotbarSlot(client, context.getAotvSlot()));
@@ -431,6 +426,10 @@ final class PestCombatCoordinator {
             context.setAotvNextUseAt(readyAt);
         }
         if (now >= readyAt) {
+            if (!hasClearAotvHop(client, client.player.getViewVector(1.0F), aotvRange)) {
+                pathAroundAotvObstacle(client, context, currentTarget);
+                return;
+            }
             ClientUtils.sendDebugMessage("[PestDestroyer] Using AOTV (" + (context.getAotvUseCount() + 1) + "). Distance: "
                             + String.format("%.1f", dist));
             ClientUtils.performUseClick();
@@ -456,6 +455,18 @@ final class PestCombatCoordinator {
             context.startPathToPest(client, currentTarget);
             context.setState(PestDestroyer.State.FLY_TO_PEST);
         }
+    }
+
+    private static boolean hasClearAotvHop(Minecraft client, Vec3 direction, double range) {
+        Vec3 start = client.player.position();
+        return FlightPathClearance.isClear(client, start, start.add(direction.normalize().scale(range)));
+    }
+
+    private static void pathAroundAotvObstacle(Minecraft client, Context context, Entity target) {
+        clearAotvBetweenPests(client, context);
+        ClientUtils.sendDebugMessage("[PestDestroyer] AOTV hop obstructed. Pathfinding around the obstacle.");
+        context.startPathToPest(client, target);
+        context.setState(PestDestroyer.State.FLY_TO_PEST);
     }
 
     private static boolean finishAotvIfClose(
@@ -504,6 +515,7 @@ final class PestCombatCoordinator {
         ClientUtils.setKeyMappingState(client.options.keyUse, false);
         ClientUtils.setKeyMappingState(client.options.keyUp, false);
         ClientUtils.setKeyMappingState(client.options.keySprint, false);
+        ClientUtils.setKeyMappingState(client.options.keyJump, false);
         RotationManager.cancelRotation();
         context.setAotvSlot(-1);
         context.setAotvUseCount(0);

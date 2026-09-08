@@ -7,10 +7,12 @@ import dev.aether.config.AetherConfig;
 import dev.aether.macro.MacroState;
 import dev.aether.macro.MacroStateManager;
 import dev.aether.macro.MacroWorkerThread;
+import dev.aether.macro.farming.FarmingMacroManager;
 import dev.aether.modules.failsafe.FailsafeManager;
 import dev.aether.modules.pest.PestManager;
 import dev.aether.util.BazaarUtils;
 import dev.aether.util.ClientUtils;
+import dev.aether.util.ProgrammaticAttackTracker;
 import dev.aether.util.TablistUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -171,11 +173,11 @@ public final class AutoSprayonatorManager {
             PestManager.setCleaningInProgress(true);
 
             msg(client, "\u00A7eUnsprayed plot detected. Pausing farming to spray...");
-            client.execute(() -> dev.aether.macro.farming.FarmingMacroManager.disable(client));
+            PestClientThread.run(client, () -> FarmingMacroManager.disable(client));
             MacroWorkerThread.sleep(guiDelay);
 
             if (!holdSprayonator(client) || shouldAbort()) {
-                msg(client, "\u00A7cSprayonator not found in hotbar. Skipping auto spray.");
+                msg(client, "\u00A7cCould not safely equip the sprayonator. Skipping auto spray.");
                 return;
             }
 
@@ -554,18 +556,42 @@ public final class AutoSprayonatorManager {
     }
 
     public static boolean holdSprayonator(Minecraft client) {
-        if (client.player == null) return false;
+        if (client == null || client.isSameThread() || shouldAbort()) return false;
         int slot = PestClientThread.call(client, () -> findSprayonatorSlot(client), -1);
         if (slot < 0) {
             return false;
         }
-        PestClientThread.run(client, () -> {
-            if (client.player != null) {
+        SprayonatorSwapGuard guard = new SprayonatorSwapGuard();
+        long deadline = System.currentTimeMillis() + 2_000L;
+        while (!shouldAbort() && System.currentTimeMillis() < deadline) {
+            boolean selected = PestClientThread.call(client, () -> {
+                if (shouldAbort() || System.currentTimeMillis() >= deadline
+                        || client.player == null || client.options == null
+                        || client.gameMode == null || findSprayonatorSlot(client) != slot) {
+                    return false;
+                }
+                boolean attacking = client.options.keyAttack.isDown()
+                        || ProgrammaticAttackTracker.isHeld();
+                boolean queuedAttack = client.options.keyAttack.consumeClick();
+                FarmingMacroManager.releaseInputs(client);
+                ProgrammaticAttackTracker.setHeld(client.options.keyAttack, false);
+                ClientUtils.setKeyMappingState(client.options.keyAttack, false);
+                ClientUtils.discardQueuedClicks(client.options.keyAttack);
+                client.gameMode.stopDestroyBlock();
+                if (!guard.readyToSwap(client.player.tickCount, attacking || queuedAttack)) {
+                    return false;
+                }
                 FailsafeManager.selectHotbarSlot(client, slot);
+                return true;
+            }, false);
+            if (selected) {
+                return MacroWorkerThread.sleep(150) && !shouldAbort();
             }
-        });
-        MacroWorkerThread.sleep(150);
-        return true;
+            if (!MacroWorkerThread.sleep(25)) {
+                return false;
+            }
+        }
+        return false;
     }
 
     private static int findSprayonatorSlot(Minecraft client) {

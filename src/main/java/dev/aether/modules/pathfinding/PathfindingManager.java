@@ -6,6 +6,7 @@ import dev.aether.modules.pathfinding.debug.PathVisualizer;
 import dev.aether.modules.pathfinding.etherwarp.EtherwarpHelper;
 import dev.aether.modules.pathfinding.execution.EtherwarpExecutor;
 import dev.aether.modules.pathfinding.execution.FlyExecutor;
+import dev.aether.modules.pathfinding.execution.FlightPathClearance;
 import dev.aether.modules.pathfinding.execution.PathExecutor;
 import dev.aether.modules.pathfinding.movement.PathSmoother;
 import dev.aether.modules.pathfinding.movement.WalkabilityChecker;
@@ -26,8 +27,6 @@ import dev.aether.util.ClientUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -1379,7 +1378,7 @@ public final class PathfindingManager {
     /**
      * Simplifies a fly path using line-of-sight raycasting (FarmHelper smoothPath style).
      * For each node, tries to skip as many subsequent nodes as possible while still
-     * having a clear 4-corner hitbox path. Drastically reduces waypoint count on
+     * having a clear hitbox path. Drastically reduces waypoint count on
      * open paths (e.g. straight flight at altitude).
      */
     private static List<Node> smoothFlyPath(Minecraft mc, List<Node> path) {
@@ -1410,41 +1409,10 @@ public final class PathfindingManager {
         return smoothed;
     }
 
-    /**
-     * Checks 4-corner line-of-sight between two path positions at feet+head height.
-     * Uses the same offsets as FarmHelper's traversable() check.
-     */
-    private static final double[][] LOS_OFFSETS = {
-        {0.05, 0.05}, {0.05, 0.95}, {0.95, 0.05}, {0.95, 0.95}
-    };
-
     private static boolean hasFreePath(Minecraft mc, PathPosition from, PathPosition to) {
-        double fx = from.flooredX(), fz = from.flooredZ();
-        double tx = to.flooredX(),   tz = to.flooredZ();
-        double fy = from.flooredY(), ty = to.flooredY();
-
-        // Check at 4 heights: feet bottom, feet top, head bottom, head top
-        double[] checkY = { fy + 0.1, fy + 0.9, fy + 1.1, fy + 1.9 };
-        double[] checkTY = { ty + 0.1, ty + 0.9, ty + 1.1, ty + 1.9 };
-
-        for (double[] xzOff : LOS_OFFSETS) {
-            for (int h = 0; h < checkY.length; h++) {
-                Vec3 start = new Vec3(
-                        fx + xzOff[0], checkY[h], fz + xzOff[1]);
-                Vec3 end = new Vec3(
-                        tx + xzOff[0], checkTY[h], tz + xzOff[1]);
-                HitResult hit = mc.level.clip(
-                        new ClipContext(
-                                start, end,
-                                ClipContext.Block.COLLIDER,
-                                ClipContext.Fluid.NONE,
-                                mc.player));
-                if (hit.getType() == HitResult.Type.BLOCK) {
-                    return false;
-                }
-            }
-        }
-        return true;
+        return FlightPathClearance.isClear(mc,
+                new Vec3(from.flooredX() + 0.5, from.flooredY() + 0.15, from.flooredZ() + 0.5),
+                new Vec3(to.flooredX() + 0.5, to.flooredY() + 0.15, to.flooredZ() + 0.5));
     }
 
     // --- Utilities -----------------------------------------------------------

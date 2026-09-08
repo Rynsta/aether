@@ -2,12 +2,11 @@ package dev.aether.modules.pest.helpers;
 
 import dev.aether.config.AetherConfig;
 import dev.aether.modules.pathfinding.execution.FlightMotion;
+import dev.aether.modules.pathfinding.execution.FlightPathClearance;
 import dev.aether.modules.rotation.RotationManager;
 import dev.aether.util.ClientUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 final class PestFlightController {
@@ -59,20 +58,7 @@ final class PestFlightController {
             return false;
         }
         Vec3 destination = target.position().add(0, client.player.getAbilities().flying ? 3.0 : 0.0, 0);
-        double halfWidth = client.player.getBbWidth() * 0.5;
-        for (double x : new double[]{-halfWidth, halfWidth}) {
-            for (double z : new double[]{-halfWidth, halfWidth}) {
-                for (double y : new double[]{0.1, client.player.getBbHeight() - 0.1}) {
-                    if (client.level.clip(new ClipContext(
-                            client.player.position().add(x, y, z), destination.add(x, y, z),
-                            ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, client.player))
-                            .getType() == HitResult.Type.BLOCK) {
-                        return false;
-                    }
-                }
-            }
-        }
-        return true;
+        return FlightPathClearance.isClear(client, client.player.position(), destination);
     }
 
     void update(Minecraft client, Entity target, double vacuumRange, boolean canTranslate) {
