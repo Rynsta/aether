@@ -752,5 +752,17 @@
   "text.aether.twilight": "Twilight",
   "text.aether.aurora": "Aurora",
   "text.aether.starfield": "Starfield",
-  "text.aether.animated_shader_skies": "Animated shader skies"
+  "text.aether.animated_shader_skies": "Animated shader skies",
+  "text.aether.halo": "Halo",
+  "text.aether.a_softly_glowing_halo_above_your_head_in_third_person": "A softly glowing halo above your head in third person",
+  "text.aether.halo_style": "Halo Style",
+  "text.aether.classic": "Classic",
+  "text.aether.orbit": "Orbit",
+  "text.aether.radiant": "Radiant",
+  "text.aether.halo_color": "Halo Color",
+  "text.aether.halo_size": "Halo Size",
+  "text.aether.halo_height": "Halo Height",
+  "text.aether.halo_tilt": "Halo Tilt",
+  "text.aether.halo_glow": "Halo Glow",
+  "text.aether.halo_animation_speed": "Halo Animation Speed"
 }

@@ -16,6 +16,7 @@ public final class CosmeticWorldRenderer {
     private final CosmeticMesh mesh = new CosmeticMesh();
     private final CosmeticShader shader = new CosmeticShader();
     private final DragonWingsRenderer wings = new DragonWingsRenderer();
+    private final HaloRenderer halo = new HaloRenderer();
     private final Matrix4f projection = new Matrix4f();
     private final FrustumIntersection frustum = new FrustumIntersection();
     private final Vector3f right = new Vector3f(), up = new Vector3f();
@@ -26,6 +27,7 @@ public final class CosmeticWorldRenderer {
         if (StreamerModeManager.isEnabled()) return false;
         Minecraft client = Minecraft.getInstance();
         return DragonWingsRenderer.visible(client)
+                || HaloRenderer.visible(client)
                 || PestDefeatEffects.hasActiveEffects(client);
     }
 
@@ -56,6 +58,12 @@ public final class CosmeticWorldRenderer {
             wings.append(mesh, client, position, now);
         }
         int wingVertices = mesh.size();
+        if (HaloRenderer.visible(client) && player.distanceToSqr(position) < 64 * 64
+                && frustum.testSphere((float) (player.x - position.x),
+                (float) (player.y + client.player.getEyeHeight() - position.y),
+                (float) (player.z - position.z), 2f * client.player.getScale())) {
+            halo.append(mesh, client, position, now);
+        }
         if (PestDefeatEffects.hasActiveEffects(client)) {
             for (var burst : PestDefeatEffects.effects().active()) {
                 var p = burst.position();

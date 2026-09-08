@@ -14,6 +14,7 @@ import org.lwjgl.system.MemoryStack;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -118,8 +119,54 @@ class CosmeticShaderTest {
     }
 
     @Test
+    void haloStylesRenderFromAboveAndEdgeOnWithOptionalGlow() throws Exception {
+        var halo = new HaloMesh();
+        for (int style = 0; style < 3; style++) {
+            for (int angle = 0; angle < 3; angle++) {
+                for (int glow = 0; glow <= 1; glow++) {
+                    clear();
+                    mesh.clear();
+                    var head = new Matrix4f().translation(0, 0, -3)
+                            .rotateX(angle * (float) Math.PI / 4).rotateZ(0.14f);
+                    halo.append(mesh, head, style, 0.6f, 0xFFFFEAC2, glow);
+                    shader.draw(mesh, perspective(), 0, WIDTH, HEIGHT, 0);
+                    assertFalse(shader.isFailed());
+                    assertTrue(coloredPixels(capture("halo-" + style + "-angle-" + angle + "-glow-" + glow)) > 80,
+                            "Halos must remain visible from the side, with and without glow");
+                    assertEquals(GL11.GL_NO_ERROR, GL11.glGetError());
+                }
+            }
+        }
+    }
+
+    @Test
+    void haloRespectsOcclusionAndLeavesWorldDepthUnchanged() throws Exception {
+        var halo = new HaloMesh();
+        var head = new Matrix4f().translation(0, 0, -3).rotateX(0.5f);
+        var depth = ByteBuffer.allocateDirect(WIDTH * HEIGHT * Float.BYTES)
+                .order(ByteOrder.nativeOrder()).asFloatBuffer();
+        for (int style = 0; style < 3; style++) {
+            clear();
+            mesh.clear();
+            mesh.billboard(0, 0, -2, new Vector3f(1, 0, 0), new Vector3f(0, 1, 0), 3,
+                    0xFF080808, 1, 1, 0, 0);
+            halo.append(mesh, head, style, 0, 0xFFFFEAC2, 1);
+            shader.draw(mesh, perspective(), 0, WIDTH, HEIGHT, 6);
+            assertEquals(0, coloredPixels(capture(null)), "A wall must completely hide every halo style");
+            clear();
+            mesh.clear();
+            halo.append(mesh, head, style, 0, 0xFFFFEAC2, 1);
+            shader.draw(mesh, perspective(), 0, WIDTH, HEIGHT, 0);
+            depth.clear();
+            GL11.glReadPixels(0, 0, WIDTH, HEIGHT, GL11.GL_DEPTH_COMPONENT, GL11.GL_FLOAT, depth);
+            while (depth.hasRemaining()) assertEquals(1f, depth.get());
+        }
+    }
+
+    @Test
     void previewsArticulatedWingsAndReportsMaximumLoadTiming() throws Exception {
         var wings = new DragonWingMesh();
+        var halo = new HaloMesh();
         var body = new Matrix4f();
         var view = perspective().lookAt(3.4f, 2.7f, -6.5f, 0, 1.1f, 0, 0, 1, 0);
         for (int frame = 0; frame < 8; frame++) {
@@ -137,6 +184,7 @@ class CosmeticShaderTest {
         var up = new Vector3f(0, 1, 0);
         var bursts = new DefeatEffectPool.Burst[8];
         var benchmarkBody = new Matrix4f().translation(0, -0.8f, -6);
+        var benchmarkHead = new Matrix4f().translation(0, 1.4f, -6);
         var benchmarkView = perspective();
         var benchmarkCamera = new Vec3(0, 0, 6);
         for (int i = 0; i < bursts.length; i++)
@@ -149,6 +197,7 @@ class CosmeticShaderTest {
                 mesh.clear();
                 wings.append(mesh, benchmarkBody, frame * 0.03f, 0.4f, 0.25f, 0xFFB080F5, true);
                 int wingVertices = mesh.size();
+                halo.append(mesh, benchmarkHead, 1, frame * 0.03f, 0xFFFFEAC2, 1);
                 for (var burst : bursts) PestDefeatMesh.append(mesh, burst, benchmarkCamera, right, up, 350_000_000L);
                 long elapsed = System.nanoTime() - start;
                 long drawStart = System.nanoTime();

@@ -25,6 +25,16 @@ void main() {
         fragColor = color;
         return;
     }
+    if (material == 6 || material == 7) {
+        float distance = material == 6 ? abs(uv.y) : abs(uv.x) + abs(uv.y);
+        float core = band(distance, material == 6 ? 0.13 : 0.22);
+        float glow = pow(max(0.0, 1.0 - distance), 3.0) * seed * 0.45;
+        float ends = material == 6 ? smoothstep(0.0, 0.045, uv.x) * smoothstep(0.0, 0.045, 1.0 - uv.x) : 1.0;
+        float alpha = min(1.0, core + glow) * color.a * ends;
+        if (alpha < 0.003) discard;
+        fragColor = vec4(mix(color.rgb, vec3(1.0), core * 0.22), alpha);
+        return;
+    }
     float r = length(uv);
     float alpha = 0.0;
     vec3 tint = color.rgb;

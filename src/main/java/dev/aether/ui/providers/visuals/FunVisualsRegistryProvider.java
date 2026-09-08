@@ -48,6 +48,24 @@ public final class FunVisualsRegistryProvider extends AbstractVisualsRegistryPro
                 .add(new ToggleSetting("Membrane Glow", AetherConfig.DRAGON_WINGS_GLOW::get,
                         value -> { AetherConfig.DRAGON_WINGS_GLOW.set(value); AetherConfig.save(); })
                         .visibleWhen(() -> !AetherConfig.DRAGON_WINGS_WIREFRAME.get())));
+        groups.add(SettingGroup.of("Halo", "A softly glowing halo above your head in third person",
+                        AetherConfig.HALO_ENABLED::get,
+                        value -> { AetherConfig.HALO_ENABLED.set(value); AetherConfig.save(); })
+                .add(new DropdownSetting("Halo Style", List.of("Classic", "Orbit", "Radiant"),
+                        AetherConfig.HALO_STYLE::get,
+                        value -> { AetherConfig.HALO_STYLE.set(value); AetherConfig.save(); }))
+                .add(new ColorSetting("Halo Color", AetherConfig.HALO_COLOR::get,
+                        value -> { AetherConfig.HALO_COLOR.set(value); AetherConfig.save(); }))
+                .add(new SliderSetting("Halo Size", 0.7f, 1.5f, AetherConfig.HALO_SCALE::get,
+                        value -> { AetherConfig.HALO_SCALE.set(value); AetherConfig.save(); }).withDecimals(1))
+                .add(new SliderSetting("Halo Height", 0.12f, 0.7f, AetherConfig.HALO_HEIGHT::get,
+                        value -> { AetherConfig.HALO_HEIGHT.set(value); AetherConfig.save(); }).withDecimals(2))
+                .add(new SliderSetting("Halo Tilt", -25f, 25f, AetherConfig.HALO_TILT::get,
+                        value -> { AetherConfig.HALO_TILT.set(value); AetherConfig.save(); }).withDecimals(0))
+                .add(new SliderSetting("Halo Glow", 0f, 1f, AetherConfig.HALO_GLOW::get,
+                        value -> { AetherConfig.HALO_GLOW.set(value); AetherConfig.save(); }).withDecimals(1))
+                .add(new SliderSetting("Halo Animation Speed", 0f, 2f, AetherConfig.HALO_SPEED::get,
+                        value -> { AetherConfig.HALO_SPEED.set(value); AetherConfig.save(); }).withDecimals(1)));
         groups.add(SettingGroup.of(
                         "Hat",
                         "Renders a chroma pyramid above your head",
