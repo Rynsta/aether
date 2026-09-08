@@ -31,6 +31,8 @@ public final class HaloClientTest implements FabricClientGameTest {
                 AetherConfig.DRAGON_WINGS_ENABLED.set(false);
                 AetherConfig.HALO_ENABLED.set(true);
                 AetherConfig.HALO_SPEED.set(0f);
+                AetherConfig.HALO_TILT.reset();
+                AetherConfig.HALO_GLOW.reset();
             });
             context.waitTicks(10);
             for (int style = 0; style < 3; style++) {
@@ -38,6 +40,13 @@ public final class HaloClientTest implements FabricClientGameTest {
                 context.runOnClient(client -> AetherConfig.HALO_STYLE.set(selection));
                 context.takeScreenshot("halo-style-" + style);
                 assertVisible(context, true);
+            }
+            world.getServer().runCommand("tp @p 0 101 0 180 -7.2");
+            context.waitTicks(5);
+            for (int style = 0; style < 3; style++) {
+                int selection = style;
+                context.runOnClient(client -> AetherConfig.HALO_STYLE.set(selection));
+                context.takeScreenshot("halo-edge-on-style-" + style);
             }
 
             context.runOnClient(client -> {

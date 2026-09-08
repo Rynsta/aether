@@ -1083,10 +1083,11 @@ public final class AetherConfig {
         public static final IntEntry HALO_STYLE = Config.integer("haloStyle", 0).range(0, 2);
         public static final FloatEntry HALO_SCALE = Config.floatVal("haloScale", 1f).range(0.7f, 1.5f);
         public static final FloatEntry HALO_HEIGHT = Config.floatVal("haloHeight", 0.28f).range(0.12f, 0.7f);
-        public static final FloatEntry HALO_TILT = Config.floatVal("haloTilt", 8f).range(-25f, 25f);
+        public static final FloatEntry HALO_TILT = Config.floatVal("haloTilt", 0f).range(-25f, 25f);
         public static final FloatEntry HALO_SPEED = Config.floatVal("haloSpeed", 1f).range(0f, 2f);
         public static final IntEntry HALO_COLOR = Config.integer("haloColor", 0xFFFFEAC2);
-        public static final FloatEntry HALO_GLOW = Config.floatVal("haloGlow", 0.5f).range(0f, 1f);
+        public static final FloatEntry HALO_GLOW = Config.floatVal("haloGlow", 1f).range(0f, 1f);
+        public static final BooleanEntry CAPE_ENABLED = Config.bool("capeEnabled", true);
         public static final BooleanEntry FREECAM_ENABLED = Config.bool("freecamEnabled", true);
         public static final FloatEntry FREECAM_SPEED = Config.floatVal("freecamSpeed", 0.45f).range(0.1f, 2.5f);
         public static final BooleanEntry FREELOOK_ENABLED = Config.bool("freelookEnabled", true);

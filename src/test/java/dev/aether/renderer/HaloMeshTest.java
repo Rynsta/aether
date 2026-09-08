@@ -55,6 +55,27 @@ class HaloMeshTest {
     }
 
     @Test
+    void haloQuadsDoNotTwistAsTheCameraCrossesTheRingPlane() {
+        var halo = new HaloMesh();
+        var mesh = new CosmeticMesh();
+        int stride = CosmeticMesh.FLOATS_PER_VERTEX;
+        for (int style = 0; style < 3; style++) for (int frame = -20; frame <= 20; frame++) {
+            mesh.clear();
+            halo.append(mesh, new Matrix4f().translation(0, frame * 0.001f, -1.2f), style, 0.3f, -1, 1);
+            var data = mesh.data();
+            for (int base = 0; base < data.limit(); base += 6 * stride) {
+                float dot = 0;
+                for (int axis = 0; axis < 3; axis++) {
+                    float startWidth = data.get(base + stride + axis) - data.get(base + axis);
+                    float endWidth = data.get(base + 2 * stride + axis) - data.get(base + 5 * stride + axis);
+                    dot += startWidth * endWidth;
+                }
+                assertTrue(dot >= 0, "Ribbon edges must not cross at the silhouette");
+            }
+        }
+    }
+
+    @Test
     void transparentHaloAndInsufficientCapacityLeaveTheStreamUntouched() {
         var halo = new HaloMesh();
         var mesh = new CosmeticMesh();

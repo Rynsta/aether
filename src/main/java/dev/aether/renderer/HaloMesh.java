@@ -20,6 +20,7 @@ public final class HaloMesh {
     private final Vector3f[] points = new Vector3f[SEGMENTS + 1];
     private final Vector3f[] widths = new Vector3f[SEGMENTS + 1];
     private final Vector3f tangent = new Vector3f();
+    private final Vector3f normal = new Vector3f(), center = new Vector3f();
 
     public HaloMesh() {
         for (int i = 0; i <= SEGMENTS; i++) {
@@ -50,8 +51,15 @@ public final class HaloMesh {
     private void appendRing(CosmeticMesh mesh, float radius, float width, int tint, float opacity,
                             float glow, boolean segmented) {
         float scale = ring.getScale(tangent).x;
+        ring.transformDirection(normal.set(0, 1, 0)).normalize();
+        ring.getTranslation(center);
+        boolean edgeOn = Math.abs(normal.dot(center)) <= center.length() * 0.1f;
         for (int i = 0; i <= SEGMENTS; i++) {
             ring.transformPosition(points[i].set(COS[i] * radius, 0, SIN[i] * radius));
+            if (edgeOn) {
+                widths[i].set(normal).mul(width * scale);
+                continue;
+            }
             ring.transformDirection(tangent.set(-SIN[i], 0, COS[i]));
             tangent.cross(points[i], widths[i]);
             if (widths[i].lengthSquared() < 1.0e-8f) {
@@ -59,6 +67,7 @@ public final class HaloMesh {
                 if (widths[i].lengthSquared() < 1.0e-8f) tangent.cross(1, 0, 0, widths[i]);
             }
             widths[i].normalize(width * scale);
+            if (i > 0 && widths[i].dot(widths[i - 1]) < 0) widths[i].negate();
         }
         for (int i = 0; i < SEGMENTS; i++) {
             if (segmented && (i % 16 < 2 || i % 16 >= 14)) continue;

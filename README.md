@@ -24,7 +24,7 @@
 
 ## features
 - **farming qol** - auto farming, pest destroyer, auto pest exchange, auto spray, auto loadouts, auto greenhouse, auto composter ... + many more!
-- **visual** - nick hider, purse spoofer, sawdust spoofer, customizable halos
+- **visual** - nick hider, purse spoofer, sawdust spoofer, customizable halos, Aether logo cape
 - **failsafes** - too many failsafes to list
 
 ---
@@ -49,10 +49,10 @@ To contribute to language packs, see the [`translations/`](translations/) direct
 
 | Locale | Covered | Percentage |
 | --- | ---: | ---: |
-| `jp_jp` | 303/766 | 39.6% |
-| `pr_us` | 253/766 | 33.0% |
-| `pt_pt` | 477/766 | 62.3% |
-| `ru_ru` | 492/766 | 64.2% |
-| `test` | 516/766 | 67.4% |
-| `zh_cn` | 508/766 | 66.3% |
+| `jp_jp` | 303/768 | 39.5% |
+| `pr_us` | 253/768 | 32.9% |
+| `pt_pt` | 477/768 | 62.1% |
+| `ru_ru` | 492/768 | 64.1% |
+| `test` | 516/768 | 67.2% |
+| `zh_cn` | 508/768 | 66.1% |
 <!-- translation-coverage:end -->

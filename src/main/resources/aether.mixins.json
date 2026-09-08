@@ -18,6 +18,7 @@
         "AccessorWindow",
         "PlayerTabOverlayAccessor",
         "MixinEntityTurn",
+        "MixinAetherCape",
         "MixinPestOutline",
         "MixinPestSkullOutline",
         "MixinPlayer",

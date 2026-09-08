@@ -48,6 +48,9 @@ public final class FunVisualsRegistryProvider extends AbstractVisualsRegistryPro
                 .add(new ToggleSetting("Membrane Glow", AetherConfig.DRAGON_WINGS_GLOW::get,
                         value -> { AetherConfig.DRAGON_WINGS_GLOW.set(value); AetherConfig.save(); })
                         .visibleWhen(() -> !AetherConfig.DRAGON_WINGS_WIREFRAME.get())));
+        groups.add(SettingGroup.of("Aether Cape", "Your Aether logo cape with vanilla movement",
+                        AetherConfig.CAPE_ENABLED::get,
+                        value -> { AetherConfig.CAPE_ENABLED.set(value); AetherConfig.save(); }));
         groups.add(SettingGroup.of("Halo", "A softly glowing halo above your head in third person",
                         AetherConfig.HALO_ENABLED::get,
                         value -> { AetherConfig.HALO_ENABLED.set(value); AetherConfig.save(); })

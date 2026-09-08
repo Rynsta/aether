@@ -140,6 +140,25 @@ class CosmeticShaderTest {
     }
 
     @Test
+    void edgeOnHaloDoesNotGrowBrightSpikesAtTheSilhouette() throws Exception {
+        var halo = new HaloMesh();
+        for (int frame = -4; frame <= 4; frame++) {
+            clear();
+            mesh.clear();
+            var head = new Matrix4f().translation(0, 0, -1.2f).rotateX(frame * 0.0005f);
+            halo.append(mesh, head, 0, 0, 0xFFFFFFFF, 1);
+            shader.draw(mesh, perspective(), 0, WIDTH, HEIGHT, 0);
+            BufferedImage rendered = capture("halo-silhouette-" + frame);
+            for (int y = 0; y < HEIGHT; y++) for (int x = 0; x < WIDTH; x++) {
+                if ((rendered.getRGB(x, y) & 255) > 150) {
+                    assertTrue(Math.abs(y - HEIGHT / 2) <= 8,
+                            "Bright spike at frame " + frame + ", pixel " + x + ", " + y);
+                }
+            }
+        }
+    }
+
+    @Test
     void haloRespectsOcclusionAndLeavesWorldDepthUnchanged() throws Exception {
         var halo = new HaloMesh();
         var head = new Matrix4f().translation(0, 0, -3).rotateX(0.5f);
