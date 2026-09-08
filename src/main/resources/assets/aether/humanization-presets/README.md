@@ -1,18 +1,23 @@
 # Efficient
 
-Efficient balances responsive farming with gradual camera movement. Reapply it from
-Humanization to load the bundled values on a new installation. Existing editable
-preset files retain their values; replace `config/aether/humanization-presets/efficient.json`
-with this version to update an older installation.
+Efficient is the recommended starting point: unhurried camera movement with a wide
+pest search cone. Reapply it from Humanization to load the bundled values on a new
+installation. Existing editable preset files retain their values; replace
+`config/aether/humanization-presets/efficient.json` with this version to update an
+older installation.
 
-- Turns use matching quadratic ease-in/out, a 240 ms base duration, and 4.5 ms per
-  degree for larger angles (a 405 ms minimum for 90 degrees).
-- Vacuum tracking uses 190 ms smoothing and a 300°/s ceiling. Hunting uses 135 ms
+- Turns use matching quadratic ease-in/out, a 100 ms base duration, and 6 ms per
+  degree for larger angles (a 640 ms minimum for 90 degrees).
+- Vacuum tracking uses 190 ms smoothing and a 360°/s ceiling. Hunting uses 135 ms
   and 420°/s to retain room for the shorter stun/throw windows.
-- Tracking noise is a small 1–3% variation in each correction. Aim offsets stay
-  modest; crop alignment remains exact to avoid shifting farming lanes.
-- GUI actions, swaps, rewarps and pest reactions have nonzero timing ranges.
-  Bazaar warning countdowns always take precedence over those delays.
+- Tracking noise is a 2–6% variation in each correction. Pest aim drift is 1.0 and
+  the above-target pitch spans 25–55°; crop alignment remains exact to avoid
+  shifting farming lanes.
+- Pest FOV is 90° so pests are picked up without a wide sweep first. Visitor and
+  pest exchange cones stay narrow at 12° and 4°.
+- GUI actions, swaps, rewarps and pest reactions have nonzero timing ranges, and
+  farming pauses while George is called. Bazaar warning countdowns always take
+  precedence over those delays.
 
 The preset includes movement speed and follow distances, but does not change pest
 routing, equipment, farm layout, failsafes, or which automation modules are enabled.
