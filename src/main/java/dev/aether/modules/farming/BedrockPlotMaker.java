@@ -9,6 +9,7 @@ import dev.aether.modules.failsafe.FailsafeManager;
 import dev.aether.modules.gear.GearManager;
 import dev.aether.modules.pathfinding.PathfindingManager;
 import dev.aether.modules.rotation.RotationManager;
+import dev.aether.notification.NotificationManager;
 import dev.aether.util.ClientUtils;
 import dev.aether.util.GardenPlots;
 import net.minecraft.client.Minecraft;
@@ -359,7 +360,13 @@ public final class BedrockPlotMaker {
                 clearRotationLock();
                 releaseHeldKeysSync(client);
                 if (!descendToBedrock(client, dropCenter)) {
+                    int stoppedY = client.player != null
+                            ? client.player.blockPosition().getY()
+                            : BEDROCK_STANDING_Y;
                     ClientUtils.sendDebugMessage("Bedrock Plot Maker: failed to reach bedrock level.");
+                    NotificationManager.error(
+                            "Bedrock Plot Maker",
+                            "Couldn't reach bedrock (stopped at Y=" + stoppedY + "). Macro halted.");
                     return;
                 }
             }
