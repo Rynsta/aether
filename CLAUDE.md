@@ -120,3 +120,14 @@ update translations for other locales; those updates are handled on GitHub.
 
 	•	Skip comments on self-explanatory code (getters, simple loops, obvious assignments).
 	•	Do comment: non-obvious business logic, workarounds for bugs/quirks, magic numbers, anything a future reader would ask “wait, why?” about.
+
+### Comment Style
+
+	•	No javadoc, ever. No `/** ... */`, no `/* ... */` block comments, no `@param`/`@return`/`@throws`.
+	•	Only `//` line comments. Two lines max, and lowercase — including the first word.
+	•	Bad: `/** Returns true if the point is inside the element's bounds. */`
+	•	Bad: `// Releases the cursor while the macro is active.`
+	•	Good: `// vanilla grabMouse() resets bindings to physical key state, dropping macro-held keys`
+	•	The only block comments left in the tree are inline constant annotations
+		(`GL11.glGetInteger(0x8B8D /* GL_CURRENT_PROGRAM */)`). Don't add new ones.
+	•	When a javadoc block would only restate the name, delete it instead of rewriting it.
