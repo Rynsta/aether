@@ -6,39 +6,20 @@ import dev.aether.util.AetherLang;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-/**
- * Singleton manager for the notification system.
- *
- * <p>Handles notification queue, lifecycle, and provides convenience methods
- * for showing notifications from anywhere in the codebase.</p>
- *
- * <h3>Usage:</h3>
- * <pre>{@code
- *   NotificationManager.info("Connected to server");
- *   NotificationManager.success("Item sold!", "Sold 64x Diamond for 1,024 coins");
- *   NotificationManager.warning("Low inventory space", "3 slots remaining");
- *   NotificationManager.error("Connection lost", "Reconnecting in 5 seconds...");
- * }</pre>
- */
 public final class NotificationManager {
 
     private NotificationManager() {}
 
     // -- Configuration ---------------------------------------------------------
 
-    /** Maximum number of notifications displayed at once. */
     public static int MAX_VISIBLE = 5;
 
-    /** Default duration for auto-dismiss (ms). */
     public static long DEFAULT_DURATION = 4000;
 
-    /** Animation duration for slide-in/out (ms). */
     public static long ANIMATION_DURATION_MS = 320;
 
-    /** Spacing between notifications (px). */
     public static float SPACING = 8f;
 
-    /** Margin from screen edge (px). */
     public static float MARGIN = 16f;
 
     // -- State ------------------------------------------------------------------
@@ -47,9 +28,6 @@ public final class NotificationManager {
 
     // -- Public API -------------------------------------------------------------
 
-    /**
-     * Shows a notification with full control over all parameters.
-     */
     public static Notification show(String title, String message, Notification.Type type, long durationMs) {
         if (StreamerModeManager.isEnabled()) {
             return null;
@@ -157,12 +135,7 @@ public final class NotificationManager {
 
     // -- Update (called each frame by renderer) ---------------------------------
 
-    /**
-     * Updates all notifications' animation states and removes completed ones.
-     * Optimized for minimal allocations and calculations.
-     *
-     * @param deltaTime Frame delta time in seconds
-     */
+    // deltaTime is in seconds
     public static void update(float deltaTime) {
         if (notifications.isEmpty()) return;
 

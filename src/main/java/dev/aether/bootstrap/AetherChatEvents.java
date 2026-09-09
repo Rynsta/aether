@@ -128,7 +128,7 @@ public final class AetherChatEvents {
         PestDestroyer.onLassoEscapeMessage(lowerPlainText);
     }
 
-    /** Recognizes both the generic and typed/count shard catch messages. */
+    // matches both the generic and the typed/count shard catch lines
     static boolean isPestCatchMessage(String lowerPlainText) {
         if (lowerPlainText == null || !lowerPlainText.contains("shard")) {
             return false;

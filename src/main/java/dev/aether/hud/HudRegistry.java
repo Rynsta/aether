@@ -19,41 +19,22 @@ import net.minecraft.resources.Identifier;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Central registry for all {@link HudElement}s.
- *
- * <p>Call {@link #register()} once during mod init to create all elements and
- * hook into Fabric's {@code HudElementRegistry}.</p>
- *
- * <p>The {@link HudEditScreen} calls {@link #renderEditMode(NVGRenderer)} within
- * its own NVG frame - the gameplay callback skips rendering when the edit screen
- * is open to prevent double-draws.</p>
- */
+// the edit screen calls renderEditMode inside its own frame, so the gameplay callback skips rendering while it is open
 public class HudRegistry {
     private static final float FADE_EPSILON = 0.01f;
 
     public static final List<HudElement> ELEMENTS = new ArrayList<>();
     private static float hudAlpha = 1f;
 
-    /** The singleton macro-status panel. */
     public static MacroHudElement macroHud;
-    /** Session profit panel. */
     public static ProfitHudElement sessionHud;
-    /** Lifetime profit panel. */
     public static ProfitHudElement lifetimeHud;
-    /** Daily profit panel. */
     public static ProfitHudElement dailyHud;
-    /** Intermediary task status panel. */
     public static TaskGroupHudElement intermediariesHud;
-    /** Mid-farming task status panel. */
     public static TaskGroupHudElement midFarmingHud;
-    /** Failsafe status panel. */
     public static TaskGroupHudElement failsafesHud;
-    /** Inventory preview panel. */
     public static InventoryHudElement inventoryHud;
-    /** Watermark panel. */
     public static WatermarkHudElement watermarkHud;
-    /** Main status panel (Main theme). */
     public static MainStatusHudElement mainStatusHud;
     public static ScoreboardHudElement scoreboardHud;
 
@@ -150,10 +131,7 @@ public class HudRegistry {
 
     // -- Edit-mode helper ------------------------------------------------------
 
-    /**
-     * Renders all enabled elements in edit mode.
-     * Must be called <em>within</em> an already-open NVG frame.
-     */
+    // must be called inside an already-open nvg frame
     public static void renderEditMode(NVGRenderer nvg) {
                 if (StreamerModeManager.isEnabled()) {
             return;

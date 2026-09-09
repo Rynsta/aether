@@ -274,10 +274,7 @@ public class VisitorManager {
         }
     }
 
-    /**
-     * Resolves a Skyblock Item ID from NBT custom data, or falls back to the
-     * Cofl API search cache in ProfitManager.fetchIdByName.
-     */
+    // falls back to the cofl api search cache in ProfitManager.fetchIdByName
     @SuppressWarnings("unchecked")
     private static String resolveId(String name, ItemStack scannerStack) {
         // 1. Try NBT lookup from the "Accept Offer" stack's custom data

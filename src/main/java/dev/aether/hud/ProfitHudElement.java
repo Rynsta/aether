@@ -11,9 +11,7 @@ import dev.aether.renderer.NVGRenderer;
 
 import java.util.Map;
 
-/**
- * NVG-rendered profit-tracking panel - one instance for Session, one for Lifetime.
- */
+// one instance each for session, lifetime and daily
 public class ProfitHudElement extends HudElement {
 
     // -- Layout (at scale 1.0) -------------------------------------------------
@@ -26,7 +24,7 @@ public class ProfitHudElement extends HudElement {
     private static final float CATEGORY_TAG_GAP = 3f;
     private static final float FARM_BAR_H = 4f;
 
-    /** Panel mode: {@code "session"}, {@code "lifetime"}, or {@code "daily"}. */
+    // one of session, lifetime or daily
     private final String mode;
     private final ProfitGraph graph = new ProfitGraph();
 

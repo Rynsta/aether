@@ -15,19 +15,8 @@ import dev.aether.util.CommandUtils;
 
 import java.util.*;
 
-/**
- * In-client pest killing state machine inspired by FarmHelper's PestsDestroyer.
- * <p>
- * Uses {@link PathfindingManager} in fly mode to navigate to pest entities,
- * then aims and fires the vacuum to kill them.
- * <p>
- * Lifecycle: {@link PestLifecycleManager} starts this automatic CLEANING stage
- * after the shared PRE stage completes, beginning the pest hunt in the garden.
- * Each tick, {@link #update(Minecraft)} drives the state machine. When all
- * pests
- * are dead (or stuck), it calls
- * {@link PestManager#handlePestCleaningFinished(Minecraft)}.
- */
+// flies to pest entities with PathfindingManager, then aims and fires the vacuum
+// started by PestLifecycleManager after the shared PRE stage; hands back to PestManager.handlePestCleaningFinished when everything is dead or stuck
 public class PestDestroyer {
     private static final PestDestroyerRuntime runtime = new PestDestroyerRuntime();
     private static final PestDestroyerCoordinatorContext CONTEXT =
@@ -189,9 +178,6 @@ public class PestDestroyer {
         runtime.resetAll();
     }
 
-    /**
-     * Called every client tick from the main update loop.
-     */
     public static void update() {
         Minecraft client = Minecraft.getInstance();
         if (!runtime.active || client.player == null || client.level == null)
@@ -616,10 +602,7 @@ public class PestDestroyer {
         runtime.transitionTo(newState, System.currentTimeMillis());
     }
 
-    /**
-     * Notify the destroyer that an entity died - used to clear current target
-     * or remove from killed list tracking.
-     */
+    // clears the current target or drops it from kill tracking
     public static void onEntityDeath(Entity entity) {
         PestTargetController.onEntityDeath(
                 Minecraft.getInstance(), runtime, CONTEXT, entity);

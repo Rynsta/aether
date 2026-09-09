@@ -228,7 +228,6 @@ public final class PestTargetTracker {
         return closest;
     }
 
-    /** Returns the pest entities currently visible to the client. */
     public static List<Entity> getLoadedPests(Minecraft client) {
         return snapshot(client).targets();
     }

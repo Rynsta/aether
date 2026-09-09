@@ -15,15 +15,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/**
- * Suppresses the vanilla HUD (crosshair, hotbar, health, etc.) while
- * {@link MainGUI} or {@link HudEditScreen} is open, so the NanoVG UI
- * renders cleanly without vanilla elements overlapping it.
- *
- * <p>For {@link HudEditScreen} specifically, the HUD elements are re-drawn
- * by {@link dev.aether.hud.HudRegistry#renderEditMode} inside the NVG frame,
- * so cancelling the vanilla render avoids duplicate rendering.</p>
- */
+// hides the vanilla hud while the nanovg screens are open; the hud editor redraws the elements itself inside the nvg frame
 @Mixin(Gui.class)
 public class MixinGui {
 

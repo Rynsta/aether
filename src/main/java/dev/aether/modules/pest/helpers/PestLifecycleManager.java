@@ -13,10 +13,7 @@ import dev.aether.util.ClientUtils;
 import dev.aether.util.CommandUtils;
 import net.minecraft.client.Minecraft;
 
-/**
- * Coordinates one pest cycle without coupling the setup and teardown work to
- * the implementation that actually clears the pests.
- */
+// keeps setup and teardown off the implementation that actually clears the pests
 public final class PestLifecycleManager {
 
     public enum Stage {

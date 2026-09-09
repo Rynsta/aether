@@ -59,10 +59,7 @@ public class RotationManager {
         initiateRotation(mc, targetPos, minDuration, humanizeRange, 0.0f);
     }
 
-    /**
-     * {@code turnSpeedLimit} in degrees per second caps how fast the camera may
-     * travel, whatever the duration works out to; 0 leaves it uncapped.
-     */
+    // turnSpeedLimit caps degrees per second whatever the duration works out to; 0 leaves it uncapped
     public static void initiateRotation(
             Minecraft mc, Vec3 targetPos, long minDuration, float humanizeRange, float turnSpeedLimit) {
         if (mc.player == null)
@@ -96,11 +93,7 @@ public class RotationManager {
         isRotating = true;
     }
 
-    /**
-     * Rotate to a specific yaw and pitch over the given duration.
-     * Does not interrupt a rotation that is already in progress unless
-     * {@code force} is true.
-     */
+    // does not interrupt a rotation already in progress unless force is set
     public static void rotateToYawPitch(Minecraft mc, float yaw, float pitch, long durationMs) {
         rotateToYawPitch(mc, yaw, pitch, durationMs, false);
     }
@@ -121,10 +114,7 @@ public class RotationManager {
         isRotating = true;
     }
 
-    /**
-     * Like initiateRotation but always overrides the current rotation.
-     * Used by pathfinding, which needs to update the target every tick.
-     */
+    // always overrides the current rotation, for pathfinding, which retargets every tick
     public static void forceRotation(Minecraft mc, Vec3 targetPos, long durationMs) {
         if (mc.player == null) return;
         if (FailsafeManager.shouldSuppressPestCleanerRotation(mc)) return;
@@ -141,16 +131,8 @@ public class RotationManager {
         isRotating = true;
     }
 
-    /**
-     * Follows a moving target: every update closes a fraction of whatever angle
-     * is left, so the camera leads in fast, decelerates and settles. Re-issuing
-     * a duration-based rotation each tick instead replays an eased curve from
-     * scratch every time, which lands the whole correction inside one tick and
-     * is what reads as an aimbot. Call this every tick while tracking.
-     *
-     * @param smoothingMs   time constant; larger is smoother and slower to close
-     * @param turnSpeedLimit degrees-per-second ceiling, 0 for none
-     */
+    // closes a fraction of whatever angle is left each update, so the camera leads in, decelerates and settles
+    // re-issuing a duration-based rotation every tick instead replays the eased curve from scratch and lands the whole correction in one tick, which is what reads as an aimbot
     public static void trackRotation(
             Minecraft mc, Vec3 targetPos, float smoothingMs, float turnSpeedLimit) {
         if (mc.player == null) return;
@@ -284,17 +266,7 @@ public class RotationManager {
                 || pitchDrift > EXTERNAL_ROTATION_TOLERANCE_DEGREES;
     }
 
-    /**
-     * Applies the configured ease-in / ease-out curve to a linear [0,1] progress value.
-     *
-     * <ul>
-     *   <li>Linear only  -> t unchanged</li>
-     *   <li>Ease-in only -> t^factor  (starts slow, ends fast)</li>
-     *   <li>Ease-out only -> 1-(1-t)^factor  (starts fast, ends slow)</li>
-     *   <li>Both          -> first half uses ease-in, second half uses ease-out,
-     *                       joined seamlessly at t=0.5 (classic "ease" S-curve)</li>
-     * </ul>
-     */
+    // ease-in is t^factor, ease-out is 1-(1-t)^factor, and both joins them at t=0.5
     private static float applyEasing(float t) {
         boolean easeIn  = AetherConfig.ROTATION_EASE_IN.get();
         boolean easeOut = AetherConfig.ROTATION_EASE_OUT.get();

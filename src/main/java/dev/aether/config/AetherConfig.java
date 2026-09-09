@@ -18,67 +18,8 @@ import dev.aether.config.entries.StringEntry;
 import dev.aether.util.AetherLanguageManager;
 import net.fabricmc.loader.api.FabricLoader;
 
-/**
- * Central config registry for all settings.
- *
- * <h2>How it works</h2>
- * Every setting is a {@code public static final} typed {@code ConfigEntry<T>}
- * field.
- * The {@link Config} factory method both creates the entry and registers it for
- * JSON serialisation to {@code aether_config.json}.
- *
- * <h2>Reading / writing a value</h2>
- * 
- * <pre>
- * // Read
- * boolean enabled = AetherConfig.AUTO_VISITOR.get();
- *
- * // Write (persisted immediately)
- * AetherConfig.AUTO_VISITOR.set(true);
- * </pre>
- *
- * <h2>Adding a new entry</h2>
- * <ol>
- * <li>Choose the right factory:
- * <ul>
- * <li>{@code Config.bool("key", default)} ->
- * {@link dev.aether.config.entries.BooleanEntry}</li>
- * <li>{@code Config.integer("key", default).range(min, max)} ->
- * {@link dev.aether.config.entries.IntEntry}</li>
- * <li>{@code Config.floatVal("key", default).range(min, max)}->
- * {@link dev.aether.config.entries.FloatEntry}</li>
- * <li>{@code Config.doubleVal("key", default)} ->
- * {@link dev.aether.config.entries.DoubleEntry}</li>
- * <li>{@code Config.string("key", default)} ->
- * {@link dev.aether.config.entries.StringEntry}</li>
- * <li>{@code Config.list("key", default, Type.class)} ->
- * {@link dev.aether.config.entries.ListEntry}</li>
- * </ul>
- * </li>
- * <li>Declare it in the relevant section below as:
- * {@code public static final XxxEntry MY_SETTING = Config.xxx("jsonKey", defaultValue);}
- * <br>
- * JSON key must be camelCase to stay compatible with existing config
- * files.</li>
- * <li>Wire it to the menu in {@link dev.aether.ui.MainGUIRegistry} by adding a
- * {@link dev.aether.ui.settings.Setting} to the appropriate
- * {@link dev.aether.ui.settings.SettingGroup}.</li>
- * </ol>
- *
- * <h2>Special rules</h2>
- * <ul>
- * <li>Append {@code .nonPersistent()} for entries that must NOT be written to
- * disk.</li>
- * <li>Enums are stored as {@link dev.aether.config.entries.StringEntry} (the
- * enum's
- * {@code name()}). Use {@link ConfigHelpers} to parse them back to the enum
- * type.</li>
- * <li>{@link #LIFETIME_ACCUMULATED} uses
- * {@link dev.aether.config.entries.DoubleEntry}
- * to avoid {@code long} overflow; cast with {@code (long)(double)} where
- * needed.</li>
- * </ul>
- */
+// every entry is created by a Config.* factory, which also registers it for json persistence
+// json keys stay camelCase so existing config files keep loading
 public final class AetherConfig {
         private static final long DAY_MS = 24L * 60L * 60L * 1000L;
         private static final long CORRUPTED_EPOCH_WINDOW_MS = 30L * DAY_MS;
@@ -148,16 +89,11 @@ public final class AetherConfig {
                 return loaded;
         }
 
-        /** Exposes the config file path for profile managers. */
         public static File getConfigFile() {
                 return CONFIG_FILE;
         }
 
-        /**
-         * Returns the live config as a shareable JSON string, with sensitive/account-specific
-         * fields blanked (webhook, co-op names, usernames). Mirrors the profile
-         * export sanitization so exported strings are safe to paste publicly.
-         */
+        // blanks webhook, co-op names and usernames so an exported config is safe to paste publicly
         public static String exportSanitizedJson() {
                 String json = toJsonString();
                 try {
@@ -173,11 +109,7 @@ public final class AetherConfig {
                 }
         }
 
-        /**
-         * Applies a JSON config string to the live config and persists it, then runs the
-         * same post-load fixups as {@link #loadFrom(File)}. Returns {@code false} on
-         * invalid JSON.
-         */
+        // runs the same post-load fixups as loadFrom; false on invalid json
         public static boolean importFromJson(String json) {
                 boolean loaded = Config.loadFromJson(json);
                 if (loaded) {
@@ -492,7 +424,7 @@ public final class AetherConfig {
         public static final FloatEntry PEST_HUNTING_MAX_TURN_SPEED =
                         Config.floatVal("pestHuntingMaxTurnSpeed", 700f).range(180f, 900f);
         public static final BooleanEntry PEST_HUNTING_VACUUM_STUN = Config.bool("pestHuntingVacuumStun", true);
-        /** Selected pest types use the vacuum instead of the lasso. */
+        // bitmask of pest types that use the vacuum instead of the lasso
         public static final IntEntry PEST_HUNTING_VACUUM_PEST_MASK =
                         Config.integer("pestHuntingVacuumPestMask", 0);
         public static final FloatEntry PEST_HUNTING_FOLLOW_DISTANCE =
@@ -600,7 +532,7 @@ public final class AetherConfig {
 
         // -- MINING ----------------------------------------------------------------
 
-        /** Deprecated compatibility stub; metal detector activation is runtime-only. */
+        // compat stub; metal detector activation is runtime-only
         @Deprecated
         @SuppressWarnings("unchecked")
         public static final BooleanEntry ENABLE_METAL_DETECTOR = Config.bool("enableMetalDetector", false)
@@ -720,7 +652,7 @@ public final class AetherConfig {
 
         // -- DISCORD ---------------------------------------------------------------
 
-        /** Persisted locally; sanitized when config profiles are exported. */
+        // persisted locally, blanked on profile export
         public static final StringEntry DISCORD_WEBHOOK_URL = Config.string("discordWebhookUrl", "");
         public static final IntEntry DISCORD_STATUS_UPDATE_TIME = Config.integer("discordStatusUpdateTime", 5).range(1,
                         60);
@@ -733,12 +665,12 @@ public final class AetherConfig {
         // -- REMOTE CONTROL --------------------------------------------------------
 
         public static final BooleanEntry REMOTE_CONTROL_ENABLED = Config.bool("remoteControlEnabled", false);
-        /** Persisted locally; sanitized when config profiles are exported. */
+        // persisted locally, blanked on profile export
         public static final StringEntry REMOTE_CONTROL_BOT_TOKEN = Config.string("remoteControlBotToken", "");
         public static final StringEntry REMOTE_CONTROL_GUILD_ID = Config.string("remoteControlGuildId", "");
         public static final StringEntry REMOTE_CONTROL_CHANNEL_ID = Config.string("remoteControlChannelId", "");
         public static final StringEntry REMOTE_CONTROL_COMMAND_PREFIX = Config.string("remoteControlCommandPrefix", "!aether");
-        /** JSON object mapping Discord channel id to the user id pinged on failsafe. */
+        // json map of discord channel id to the user id pinged on failsafe
         public static final StringEntry REMOTE_CONTROL_PING_TARGETS = Config.string("remoteControlPingTargets", "{}");
 
         // -- PROFIT / HUD ----------------------------------------------------------
@@ -753,7 +685,6 @@ public final class AetherConfig {
         public static final BooleanEntry FARMING_HUD_ETA_MAX = Config.bool("farmingHudEtaMax", true);
         public static final BooleanEntry HIDE_FILTERED_CHAT = Config.bool("hideFilteredChat", true);
         public static final BooleanEntry GUI_ONLY_IN_GARDEN = Config.bool("guiOnlyInGarden", false);
-        /** Hides all HUD overlays while the macro is not running. */
         public static final BooleanEntry HUD_ONLY_WHILE_MACRO_RUNNING = Config.bool("hudOnlyWhileMacroRunning", false);
 
         // -- PET TRACKER -----------------------------------------------------------
@@ -847,9 +778,7 @@ public final class AetherConfig {
 
         // -- LIFETIME ACCUMULATED --------------------------------------------------
 
-        /**
-         * Session time accumulator stored as milliseconds. Uses double for precision.
-         */
+        // double, not long, so the millisecond accumulator cannot overflow
         public static final DoubleEntry LIFETIME_ACCUMULATED = Config.doubleVal("lifetimeAccumulated", 0.0);
         public static final DoubleEntry DAILY_FARM_ACCUMULATED = Config.doubleVal("dailyFarmAccumulated", 0.0);
         public static final StringEntry DAILY_FARM_DATE = Config.string("dailyFarmDate", "");
@@ -892,31 +821,24 @@ public final class AetherConfig {
         public static final StringEntry FARMING_MACRO_PRESET_NAME = Config.string("farmingMacroPresetName", "");
         public static final StringEntry FARMING_MACRO_PRESET = Config.string("farmingMacroPreset", "");
         public static final StringEntry FARM_TYPE = Config.string("farmType", FarmType.S_SHAPE.name());
-        /** Release the mouse cursor while the farming macro is running. */
         public static final BooleanEntry MACRO_UNGRAB_MOUSE = Config.bool("macroUngrabMouse", true);
-        /** Automatically reconnect after an unexpected server disconnect while the macro is running. */
         public static final BooleanEntry AUTO_RECONNECT = Config.bool("autoReconnect", true);
-        /** Use a fixed custom pitch when enabling the farming macro. */
         public static final BooleanEntry MACRO_USE_CUSTOM_PITCH = Config.bool("macroUseCustomPitch", false);
-        /** Custom pitch angle (-90 = look straight up, 90 = look straight down). */
+        // -90 looks straight up, 90 straight down
         public static final FloatEntry MACRO_CUSTOM_PITCH = Config.floatVal("macroCustomPitch", 30.0f).range(-90f, 90f);
         public static final FloatEntry MACRO_CUSTOM_PITCH_HUMANIZATION = Config
                         .floatVal("macroCustomPitchHumanization", 0.0f).range(0.0f, 10.0f);
-        /** Use a fixed custom yaw when enabling the farming macro. */
         public static final BooleanEntry MACRO_USE_CUSTOM_YAW = Config.bool("macroUseCustomYaw", false);
-        /** Custom yaw angle in degrees (-180 to 180). */
         public static final FloatEntry MACRO_CUSTOM_YAW = Config.floatVal("macroCustomYaw", 0.0f).range(-180f, 180f);
         public static final FloatEntry MACRO_CUSTOM_YAW_HUMANIZATION = Config
                         .floatVal("macroCustomYawHumanization", 0.0f).range(0.0f, 10.0f);
-        /** If true, the farming macro will use a Squeaky Mousemat before starting when the current rotation differs from the stored mousemat rotation. */
+        // swaps the mousemat first when the current rotation differs from the stored one
         public static final BooleanEntry SQUEAKY_MOUSEMAT = Config.bool("squeakyMousemat", false);
-        /** Hold W while farming rows (A/D + W) instead of only strafing (A/D). */
         public static final BooleanEntry MACRO_HOLD_W_WHILE_FARMING = Config.bool("macroHoldWWhileFarming", false);
-        /** Reverse SDS mushroom lane movement from A/S/S+D to D/S/S+A. */
+        // flips the lane pattern from a/s/s+d to d/s/s+a
         public static final BooleanEntry MACRO_SDS_MUSHROOM_REVERSE_LANE = Config.bool("macroSdsMushroomReverseLane", false);
-        /** Skip all /setspawn calls used by farming macro support flows. */
         public static final BooleanEntry MACRO_DISABLE_SETSPAWN = Config.bool("macroDisableSetspawn", false);
-        /** Use configured lane boundaries to switch direction before movement stalls. */
+        // turns on the configured lane boundary instead of waiting for a stall
         public static final BooleanEntry MACRO_FAST_LANE_SWITCH = Config.bool("macroFastLaneSwitch", false);
         public static final StringEntry MACRO_FAST_LANE_BOUNDARY_AXIS = Config.string("macroFastLaneBoundaryAxis", "X");
         public static final IntEntry MACRO_FAST_LANE_LEFT_BOUNDARY = Config.integer("macroFastLaneLeftBoundary", -48)
@@ -925,12 +847,10 @@ public final class AetherConfig {
                         .range(-240, 240);
         public static final ListEntry<String> MACRO_FARM_WAYPOINTS = Config.list("macroFarmWaypoints",
                         Collections.emptyList(), String.class);
-        /** Horizontal distance in blocks used to trigger a Custom Farm waypoint switch. */
         public static final FloatEntry MACRO_CUSTOM_WAYPOINT_SWITCH_RADIUS = Config
                         .floatVal("macroCustomWaypointSwitchRadius", 0.20f)
                         .range(0.05f, 1.00f);
         public static final StringEntry BEDROCK_PLOT_MAKER_PLOT = Config.string("bedrockPlotMakerPlot", "1");
-        /** Post lane-switch delay in milliseconds before evaluating row-end checks again. */
         public static final IntEntry MACRO_LANE_SWITCH_DELAY_MIN = Config.integer("macroLaneSwitchDelayMin", 0)
                         .range(0, 5000);
         public static final IntEntry MACRO_LANE_SWITCH_DELAY_MAX = Config.integer("macroLaneSwitchDelayMax", 500)

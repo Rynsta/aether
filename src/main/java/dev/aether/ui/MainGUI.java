@@ -23,11 +23,7 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.*;
 
-/**
- * Full NVG config menu - Farming/Visuals main tabs, subtab sidebar,
- * scrollable SettingGroup cards with all setting types rendered inline.
- * Colors sourced from {@link Theme} for live theming support.
- */
+// main tabs, subtab sidebar, scrollable setting cards; colors come from Theme so it re-themes live
 public class MainGUI extends NVGScreen {
     public record LaunchTarget(int mainTab, String moduleName, boolean openModuleDetail) {
         public static LaunchTarget bootstrapAuthentication() {
@@ -59,9 +55,8 @@ public class MainGUI extends NVGScreen {
     private static final float GROUP_GAP   = 12f;
     static final float HEADER_H    = 46f;
     static final float HEADER_TO_FIRST_SETTING_GAP = 5f;
-    /** Height reserved for boolean controls. */
     static final float PILL_H      = 21f;
-    /** Height of a compact group-section label row used in the flat Colors/Settings renderer. */
+    // compact group-section label row in the flat colors/settings renderer
     static final float FLAT_LABEL_H = 32f;
     static final float DROPDOWN_FIELD_W = 130f;
     static final float DROPDOWN_FIELD_H = 32f;
@@ -92,9 +87,7 @@ public class MainGUI extends NVGScreen {
 
     private float px, py, pw, ph;
     float contX, contY, contW, contH;
-    /** Physical-pixel ratio (physical px per logical px). Updated each render. */
     private float pr = 1f;
-    /** Screen size in physical pixels. Updated each render. */
     private float physW, physH;
 
     // -- Entrance animation ----------------------------------------------------
@@ -103,30 +96,22 @@ public class MainGUI extends NVGScreen {
 
     // -- UI scale --------------------------------------------------------------
 
-    /**
-     * Scale multiplier for the entire menu.
-     * 1.0 = every layout unit is exactly 1 physical pixel.
-     * Increase to make the menu larger, decrease to shrink it.
-     * Persisted value lives in {@link dev.aether.ui.theme.Theme#UI_SCALE} (the source of truth);
-     * MainGUI syncs this from it each frame in syncFrameLayoutForWindowSize, except while a slider
-     * is being dragged (so the UI Scale slider can't feed back). Edit via the slider in Theme Options.
-     */
+    // 1.0 means one layout unit is one physical pixel
+    // Theme.UI_SCALE is the source of truth; this syncs from it each frame except while the slider is dragging, so the slider can't feed back
     public static float uiScale = 1.5f;
     public static float uiTextScale = 1;
 
     // -- Sidebar ---------------------------------------------------------------
 
     private float sidebarAnim = 0f;   // 0 = collapsed, 1 = expanded
-    /** Computed once on first frame to fit the longest tab label. */
+    // computed once on the first frame to fit the longest tab label
     private float computedSidebarExpanded = 0f;
 
     // -- Navigation ------------------------------------------------------------
 
     private int   activeMain   = 0;
     private int   activeSubtab = 0;
-    /** Animated selection index for the main tabs (slides smoothly). */
     private float animMainSel  = 0f;
-    /** Animated selection index for the subtab list (slides smoothly). */
     private float animSubSel   = 0f;
 
     // -- Search ----------------------------------------------------------------
@@ -182,7 +167,7 @@ public class MainGUI extends NVGScreen {
     private long  lastFrameTimeNanos = System.nanoTime();
 
     // -- Scrollbar drag --------------------------------------------------------
-    /** 0=none  1=main  2=search  3=profile  4=subtab */
+    // 0=none 1=main 2=search 3=profile 4=subtab
     private int   sbDragging        = 0;
     private float sbDragThumbOffset = 0f;
     // Cached track geometry written during render (for hit-testing)
@@ -211,7 +196,7 @@ public class MainGUI extends NVGScreen {
     int           activeListIndex = -1;
     PositionSetting activePosField;
     KeybindSetting activeKeybindCapture;
-    /** 0=X, 1=Y, 2=Z */
+    // 0=X 1=Y 2=Z
     int           activePosIdx;
     StringBuilder textBuf    = new StringBuilder();
     int           textCursor = 0;
@@ -245,16 +230,15 @@ public class MainGUI extends NVGScreen {
 
     // -- HSV Color picker ------------------------------------------------------
 
-    /** The color swatch the mouse is currently hovering over (updated each frame). */
     ColorSetting  hoveredColor;
     ColorSetting  activeColor;
     private float cpHue = 0f, cpSat = 1f, cpVal = 1f, cpAlpha = 1f;
-    /** 0=none 1=SV 2=Hue 3=Alpha */
+    // 0=none 1=SV 2=Hue 3=Alpha
     private int cpDrag = 0;
     static final int CP_SV = 1, CP_HUE = 2, CP_ALPHA = 3;
     boolean cpHexFocus = false;
     private final StringBuilder cpHexBuf = new StringBuilder();
-    /** Picker layout bounds (written each frame). */
+    // written each frame
     private float cpPX, cpPY, cpPW, cpPH;
     private float cpSvX, cpSvY, cpSvW, cpSvH;
     private float cpHBarY, cpABarY, cpBarH;
@@ -263,16 +247,15 @@ public class MainGUI extends NVGScreen {
     // -- Toggle pill animations ------------------------------------------------
 
     private record Section(String name, List<ModulesTab.SubTab> subtabs) {}
-    /** Card hover progress per subtab (0 = not hovered, 1 = fully hovered). */
+    // 0 = not hovered, 1 = fully hovered
     private final IdentityHashMap<ModulesTab.SubTab, Float> cardHoverAnim = new IdentityHashMap<>();
 
     // -- Module detail view ----------------------------------------------------
 
-    /** Non-null when the user has opened a module's settings view. */
+    // non-null once the user opens a module's settings view
     private ModulesTab.SubTab activeSubTab = null;
-    /** Index of the selected category (SettingGroup) within activeSubTab. */
     private int activeCategoryIdx = 0;
-    /** Hover animation per category item in the left panel (keyed by SettingGroup or this for "All"). */
+    // keyed by SettingGroup, or this for "All"
     private final IdentityHashMap<Object, Float> catHoverAnim = new IdentityHashMap<>();
     private final IdentityHashMap<Object, Float> subTabBarAnim = new IdentityHashMap<>();
     boolean suppressNestedContentScissor = false;
@@ -477,10 +460,6 @@ public class MainGUI extends NVGScreen {
         profilesPanel.commitRename();
     }
 
-    /**
-     * Returns the list of sections (name + groups) to display in the Modules
-     * card grid based on the active filter.
-     */
     private List<Section> sectionsForFilter() {
         List<Section> availableSections = availableModuleSections();
         if (availableSections.size() <= 1) {
@@ -508,7 +487,6 @@ public class MainGUI extends NVGScreen {
         return sections;
     }
 
-    /** Whether children of {@code group} should currently be visible. */
     private boolean showChildren(SettingGroup group) {
         if (group.isAlwaysOn()) return true;
         boolean forced = forcedOverride.contains(group);
@@ -882,17 +860,15 @@ public class MainGUI extends NVGScreen {
 
 
     // -- Sidebar layout constants ----------------------------------------------
-    /** Horizontal padding inside the sidebar (icon box starts here from panel left). */
+    // icon box starts here from the panel left
     static final float SB_H_PAD    = 12f;
-    /** Size of each tab's icon pill (highlight square). */
     static final float SB_PILL     = 36f;
-    /** Height of the logo section (logo + spacing below it). */
+    // logo plus the spacing below it
     static final float SB_LOGO_H   = 56f;
-    /** Gap between the logo separator and the first tab row. */
     static final float SB_SEP_GAP  = 8f;
-    /** Vertical padding within a tab row (pill inset from row top). */
+    // pill inset from the row top
     static final float SB_ROW_PAD  = (44f - SB_PILL) / 2f;   // = 4f
-    /** Vertical bottom margin for the bottom section (Settings row to panel bottom). */
+    // settings row to panel bottom
     static final float SB_BOT_PAD  = 8f;
 
     private void renderSidebar(NVGRenderer nvg, float mx, float my) {
@@ -965,7 +941,6 @@ public class MainGUI extends NVGScreen {
         renderPrimitives.renderSectionHeader(nvg, name, x, y, w);
     }
 
-    /** Derives the display name for a module card from its SubTab. */
     private static String moduleCardName(ModulesTab.SubTab sub) {
         return AetherLang.localize(sub.name());
     }
@@ -1390,12 +1365,10 @@ public class MainGUI extends NVGScreen {
         settingInteractionController.handleContentClick(mx, my);
     }
 
-    /** Click handler for the flat Colors / Settings renderer. */
     private void handleFlatContentClick(float mx, float my) {
         settingInteractionController.handleFlatContentClick(mx, my);
     }
 
-    /** Click handler for module detail view (right settings panel). */
     private void handleModuleSettingsPanelClick(float mx, float my) {
         settingInteractionController.handleModuleSettingsPanelClick(mx, my);
     }

@@ -14,7 +14,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
-/** Dedicated pre-cleaning AOTV route used by Ballsack Shredder. */
+// dedicated pre-cleaning aotv route for ballsack shredder
 public final class PestBallsackShredder {
     private static final long AOTV_TIMEOUT_MS = 10_000L;
     private static final long RESULT_CONFIRM_TIMEOUT_MS = 2_000L;

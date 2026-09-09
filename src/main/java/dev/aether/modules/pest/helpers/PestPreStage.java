@@ -9,9 +9,7 @@ import dev.aether.util.ClientUtils;
 import dev.aether.util.CommandUtils;
 import net.minecraft.client.Minecraft;
 
-/**
- * Shared preparation for automatic and manual pest cleaning.
- */
+// shared by automatic and manual pest cleaning
 final class PestPreStage {
 
     record Result(boolean successful, PestBallsackShredder.Result ballsackResult) {

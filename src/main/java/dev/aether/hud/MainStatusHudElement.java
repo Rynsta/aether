@@ -16,9 +16,7 @@ import dev.aether.util.BpsTracker;
 import dev.aether.util.ClientUtils;
 import net.minecraft.client.Minecraft;
 
-/**
- * All-in-one macro status card for the "Main" HUD theme.
- */
+// all-in-one status card for the main hud theme
 public class MainStatusHudElement extends HudElement {
 
     // Layout constants

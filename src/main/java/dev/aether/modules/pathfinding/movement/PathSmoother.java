@@ -5,9 +5,7 @@ import dev.aether.modules.pathfinding.Node;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Implements a string-pulling path smoother using Bresenham 3-D line-of-sight tests.
- */
+// string-pulling smoother over bresenham 3d line-of-sight tests
 public final class PathSmoother {
 
     // Adaptive smoothing budget: open areas can skip farther than tight corridors.

@@ -339,10 +339,7 @@ public final class AutoSprayonatorManager {
         return false;
     }
 
-    /**
-     * Opens the sprayonator GUI and clicks the target material item.
-     * Safe to call from outside this class (e.g. dynamic pests) as long as the sprayonator is held.
-     */
+    // safe to call from outside this class as long as the sprayonator is held
     public static boolean cycleToMaterial(Minecraft client, String target, long guiDelay) {
         if (client == null || client.player == null || target == null || target.isBlank()) {
             return false;

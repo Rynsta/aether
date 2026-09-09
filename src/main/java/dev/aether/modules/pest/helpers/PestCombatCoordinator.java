@@ -547,7 +547,7 @@ final class PestCombatCoordinator {
         return PestAimTracker.trackingAim(client, target);
     }
 
-    /** Builds the high aim point that lets the vacuum beam connect from above. */
+    // high aim point that lets the vacuum beam connect from above
     static Vec3 buildVacuumAimTarget(Minecraft client, Entity target) {
         return buildVacuumAimTarget(
                 client, target, getEntityEyePosition(target));

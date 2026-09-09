@@ -13,20 +13,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
-/**
- * NVG-based HUD layout editor.
- *
- * <p>Displayed when the user clicks "Edit HUD Layout" in the Visuals -> HUD settings.
- * All HUD elements are rendered in edit mode within a single NVG frame.
- * A grid overlay (togglable) provides visual snap feedback.</p>
- *
- * <ul>
- *   <li><b>Drag</b> - reposition a panel</li>
- *   <li><b>Ctrl/Shift + Drag</b> - resize (scale) a panel (Shift is the reliable modifier on macOS)</li>
- *   <li><b>Snap toggle</b> - snaps drag positions to a {@value #GRID_PX}px grid</li>
- *   <li><b>ESC / INSERT</b> - close</li>
- * </ul>
- */
+// drag to move, ctrl/shift+drag to resize, esc or insert to close
 public class HudEditScreen extends Screen {
 
     // -- Constants -------------------------------------------------------------
@@ -41,10 +28,9 @@ public class HudEditScreen extends Screen {
     private boolean snapToGrid = true;
     private HudElement activeElement = null;
 
-    /** Mouse coords tracked each frame for button hover detection. */
     private double mouseX, mouseY;
 
-    /** Toolbar button X positions - written during render. */
+    // written during render
     private float btnSnapX, btnDoneX, btnBaseY;
 
     // -- Constructor -----------------------------------------------------------
@@ -89,7 +75,7 @@ public class HudEditScreen extends Screen {
         }
     }
 
-    /** Suppress MC's built-in background so the game world stays visible. */
+    // keeps the game world visible behind the editor
     @Override
     public void extractBackground(GuiGraphicsExtractor g, int mx, int my, float delta) {}
 
@@ -132,7 +118,6 @@ public class HudEditScreen extends Screen {
         }
     }
 
-    /** Draws a small pill label above each element for easy identification. */
     private void renderElementLabels(NVGRenderer nvg) {
         for (HudElement e : HudRegistry.ELEMENTS) {
             if (!e.isEnabled()) continue;

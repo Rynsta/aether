@@ -17,7 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Predicate;
 
-/** Owns target discovery, queueing, handoff, and kill accounting. */
+// target discovery, queueing, handoff and kill accounting
 final class PestTargetController {
     static final double AOTV_RANGE = 12.0;
     static final double AOTV_GAP_MULTIPLIER = 1.6;

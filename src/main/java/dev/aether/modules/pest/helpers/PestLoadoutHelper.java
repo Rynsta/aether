@@ -33,7 +33,7 @@ final class PestLoadoutHelper {
         return -1;
     }
 
-    /** Returns [lowest-rarity stun slot, highest-rarity kill slot]. */
+    // returns [lowest-rarity stun slot, highest-rarity kill slot]
     static int[] findAutomaticVacuumSlots(Minecraft client) {
         if (client.player == null) return new int[] {-1, -1};
         int lowestSlot = -1, highestSlot = -1;

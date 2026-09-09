@@ -7,10 +7,7 @@ import org.lwjgl.nanovg.NanoVG;
 import java.util.ArrayDeque;
 import java.util.Random;
 
-/**
- * Singleton manager for the menu background (particles and ripples).
- * Centrally manages state so that animations persist when switching between screens.
- */
+// state lives here so the animation persists across screen switches
 public final class AetherBackground {
 
     public static final AetherBackground INSTANCE = new AetherBackground();

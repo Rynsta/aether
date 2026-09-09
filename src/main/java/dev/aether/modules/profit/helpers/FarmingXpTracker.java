@@ -14,24 +14,13 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Tracks Farming skill XP and computes a live XP/hour rate plus progress toward
- * level 60.
- *
- * <p>Inspired by SkyHanni's {@code SkillApi}: the action bar drives live XP gains
- * (its {@code +N Farming (...)} message), while the tab list "Skills" widget and
- * the action bar fraction form anchor the <em>absolute</em> level/progress. This
- * matters because at high levels the action bar degrades from {@code (cur/max)} to
- * {@code (percent)}, which alone cannot resolve an absolute XP value.</p>
- *
- * <p>XP/hour uses a rolling per-second window (like SkyHanni) so the rate reflects
- * <em>current</em> farming speed and pauses when farming stops.</p>
- */
+// the action bar drives live gains, while the tab-list skills widget and the action bar fraction anchor the absolute level
+// at high levels the action bar degrades from (cur/max) to (percent), which alone cannot resolve an absolute xp value
 public final class FarmingXpTracker {
 
     public static final int MAX_LEVEL = 60;
 
-    /** XP required to go from level L to L+1 (index 0 = level 0->1). */
+    // index 0 is level 0->1
     private static final long[] LEVEL_INCREMENTS = {
             50L, 125L, 200L, 300L, 500L, 750L, 1000L, 1500L, 2000L, 3500L,
             5000L, 7500L, 10000L, 15000L, 20000L, 30000L, 50000L, 75000L, 100000L, 200000L,
@@ -41,12 +30,11 @@ public final class FarmingXpTracker {
             4300000L, 4600000L, 4900000L, 5200000L, 5500000L, 5800000L, 6100000L, 6400000L, 6700000L, 7000000L,
     };
 
-    /** Cumulative XP to <em>reach</em> each level (index = level, 0..60). */
+    // index = level, 0..60
     private static final long[] XP_TO_LEVEL = buildCumulative();
-    /** Total XP required to reach level 60 (= 111,672,425). */
     public static final long XP_TO_MAX = XP_TO_LEVEL[MAX_LEVEL];
 
-    /** Maps a "needed for next level" value back to the level you are currently on. */
+    // maps a "needed for next level" value back to the level you are on
     private static final Map<Long, Integer> NEEDED_TO_LEVEL = buildNeededMap();
 
     // -- Patterns --------------------------------------------------------------
@@ -141,7 +129,7 @@ public final class FarmingXpTracker {
 
     // -- Tab list / per-tick update (called from ProfitLiveTracker) ------------
 
-    /** Anchors absolute level/progress from the tab-list Skills widget if present. */
+    // anchors absolute level and progress from the tab-list skills widget when it is there
     public static void updateFromTablist(Minecraft client) {
         if (client == null || client.getConnection() == null || !ProfitManager.isProfitTrackingActive()) {
             return;
@@ -177,7 +165,7 @@ public final class FarmingXpTracker {
         }
     }
 
-    /** Advances the per-second rolling average. Call once per game tick; recomputes once a second. */
+    // call once per game tick; recomputes once a second
     public static void tick() {
         if (!ProfitManager.isProfitTrackingActive()) {
             return;
@@ -267,7 +255,6 @@ public final class FarmingXpTracker {
         return Math.max(0L, XP_TO_MAX - Math.max(0L, absoluteXp));
     }
 
-    /** Overall progress toward level 60, clamped to [0,1]. */
     public static float getProgressToMax() {
         if (absoluteXp <= 0) {
             return 0f;
@@ -275,7 +262,7 @@ public final class FarmingXpTracker {
         return Math.max(0f, Math.min(1f, (float) absoluteXp / (float) XP_TO_MAX));
     }
 
-    /** Estimated milliseconds to reach level 60 at the current rate, or -1 if unknown. */
+    // -1 when unknown
     public static long getEtaToMaxMs() {
         long rate = getXpPerHour();
         if (rate <= 0 || isMaxed()) {
@@ -284,7 +271,6 @@ public final class FarmingXpTracker {
         return (long) (getRemainingToMax() / (double) rate * 3_600_000.0);
     }
 
-    /** XP accumulated within the current level. */
     public static long getXpIntoLevel() {
         if (absoluteXp < 0 || currentLevel < 0) {
             return 0L;
@@ -292,7 +278,6 @@ public final class FarmingXpTracker {
         return Math.max(0L, absoluteXp - XP_TO_LEVEL[Math.min(currentLevel, MAX_LEVEL)]);
     }
 
-    /** XP required to advance from the current level to the next. */
     public static long getXpForNextLevel() {
         if (currentLevel < 0 || currentLevel >= LEVEL_INCREMENTS.length) {
             return 0L;
@@ -305,7 +290,7 @@ public final class FarmingXpTracker {
         return need <= 0 ? 0L : Math.max(0L, need - getXpIntoLevel());
     }
 
-    /** Estimated milliseconds to reach the next level at the current rate, or -1 if unknown. */
+    // -1 when unknown
     public static long getEtaToNextLevelMs() {
         long rate = getXpPerHour();
         if (rate <= 0 || currentLevel >= MAX_LEVEL) {
@@ -326,7 +311,6 @@ public final class FarmingXpTracker {
         }
     }
 
-    /** Resolve the level you're currently on from the "needed for next level" value. */
     private static int levelForNeeded(long needed) {
         Integer exact = NEEDED_TO_LEVEL.get(needed);
         if (exact != null) {

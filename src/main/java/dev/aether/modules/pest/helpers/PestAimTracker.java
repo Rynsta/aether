@@ -8,13 +8,8 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-/**
- * Turns the raw vacuum aim point into something worth chasing. A first-order
- * tracker always trails a moving target by roughly its own time constant, so
- * the point is led by the pest's measured velocity; on top of that a slow
- * offset wanders inside the pest's silhouette, because a crosshair pinned
- * motionless on a moving mob is the tell this is trying to avoid.
- */
+// a first-order tracker always trails a moving target by its own time constant, so the point is led by the pest's measured velocity
+// a slow offset wanders inside the silhouette, because a crosshair pinned motionless on a moving mob is the tell
 final class PestAimTracker {
     private static final long SAMPLE_MIN_MS = 40L;
     private static final long SAMPLE_STALE_MS = 400L;

@@ -13,10 +13,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-/**
- * Theme system for the UI library.
- * Core colors are mutable so users can customize them.
- */
+// core colors are mutable so users can customize them
 public class Theme {
 
     // ============================================================
@@ -38,15 +35,12 @@ public class Theme {
     public static int BG_ACTIVE     = 0xFF414B58;
     public static int BG_FIELD      = 0xFF323A45;
 
-    /** Main panel background. */
     public static int PANEL_BG      = 0xFF20262D;
-    /** Sidebar background. */
     public static int SIDEBAR_BG    = 0xFF171C23;
-    /** Setting-row and module-card background. */
+    // setting rows and module cards
     public static int CARD_BG       = 0xFF2B333D;
-    /** Element background - slider value box, dropdown button, action button. */
+    // slider value box, dropdown button, action button
     public static int ELEMENT_BG    = 0xFF36404B;
-    /** Separator / divider line color. */
     public static int SEPARATOR     = 0xFF4A5563;
 
     // ============================================================
@@ -87,13 +81,12 @@ public class Theme {
     public static final int TEXT_DISABLED  = 0xFF4B5563;
     public static final int TEXT_ACCENT    = 0xFF6366F1;
 
-    /** Muted / inactive text - unselected tabs, descriptions, dim labels. */
+    // unselected tabs, descriptions, dim labels
     public static int TEXT_MUTED     = 0xFF9AA6B2;
-    /** Setting-row label text. */
     public static int TEXT_LABEL     = 0xFFF0F3F6;
-    /** Secondary value text - slider value, dropdown value, action button default. */
+    // slider value, dropdown value, action button default
     public static int TEXT_VALUE     = 0xFFD2D9E1;
-    /** Enabled group label color in flat (Colors/Settings) view. */
+    // enabled group label in the flat colors/settings view
     public static int GROUP_ACTIVE   = 0xFFB8C4D1;
 
     // ============================================================
@@ -101,13 +94,10 @@ public class Theme {
     // ============================================================
 
     // Toggle pill
-    /** Off-state track background for toggle pill. */
     public static int PILL_TRACK     = 0xFF46515E;
-    /** Off-state knob color for toggle pill. */
     public static int PILL_KNOB_OFF  = 0xFFB4BEC9;
 
     // Slider
-    /** Left/start color of slider gradient fill. */
     public static int SLIDER_LEFT    = 0xFF4FA3D1;
 
     // Dropdown
@@ -168,23 +158,20 @@ public class Theme {
 
     public static final float ANIM_TIME_MIN_MS = 50f;
     public static final float ANIM_TIME_MAX_MS = 1000f;
-    /** Target animation time for GUI components in milliseconds. */
     public static float ANIM_TIME_MS = 250f;
 
     public static final float UI_SCALE_MIN = 0.5f;
     public static final float UI_SCALE_MAX = 3.0f;
-    /** Global scale of the /aether GUI panel (1.0 = pixel-perfect). Mirrored into MainGUI.uiScale at load. */
+    // 1.0 is pixel-perfect; mirrored into MainGUI.uiScale at load
     public static float UI_SCALE = 1.5f;
 
     public static final float TEXT_SCALE_MIN = 0.75f;
     public static final float TEXT_SCALE_MAX = 2.0f;
-    /** Independent text multiplier applied inside the /aether GUI. */
     public static float TEXT_SCALE = 1.0f;
 
-    /** Extra vertical spacing between settings within a module card (px). */
     public static int SETTING_SPACING = 4;
 
-    /** Set of ThemeEntry labels that cycle through rainbow colors each frame. */
+    // ThemeEntry labels that cycle through rainbow colors each frame
     public static final Set<String> rainbowEntries = new HashSet<>();
     private static float rainbowHue = 0f;
 
@@ -383,7 +370,6 @@ public class Theme {
         }
     }
 
-    /** Restores every user-editable theme value to the built-in defaults. */
     public static void resetToDefaults() {
         resetColorsToDefaults();
         ANIM_TIME_MS = 250f;
@@ -496,7 +482,7 @@ public class Theme {
         return withAlpha(rgb, alpha);
     }
 
-    /** Returns [hue, saturation, value] in 0..1 range. */
+    // [hue, saturation, value], all 0..1
     public static float[] argbToHsv(int argb) {
         int r = (argb >> 16) & 0xFF;
         int g = (argb >> 8)  & 0xFF;

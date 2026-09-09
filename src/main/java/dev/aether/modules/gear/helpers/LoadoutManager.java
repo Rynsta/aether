@@ -132,7 +132,6 @@ public class LoadoutManager {
         ClientUtils.sendCommand("/loadout");
     }
 
-    /** Cancels an in-flight loadout operation after auto loadout is disabled. */
     public static void cancelIfDisabled(Minecraft client) {
         if (AetherConfig.AUTO_LOADOUT_ENABLED.get() || !isSwappingLoadout) {
             return;

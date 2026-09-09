@@ -16,14 +16,7 @@ import net.minecraft.world.item.component.ItemLore;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
-/**
- * Utility for buying items from the Bazaar programmatically.
- * Translated from bazar_buyer.lua - opens /bz, navigates menus,
- * and instant-buys the requested amount.
- *
- * <p>
- * Usage: {@code BazaarUtils.buy(client, "Cobblestone", 64, success -> ...)}
- */
+// translated from bazar_buyer.lua: opens /bz, navigates the menus, and instant-buys
 public final class BazaarUtils {
 
     private BazaarUtils() {
@@ -59,17 +52,7 @@ public final class BazaarUtils {
         isSellingBazaar = false;
     }
 
-    /**
-     * Buy {@code count} of {@code itemName} from the Bazaar.
-     * Runs asynchronously on the macro worker thread.
-     *
-     * @param client   Minecraft instance
-     * @param itemName Display-name substring to match in the Bazaar search results
-     *                 (colour codes stripped)
-     * @param count    Amount to buy (1, 64, or custom)
-     * @param callback Called with {@code true} on success, {@code false} on
-     *                 failure/timeout
-     */
+    // runs async on the macro worker thread; itemName is a display-name substring with colour codes stripped
     public static void buy(Minecraft client, String itemName, int count, Consumer<Boolean> callback) {
         if (isBuying) {
             ClientUtils.sendDebugMessage("[BazaarUtils] Already buying, skipping.");
@@ -93,19 +76,13 @@ public final class BazaarUtils {
         });
     }
 
-    /**
-     * Blocking version that returns a {@link CompletableFuture}.
-     */
     public static CompletableFuture<Boolean> buyAsync(Minecraft client, String itemName, int count) {
         CompletableFuture<Boolean> future = new CompletableFuture<>();
         buy(client, itemName, count, future::complete);
         return future;
     }
 
-    /**
-     * Sell all bazaar-able items in inventory instantly.
-     * Steps: /bz -> "Sell Inventory Now" -> "Selling whole inventory"
-     */
+    // /bz -> "Sell Inventory Now" -> "Selling whole inventory"
     public static void instantSell(Minecraft client, Consumer<Boolean> callback) {
         if (isSellingBazaar || isBuying) {
             ClientUtils.sendDebugMessage("[BazaarUtils] Busy with another Bazaar operation.");

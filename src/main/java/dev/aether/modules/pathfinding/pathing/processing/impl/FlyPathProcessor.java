@@ -6,11 +6,7 @@ import dev.aether.modules.pathfinding.pathing.processing.NodeProcessor;
 import dev.aether.modules.pathfinding.pathing.processing.context.EvaluationContext;
 import dev.aether.modules.pathfinding.wrapper.PathPosition;
 
-/**
- * Flight-specific path validation. Unlike the walking processor, this only
- * requires enough body clearance for the player and does not require floor
- * support.
- */
+// unlike the walking processor this only wants body clearance, no floor support
 public final class FlyPathProcessor implements NodeProcessor {
     private static final double WALL_PROXIMITY_COST = 0.12;
     private static final double VERTICAL_COST = 0.08;

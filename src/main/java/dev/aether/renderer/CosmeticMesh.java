@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
-/** Reused, bounded triangle stream for cosmetic geometry. */
+// reused, bounded triangle stream for cosmetic geometry
 public final class CosmeticMesh {
     public static final int FLOATS_PER_VERTEX = 12;
     public static final int MAX_VERTICES = 8190;

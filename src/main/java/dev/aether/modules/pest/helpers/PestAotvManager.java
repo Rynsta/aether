@@ -64,10 +64,7 @@ public class PestAotvManager {
         finishPreparationAotv(client, false);
     }
 
-    /**
-     * Drives the roof AOTV used by the shared PRE stage. PestDestroyer keeps
-     * ownership of roof rescans that happen later during automatic cleaning.
-     */
+    // drives the roof aotv for the shared PRE stage; PestDestroyer keeps the rescans that happen later during cleaning
     public static void updatePreparationAotv(Minecraft client) {
         if (!preparationAotvActive || client == null || client.player == null
                 || client.level == null || client.options == null) {
@@ -253,7 +250,7 @@ public class PestAotvManager {
             }
     }
 
-    /** Performs the post-roof view reset on the worker after its AOTV phase has ended. */
+    // runs on the worker after its aotv phase has ended
     public static void rotateDownAfterAotv(Minecraft client) throws InterruptedException {
         rotateDownAfterAotv(client, false);
     }

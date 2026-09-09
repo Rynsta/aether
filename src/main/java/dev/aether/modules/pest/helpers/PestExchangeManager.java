@@ -19,13 +19,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
-/**
- * Handles the Pest Exchange flow:
- * 1. /plottp barn
- * 2. Pathfind walk to Phillip's desk (configurable position)
- * 3. Interact with Phillip NPC
- * 4. Click "Empty Vacuum Bag" in the Pesthunter GUI
- */
+// plottp barn, walk to phillip's desk, interact, then click empty vacuum bag in the pesthunter gui
 public class PestExchangeManager {
     private static final int MAX_ABIPHONE_CALL_ATTEMPTS = 3;
     private static final long ABIPHONE_GUI_WAIT_MS = 10000L;

@@ -18,12 +18,7 @@ import net.minecraft.client.gui.screens.options.OptionsScreen;
 import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 import net.minecraft.client.input.MouseButtonEvent;
 
-/**
- * Custom NVG-rendered title screen that replaces the vanilla {@code TitleScreen}.
- *
- * <p>Injected via {@link dev.aether.mixin.MixinTitleScreen}. All animation state
- * is driven by wall-clock time ({@link System#currentTimeMillis()}).</p>
- */
+// replaces the vanilla title screen via MixinTitleScreen; all animation runs off wall-clock time
 public class AetherTitleScreen extends NVGScreen {
 
 
@@ -128,7 +123,6 @@ public class AetherTitleScreen extends NVGScreen {
             float tW    = nvg.textWidth(Fonts.BOLD, "Aether", tSize);
             float tx    = cx - tW / 2f;
             nvg.text(Fonts.BOLD, "Aether", tx, titleY, tSize, 0xFFFFFFFF);
-            /* nvg.glow(tx, titleY, tW, tSize, 16f, Theme.withAlpha(0xFFFFFFFF, (int)(10)), 0.66f); */
             float ulW = tW * Math.min(1f, elapsed / 600f);
             if (ulW > 0f)
                 nvg.rect(tx, titleY + tSize + 5f, ulW, 1f,

@@ -18,14 +18,7 @@ import net.minecraft.client.Minecraft;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Manages the lifecycle of the currently active {@link AbstractFarmingMacro}.
- *
- * <p>Call {@link #enable(Minecraft, AbstractFarmingMacro)} to start a macro and
- * {@link #disable(Minecraft)} to stop it.  {@link #tick(Minecraft)} must be
- * wired to a {@code ClientTickEvents.END_CLIENT_TICK} handler in
- * {@link dev.aether.AetherClient}.
- */
+// tick() has to be wired to END_CLIENT_TICK
 public final class FarmingMacroManager {
 
     private FarmingMacroManager() {}
@@ -39,7 +32,7 @@ public final class FarmingMacroManager {
     private static volatile boolean deferredStartPending = false;
     private static int pendingEnableTicks = 0;
 
-    /** Persists the active step within a macro's declared state cycle. */
+    // persists the active step within a macro's declared state cycle
     private static volatile Integer cachedCycleStep = null;
 
     public static void loadCycleStep() {
@@ -67,18 +60,12 @@ public final class FarmingMacroManager {
         return cachedCycleStep;
     }
 
-	/**
-	 * Restores the active macro's cached farming orientation.
-	 */
 	public static boolean restoreConfiguredOrientation(Minecraft mc) {
 		return activeMacro != null && activeMacro.restoreConfiguredOrientation(mc);
 	}
 
     // -- Public API ------------------------------------------------------------
 
-    /**
-     * Instantiates a macro instance based on the current {@link AetherConfig#FARM_TYPE}.
-     */
     public static AbstractFarmingMacro createMacroFromConfig() {
         String typeName = AetherConfig.FARM_TYPE.get();
         return switch (typeName) {
@@ -95,10 +82,7 @@ public final class FarmingMacroManager {
         };
     }
 
-    /**
-     * Enable the given macro, replacing any previously active one.
-     * Always call this on the main client thread.
-     */
+    // main client thread only
     public static void enable(Minecraft mc, AbstractFarmingMacro macro) {
         if (RestartManager.isRestartSequenceActive()) {
             return;
@@ -245,10 +229,7 @@ public final class FarmingMacroManager {
                 && mc.player.containerMenu.containerId != mc.player.inventoryMenu.containerId;
     }
 
-    /**
-     * Disable the currently active macro (if any).
-     * Always call this on the main client thread.
-     */
+    // main client thread only
     public static void disable(Minecraft mc) {
         if (activeMacro != null) {
             activeMacro.onDisable(mc);
@@ -257,7 +238,6 @@ public final class FarmingMacroManager {
         }
     }
 
-    /** Returns the currently active macro, or {@code null} if none. */
     public static AbstractFarmingMacro getActiveMacro() {
         return activeMacro;
     }
@@ -266,17 +246,13 @@ public final class FarmingMacroManager {
         return activeMacro != null;
     }
 
-    /** Releases input owned by the active farm macro without disabling it. */
+    // releases the macro's keys without disabling it
     public static void releaseInputs(Minecraft mc) {
         if (activeMacro != null && mc != null && mc.options != null) {
             activeMacro.releaseAll(mc);
         }
     }
 
-    /**
-     * Advance the active macro by one tick.
-     * Wire this to {@code ClientTickEvents.END_CLIENT_TICK}.
-     */
     public static void tick(Minecraft mc) {
         if (activeMacro == null || mc.player == null) {
             return;

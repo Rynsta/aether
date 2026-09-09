@@ -2,12 +2,6 @@ package dev.aether.notification;
 
 import dev.aether.ui.theme.Theme;
 
-/**
- * Represents a single notification to be displayed.
- *
- * <p>Notifications have a title, optional message, type (info/success/warning/error),
- * and automatic dismissal after a configurable duration.</p>
- */
 public class Notification {
 
     public enum Type {
@@ -43,15 +37,7 @@ public class Notification {
     private float animProgress = 0f;
     private boolean dismissing = false;
 
-    /**
-     * Creates a new notification.
-     *
-     * @param title      The main title text
-     * @param message    Optional subtitle/description (can be null or empty)
-     * @param type       Notification type (determines color and icon)
-     * @param durationMs Time before auto-dismiss (0 = no auto-dismiss)
-     * @param dismissible Whether clicking dismisses the notification
-     */
+    // durationMs of 0 means no auto-dismiss
     public Notification(String title, String message, Type type, long durationMs, boolean dismissible) {
         this.title = title;
         this.message = message;
@@ -86,7 +72,7 @@ public class Notification {
 
     // -- Animation state (single progress value for efficiency) ----------------
 
-    /** Returns visibility from 0 (hidden) to 1 (fully shown). */
+    // 0 hidden, 1 fully shown
     public float getAnimProgress() { return animProgress; }
     public void setAnimProgress(float progress) { this.animProgress = progress; }
 
@@ -95,26 +81,24 @@ public class Notification {
 
     // -- Lifecycle --------------------------------------------------------------
 
-    /** @return true if this notification should be removed */
     public boolean isExpired() {
         if (durationMs <= 0) return false;
         return System.currentTimeMillis() - createdAt >= durationMs;
     }
 
-    /** @return Progress through the notification's lifetime (0.0 - 1.0) */
+    // 0.0 to 1.0 through the notification's lifetime
     public float getLifetimeProgress() {
         if (durationMs <= 0) return 0f;
         return Math.min(1f, (float)(System.currentTimeMillis() - createdAt) / durationMs);
     }
 
-    /** Starts the dismiss animation. */
     public void dismiss() {
         if (!dismissing) {
             dismissing = true;
         }
     }
 
-    /** Updates the visible content in place and restarts the countdown. */
+    // updates the visible content in place and restarts the countdown
     public void update(String title, String message, Type type) {
         this.title = title;
         this.message = message;

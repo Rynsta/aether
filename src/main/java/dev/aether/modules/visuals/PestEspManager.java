@@ -22,7 +22,7 @@ import org.joml.Vector4f;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Renders only currently loaded, confirmed pest entities in the Garden. */
+// only currently loaded, confirmed pests in the garden
 public final class PestEspManager {
     private static final float TRACER_EDGE_MARGIN = 20.0f;
 

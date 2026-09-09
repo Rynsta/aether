@@ -16,19 +16,8 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
-/**
- * Fly executor inspired by FarmHelper's FlyPathFinderExecutor.
- *
- * Key design decisions mirroring FarmHelper:
- * - Rotation is horizontal only (yaw). The player looks toward the target,
- * BUT vertical movement is controlled entirely by Space/Shift based on
- * raycast collision checks in front of and behind the player - not by pitch.
- * - Waypoint advancement uses the closest reachable waypoint (1.5 block
- * radius).
- * - Stopping: once we'd arrive within stoppingThreshold after deceleration,
- * keys release.
- * - Stuck recovery: at 1.5s hold Space to climb; at 3s abort.
- */
+// vertical movement is space/shift driven by raycasts in front and behind, not by pitch; rotation is yaw only
+// stuck recovery holds space at 1.5s and aborts at 3s
 public final class FlyExecutor {
 
     public enum State {
@@ -56,7 +45,6 @@ public final class FlyExecutor {
     private int wpIndex;
     private int goalX, goalY, goalZ;
 
-    /** Rolling stuck detection */
     private Vec3 lastPosCheck = Vec3.ZERO;
     private long lastProgressTime;
     private long decelStartTime = 0;
@@ -369,11 +357,7 @@ public final class FlyExecutor {
         }
     }
 
-    /**
-     * Sets only the player's yaw to face (dx, dz). Does not touch pitch.
-     * Yaw is smoothed through the shared pathfinding RotationExecutor.
-     * Guard: skip update when the horizontal distance is too small.
-     */
+    // yaw only, smoothed through the shared RotationExecutor; skipped when the horizontal distance is too small
     private void setHorizontalRotation(Minecraft mc, double dx, double dz, float pitch) {
         if (mc.player == null)
             return;
@@ -481,11 +465,7 @@ public final class FlyExecutor {
         return FlightPathClearance.isClear(mc, pos, target);
     }
 
-    /**
-     * FarmHelper-style: raycast in front of the player to detect blocks,
-     * then decide whether to go up or down.
-     * This avoids drift from pitch-based steering.
-     */
+    // raycast in front of the player to decide up or down, which avoids the drift pitch-based steering gives
     private void adjustVerticalKeysWithRaycast(Minecraft mc, Vec3 pos, double waypointY, double tolerance) {
         if (mc.player == null || mc.level == null)
             return;

@@ -8,7 +8,7 @@ import org.lwjgl.system.MemoryStack;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-/** One bounded upload, one opaque wing draw and one additive effect draw. */
+// one bounded upload, one opaque wing draw and one additive effect draw
 public final class CosmeticShader implements AutoCloseable {
     private int program;
     private int vao;

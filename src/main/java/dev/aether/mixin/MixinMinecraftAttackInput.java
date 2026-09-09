@@ -14,11 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Minecraft.class)
 public class MixinMinecraftAttackInput {
-    /**
-     * Swinging while a pest is on the lasso knocks it off, and a left click can
-     * come from a stale macro latch, a queued click, or the player's own mouse.
-     * Blocked at the game's own entry points so none of those can reach it.
-     */
+    // swinging while a pest is on the lasso knocks it off, and a left click can come from a stale macro latch, a queued click, or the player's own mouse
     @Inject(method = "startAttack", at = @At("HEAD"), cancellable = true)
     private void aether$blockAttackWhileLassoing(CallbackInfoReturnable<Boolean> cir) {
         if (AetherBootstrapHooks.isAttackSuppressed()) {

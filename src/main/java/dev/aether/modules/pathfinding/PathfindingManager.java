@@ -36,9 +36,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * Central coordinator for all pathfinding operations.
- */
 public final class PathfindingManager {
 
     private enum NavigationMode {
@@ -82,7 +79,7 @@ public final class PathfindingManager {
 
     // Held so we can abort the current async run
     private static volatile AStarPathfinder currentPathfinder = null;
-    /** Invalidates late async A* results when a newer route has already started. */
+    // invalidates late async a* results when a newer route already started
     private static volatile long pathSearchToken = 0L;
     private static volatile EtherwarpPathfinder currentEtherwarpPathfinder = null;
     private static volatile long etherwarpSearchToken = 0L;
@@ -344,9 +341,7 @@ public final class PathfindingManager {
         doStartPathfind(mc, x, y, z, false);
     }
 
-    /**
-     * Runs A* without any movement - results are shown in PathVisualizer only.
-     */
+    // runs a* without moving - results only show in PathVisualizer
     public static void startPathTest(Minecraft mc, int x, int y, int z) {
         if (mc.player == null || mc.level == null) return;
 
@@ -1354,11 +1349,7 @@ public final class PathfindingManager {
         return node;
     }
 
-    /**
-     * Normalizes the player's current feet Y onto the walk layer used by the pathfinder.
-     * Thin floor blocks like carpet should keep the player on the current block, while
-     * slabs/stairs still bump the start node up into the air block above them.
-     */
+    // thin floors like carpet keep the player on the current block, slabs and stairs bump the start node into the air block above
     private static int resolveStartY(WalkabilityChecker checker, double playerX, double playerY, double playerZ) {
         int x = Mth.floor(playerX);
         int y = Mth.floor(playerY);
@@ -1375,12 +1366,7 @@ public final class PathfindingManager {
         return Mth.ceil(playerY);
     }
 
-    /**
-     * Simplifies a fly path using line-of-sight raycasting (FarmHelper smoothPath style).
-     * For each node, tries to skip as many subsequent nodes as possible while still
-     * having a clear hitbox path. Drastically reduces waypoint count on
-     * open paths (e.g. straight flight at altitude).
-     */
+    // line-of-sight raycast skips as many nodes as still have a clear hitbox path, which cuts waypoint count hard on open flight
     private static List<Node> smoothFlyPath(Minecraft mc, List<Node> path) {
         if (mc.level == null || path.size() < 3) return path;
 
@@ -1417,10 +1403,7 @@ public final class PathfindingManager {
 
     // --- Utilities -----------------------------------------------------------
 
-    /**
-     * Converts a PathPosition collection (from PathfinderResult) to a Node list
-     * with inferred MoveTypes for PathVisualizer coloring.
-     */
+    // infers MoveTypes so PathVisualizer can colour them
     private static List<Node> toNodeList(Collection<PathPosition> positions,
                                           PathfinderConfiguration config) {
         if (positions == null || positions.isEmpty()) return Collections.emptyList();
@@ -1484,16 +1467,11 @@ public final class PathfindingManager {
     private static final int  SHIFT_Z = 12;
     private static final int  SHIFT_X = 38;
 
-    /** Minimum distance between keynodes on straight segments. */
     private static final double KEYNODE_MIN_SPACING  = 12.0;
-    /** Direction change (degrees) that forces a new keynode regardless of distance. */
+    // degrees of direction change that forces a keynode regardless of distance
     private static final double KEYNODE_ANGLE_THRESH = 25.0;
 
-    /**
-     * Subsamples a smoothed path so keynodes are spaced >= KEYNODE_MIN_SPACING apart,
-     * but always kept when the horizontal direction changes by >= KEYNODE_ANGLE_THRESH degrees.
-     * First and last nodes are always kept.
-     */
+    // spaces keynodes at least KEYNODE_MIN_SPACING apart, but always keeps a turn past KEYNODE_ANGLE_THRESH, plus the first and last node
     private static List<Node> subsampleKeynodes(List<Node> smoothed) {
         if (smoothed.size() <= 2) return new ArrayList<>(smoothed);
         List<Node> result = new ArrayList<>();

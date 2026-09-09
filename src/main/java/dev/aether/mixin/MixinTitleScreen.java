@@ -14,14 +14,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/**
- * Replaces {@link TitleScreen} with {@link AetherTitleScreen} with zero frame delay.
- *
- * Cancelling {@code init} means vanilla buttons/panorama are never set up.
- * Calling {@code setScreen} directly (not via {@code execute()}) means
- * {@code mc.screen} is already {@link AetherTitleScreen} before the first render tick,
- * so there is no one-frame TitleScreen flash.
- */
+// cancelling init means vanilla buttons/panorama never get set up, and setting the screen directly rather than via execute() avoids a one-frame TitleScreen flash
 @Mixin(TitleScreen.class)
 public abstract class MixinTitleScreen extends Screen {
     private static final int AETHER_BUTTON_WIDTH = 200;

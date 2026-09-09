@@ -4,7 +4,7 @@ import dev.aether.modules.failsafe.FailsafeManager;
 import dev.aether.util.ClientUtils;
 import net.minecraft.client.Minecraft;
 
-/** Handles vacuum selection and entering flight before a hunt begins. */
+// vacuum selection and entering flight before a hunt begins
 final class PestEquipmentController {
     interface Context {
         void setState(PestDestroyer.State state);

@@ -13,10 +13,7 @@ import dev.aether.util.ClientUtils;
 import dev.aether.util.CommandUtils;
 import net.minecraft.client.Minecraft;
 
-/**
- * Watches the pest tab-list bonus line and runs Phillip exchange when
- * "Bonus: INACTIVE" is detected while farming.
- */
+// watches the tab-list bonus line and runs the phillip exchange when it reads INACTIVE while farming
 public final class AutoPestExchangeManager {
 
     private static final long RUN_COOLDOWN_MS = 30_000L;

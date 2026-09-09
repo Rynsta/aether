@@ -126,10 +126,7 @@ public class ForgeManager {
         return false;
     }
 
-    /**
-     * Finds the nearest walkable block within 3 blocks of the target NPC coords,
-     * closest to the player. Mirrors the visitor macro's approach.
-     */
+    // nearest walkable block within 3 of the npc, closest to the player; mirrors the visitor macro
     private static BlockPos findBestWalkingTarget(Minecraft client, int tx, int ty, int tz) {
         if (client.level == null || client.player == null) return null;
         BlockPos base = new BlockPos(tx, ty, tz);
@@ -176,9 +173,7 @@ public class ForgeManager {
         return true;
     }
 
-    /**
-     * Finds the nearest "Forger" NPC, explicitly excluding real players.
-     */
+    // explicitly excludes real players
     private static Entity findForgerNpc(Minecraft client) {
         if (client.level == null || client.player == null) return null;
 

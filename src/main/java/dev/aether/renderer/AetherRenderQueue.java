@@ -3,10 +3,7 @@ package dev.aether.renderer;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Queues immediate-mode GL/NanoVG work discovered during GUI extraction and
- * runs it during the actual render pass.
- */
+// gl/nanovg work found during gui extraction, run later in the actual render pass
 public final class AetherRenderQueue {
     private static final List<Runnable> TASKS = new ArrayList<>();
     private static final List<Runnable> BEFORE_GUI_TASKS = new ArrayList<>();

@@ -43,24 +43,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Standalone visitors macro triggered by {@code /aether visitors}.
- * <p>
- * Flow:
- * <ol>
- * <li>TP to barn ({@code /plottp barn})</li>
- * <li>Scan tab-list for visitor names</li>
- * <li>For each visitor NPC in the barn area:
- * <ul>
- * <li>Walk close, rotate, interact (right-click)</li>
- * <li>Read the "Accept Offer" lore to extract required items</li>
- * <li>Buy each item from Bazaar via {@link BazaarUtils}</li>
- * <li>Re-open visitor GUI and click "Accept Offer"</li>
- * </ul>
- * </li>
- * <li>When all visitors are served, stop.</li>
- * </ol>
- */
+// plottp barn, scan tab for visitor names, then per npc: walk close, interact, read the accept offer lore, buy the items off bazaar, and accept
 public class VisitorsMacro {
 
     private static final Pattern ITEM_PATTERN = Pattern.compile("^(.+?)\\s+x([\\d,]+)$");
@@ -864,10 +847,7 @@ public class VisitorsMacro {
         return client.player != null && client.player.distanceTo(visitor) <= retryRange;
     }
 
-    /**
-     * Repeatedly right-clicks the entity every 500ms until a container GUI opens or
-     * timeout.
-     */
+    // right-clicks every 500ms until a container gui opens or it times out
     private static boolean interactUntilGui(Minecraft client, String visitorName, Entity entity, long timeoutMs) {
         long deadline = System.currentTimeMillis() + timeoutMs;
         int prepRetries = 0;

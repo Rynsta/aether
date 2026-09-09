@@ -26,18 +26,8 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-/**
- * Singleton manager for the NanoVG rendering context.
- *
- * <p>Call {@link #init()} once during client startup (before any rendering),
- * and {@link #destroy()} during shutdown. Every screen frame that wants to use
- * NanoVG should call {@link #beginFrame(float, float)} before drawing and
- * {@link #endFrame()} when finished.</p>
- *
- * <p>Font files are loaded automatically from the mod's resources. Use
- * {@link #getFontId(String)} with a name constant from {@link Fonts}
- * to retrieve the registered font ID.</p>
- */
+// init() once at client startup and destroy() at shutdown; every frame pairs beginFrame with endFrame
+// fonts load from the mod's resources - look them up with getFontId and a Fonts constant
 public final class NanoVGManager {
 
     // -- Singleton state -------------------------------------------------------
@@ -47,38 +37,28 @@ public final class NanoVGManager {
     private static boolean initialized = false;
     private static boolean drawing = false;
 
-    /** Current pixel ratio (physical px per logical px), updated every beginFrame(). */
     private static float pxRatio = 1f;
 
-    /** GL sampler ID bound to unit 0 before we clear it - restored in endFrame(). */
+    // restored in endFrame()
     private static int savedSampler = 0;
 
-    /** GL framebuffer bound when beginFrame() was called - restored in endFrame(). */
+    // restored in endFrame()
     private static int savedFbo = 0;
 
-    /** MC's main render target FBO, resolved each beginFrame(). Used by RippleEffect. */
+    // resolved each beginFrame(); used by RippleEffect
     private static int mainRtFbo = 0;
 
-    /**
-     * When >= 0, {@link #beginFrame} renders into this FBO instead of MC's main RT.
-     * Automatically reset to {@code -1} after one use.
-     * Set by {@link RippleEffect} to redirect NVG into its offscreen scene buffer.
-     */
+    // reset to -1 after one use; RippleEffect sets it to redirect nvg into its offscreen scene buffer
     private static int overrideTargetFbo = -1;
 
-    /** GL program active when beginFrame() was called - restored in endFrame().
-     *  NanoVG's GL3 backend calls glUseProgram(0) internally at the end of nvgEndFrame(),
-     *  which would leave MC's pipeline with no active shader. */
+    // nanovg's gl3 backend calls glUseProgram(0) at the end of nvgEndFrame, which would leave mc's pipeline with no shader
     private static int savedProgram = 0;
 
-    /** VAO bound when beginFrame() was called - restored in endFrame().
-     *  NanoVG binds its own VAO and does not restore the previous one, which causes
-     *  MC's font renderer (debug overlay etc.) to read the wrong vertex state. */
+    // nanovg binds its own vao and never restores the previous one, which makes mc's font renderer read the wrong vertex state
     private static int savedVao = 0;
 
-    /** Maps font name -> NanoVG font ID. */
     private static final Map<String, Integer> fontIds = new HashMap<>();
-    /** Keep ByteBuffers alive so NanoVG doesn't read freed memory. */
+    // keeps the ByteBuffers alive so nanovg doesn't read freed memory
     private static final Map<String, ByteBuffer> fontBuffers = new HashMap<>();
     private static final String UNICODE_FALLBACK_FONT = "Aether-Unicode-Fallback";
 
@@ -86,12 +66,7 @@ public final class NanoVGManager {
 
     // -- Lifecycle -------------------------------------------------------------
 
-    /**
-     * Initialises the NanoVG context and loads the built-in fonts.
-     * Must be called once on the main render thread before any NVG rendering.
-     *
-     * @throws RuntimeException if the NanoVG context could not be created
-     */
+    // main render thread, once, before any nvg rendering
     public static void init() {
         if (initialized) return;
 
@@ -112,10 +87,6 @@ public final class NanoVGManager {
         initialized = true;
     }
 
-    /**
-     * Destroys the NanoVG context and releases all resources.
-     * Should be called during client shutdown.
-     */
     public static void destroy() {
         if (!initialized) return;
         SVGRenderer.destroy(vg);
@@ -130,16 +101,7 @@ public final class NanoVGManager {
 
     // -- Frame lifecycle -------------------------------------------------------
 
-    /**
-     * Begins a new NanoVG frame, binding MC's main render target as the draw target.
-     *
-     * <p>This must be called before any {@link NVGRenderer} drawing calls and must be
-     * paired with exactly one {@link #endFrame()} call.</p>
-     *
-     * @param width  logical screen width in pixels
-     * @param height logical screen height in pixels
-     * @throws IllegalStateException if {@code init()} has not been called or a frame is already open
-     */
+    // binds mc's main render target; pair with exactly one endFrame()
     public static void beginFrame(float width, float height) {
         if (!initialized) throw new IllegalStateException("[Aether] NanoVGManager.init() must be called first");
         if (drawing)      throw new IllegalStateException("[Aether] endFrame() was not called before beginFrame()");
@@ -186,12 +148,7 @@ public final class NanoVGManager {
         drawing = true;
     }
 
-    /**
-     * Ends the current NanoVG frame and flushes all queued drawing commands.
-     * Restores the minimum GL state Minecraft expects after NanoVG rendering.
-     *
-     * @throws IllegalStateException if no frame is currently open
-     */
+    // restores the minimum gl state minecraft expects after nanovg
     public static void endFrame() {
         if (!drawing) throw new IllegalStateException("[Aether] beginFrame() was not called before endFrame()");
 
@@ -236,25 +193,16 @@ public final class NanoVGManager {
 
     // -- Accessors -------------------------------------------------------------
 
-    /** Returns the singleton {@link NVGRenderer} for this context. */
     public static NVGRenderer getRenderer() { return renderer; }
 
-    /** Returns the raw NanoVG context handle ({@code long vg}). */
     public static long getVg() { return vg; }
 
-    /** @return {@code true} if {@link #init()} has been called successfully */
     public static boolean isInitialized() { return initialized; }
 
-    /**
-     * Redirects the next {@link #beginFrame} call to render into {@code fbo} instead
-     * of MC's main render target. Consumed after one use. Used by {@link RippleEffect}.
-     */
+    // consumed after one use; used by RippleEffect
     public static void setOverrideTargetFbo(int fbo) { overrideTargetFbo = fbo; }
 
-    /**
-     * Returns MC's main render target FBO, resolved during the last {@link #beginFrame}.
-     * Valid after the first frame; used by {@link RippleEffect#composite} as the output target.
-     */
+    // valid after the first frame; RippleEffect.composite uses it as the output target
     public static int getMainRtFbo() { return mainRtFbo; }
 
     private static DirectStateAccess resolveDirectStateAccess() {
@@ -262,33 +210,18 @@ public final class NanoVGManager {
                 .aether$directStateAccess();
     }
 
-    /** @return {@code true} if a frame has been opened with {@link #beginFrame} */
     public static boolean isDrawing() { return drawing; }
 
-    /** Returns the current pixel ratio (physical pixels per logical pixel). Updated each frame. */
     public static float getPxRatio() { return pxRatio; }
 
-    /**
-     * Returns the NanoVG font ID registered under {@code name}, or {@code -1}
-     * if the font has not been loaded.
-     *
-     * @param name font name as defined in {@link Fonts}
-     */
+    // -1 when the font has not been loaded
     public static int getFontId(String name) {
         return fontIds.getOrDefault(name, -1);
     }
 
     // -- Font loading ----------------------------------------------------------
 
-    /**
-     * Loads a font from the mod's resources and registers it with NanoVG.
-     *
-     * <p>The font's byte buffer is kept in memory for the lifetime of the context
-     * because NanoVG holds a raw pointer into it.</p>
-     *
-     * @param name         the name to register the font under
-     * @param resourcePath absolute path within the jar, e.g. {@code "/assets/aether/fonts/Inter-Regular.otf"}
-     */
+    // the byte buffer stays in memory for the lifetime of the context, because nanovg holds a raw pointer into it
     public static void loadFont(String name, String resourcePath) {
         if (fontIds.containsKey(name)) return;
         try (InputStream in = AetherResources.open(resourcePath)) {

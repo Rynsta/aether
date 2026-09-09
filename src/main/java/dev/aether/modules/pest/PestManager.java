@@ -150,19 +150,11 @@ public class PestManager {
         }
     }
 
-    /**
-     * Parse infested plots directly from the current tab list.
-     */
     public static Set<String> getInfestedPlotsFromTab(Minecraft client) {
         return new LinkedHashSet<>(parseTabList(client).infestedPlots());
     }
 
-    /**
-     * Raw pests-alive count from the current tab list. Returns -1 when the tab
-     * has no pests line (i.e. no pests). Unlike {@link #getEffectiveAliveCountNow}
-     * this is not blended with chat-predicted counts, so it drops back to 0/-1 as
-     * soon as the tab clears - which is what manual pest handling relies on.
-     */
+    // -1 when the tab has no pests line; unlike getEffectiveAliveCountNow this is not blended with chat predictions, so it drops back as soon as the tab clears, which is what manual handling relies on
     public static int getTabAliveCountNow(Minecraft client) {
         if (client == null || client.getConnection() == null || client.player == null) {
             return -1;
@@ -379,7 +371,7 @@ public class PestManager {
         checkTabListForPests(client, MacroStateManager.getCurrentState());
     }
 
-    /** Schedules a chat trigger without blocking the shared worker or farming. */
+    // schedules a chat trigger without blocking the shared worker or farming
     public static synchronized void scheduleChatCleaningTrigger(
             String plot, int spawnedCount, long delayMs, long ballsackDelayMs, boolean spawnedMessage) {
         boolean useBallsackRoute = spawnedMessage && shouldRunBallsackShredderForSpawn(plot);
@@ -469,10 +461,7 @@ public class PestManager {
 
     private record PendingChatTrigger(String plot, int spawnedCount, long triggerAtMs) {}
 
-    /**
-     * Returns effective pests alive count from tab/chat sync.
-     * -1 means unavailable/unknown right now.
-     */
+    // -1 means unavailable right now
     public static int getEffectiveAliveCountNow(Minecraft client) {
         if (client == null || client.getConnection() == null || client.player == null) {
             return -1;
@@ -487,11 +476,7 @@ public class PestManager {
         return getEffectiveAliveCount(data.aliveCount());
     }
 
-    /**
-     * Count used only to decide whether Pest Destroyer is complete. When
-     * estimation is disabled, a missing pests line is treated as the tab
-     * reporting zero pests after the destroyer's normal confirmation guard.
-     */
+    // with estimation off, a missing pests line counts as zero pests once the destroyer's confirmation guard has passed
     public static int getPestDestroyerCompletionAliveCountNow(Minecraft client) {
         if (client == null || client.getConnection() == null || client.player == null) {
             return -1;

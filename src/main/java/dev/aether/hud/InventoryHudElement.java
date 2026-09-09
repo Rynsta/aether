@@ -12,10 +12,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
-/**
- * Glass-panel HUD element that displays the player's inventory, with optional
- * armor slots and player portrait.
- */
 public class InventoryHudElement extends HudElement {
 
     private static final float PAD = 8f;
