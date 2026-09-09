@@ -52,5 +52,5 @@
   "pestHuntingFollowDistance": 5,
   "pestHuntingMaxDistance": 8,
   "pestHuntingTrackingSmoothingMs": 135,
-  "pestHuntingMaxTurnSpeed": 360
+  "pestHuntingMaxTurnSpeed": 420
 }
