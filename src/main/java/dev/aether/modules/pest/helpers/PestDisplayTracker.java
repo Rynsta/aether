@@ -38,17 +38,11 @@ public final class PestDisplayTracker {
         tick = client.player.tickCount;
         List<Entity> mobs = PestTargetTracker.getLoadedPestMobs(client);
         List<ArmorStand> skulls = PestTargetTracker.getLoadedPestMarkers(client);
+        List<Entity> preferredMobs = mobs.stream().filter(mob -> !isAttached(client, mob)).toList();
         Map<Entity, ArmorStand> visibleSkulls = new java.util.LinkedHashMap<>();
         for (ArmorStand skull : skulls) {
             Integer previousOwner = skullOwners.get(skull.getId());
-            Entity owner = previousOwner == null ? null
-                    : mobs.stream().filter(mob -> mob.getId() == previousOwner).findFirst().orElse(null);
-            // A dead pest's skull can outlive its mob; do not lend it to a neighbouring pest.
-            if (previousOwner != null && (owner == null || !isMarkerNear(skull, owner))) continue;
-            if (owner == null) {
-                owner = nearest(skull, mobs.stream().filter(mob -> !isAttached(client, mob)).toList());
-                if (owner == null) owner = nearest(skull, mobs);
-            }
+            Entity owner = findSkullOwner(skull, previousOwner, mobs, preferredMobs);
             if (owner != null) {
                 visibleSkulls.putIfAbsent(owner, skull);
                 skullOwners.put(skull.getId(), owner.getId());
@@ -119,6 +113,17 @@ public final class PestDisplayTracker {
         return entity instanceof Leashable leash && leash.getLeashHolder() == client.player;
     }
 
+    static Entity findSkullOwner(Entity skull, Integer previousOwner, List<Entity> mobs, List<Entity> preferredMobs) {
+        if (previousOwner != null) {
+            return mobs.stream().filter(mob -> mob.getId() == previousOwner).findFirst().orElse(null);
+        }
+        for (Entity vehicle = skull.getVehicle(); vehicle != null; vehicle = vehicle.getVehicle()) {
+            if (mobs.contains(vehicle)) return vehicle;
+        }
+        Entity owner = nearest(skull, preferredMobs);
+        return owner != null ? owner : nearest(skull, mobs);
+    }
+
     private static Entity nearest(Entity marker, List<Entity> mobs) {
         return mobs.stream().filter(mob -> isMarkerNear(marker, mob))
                 .min(Comparator.<Entity>comparingDouble(marker::distanceToSqr).thenComparingInt(Entity::getId))
@@ -128,7 +133,7 @@ public final class PestDisplayTracker {
     private static boolean isMarkerNear(Entity marker, Entity mob) {
         double dx = marker.getX() - mob.getX(), dz = marker.getZ() - mob.getZ();
         double dy = marker.getY() - mob.getY();
-        return dx * dx + dz * dz <= 2.25 && dy >= -1 && dy <= 5;
+        return dx * dx + dz * dz <= 2.25 && dy >= -2 && dy <= 5;
     }
 
     public record PestDisplay(Entity entity, ArmorStand skull, String name, ItemStack icon,
