@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 public enum ThemePreset {
     SLATE("Slate", "slate"),
     SAGE("Sage", "sage"),
+    MATCHA("Matcha", "matcha"),
     DUSK("Dusk", "dusk"),
     EMBER("Ember", "ember");
 
