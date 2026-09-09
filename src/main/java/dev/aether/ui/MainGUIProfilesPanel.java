@@ -5,6 +5,7 @@ import dev.aether.config.ThemeProfileManager;
 import dev.aether.notification.NotificationManager;
 import dev.aether.renderer.NVGRenderer;
 import dev.aether.ui.theme.Theme;
+import dev.aether.ui.theme.ThemePreset;
 import dev.aether.ui.util.Fonts;
 import dev.aether.util.AetherLang;
 import net.minecraft.client.Minecraft;
@@ -107,6 +108,12 @@ final class MainGUIProfilesPanel {
         tot += MainGUI.SECT_H;
         y += MainGUI.SECT_SEP;
         tot += MainGUI.SECT_SEP;
+
+        if (!isConfig) {
+            float presetsHeight = renderThemePresets(nvg, mx, my, gx, gw, y);
+            y += presetsHeight;
+            tot += presetsHeight;
+        }
 
         nvg.text(Fonts.BOLD, AetherLang.localize("Save Profile"), gx, y, 10f, Theme.TEXT_MUTED);
         y += 16f;
@@ -301,5 +308,43 @@ final class MainGUIProfilesPanel {
         tot += importH + 16f;
 
         return new LayoutCursor(y, tot);
+    }
+
+    private float renderThemePresets(NVGRenderer nvg, float mx, float my, float gx, float gw, float y) {
+        nvg.text(Fonts.BOLD, AetherLang.localize("Colour Presets"), gx, y, 10f, Theme.TEXT_MUTED);
+        ThemePreset[] presets = ThemePreset.values();
+        float gap = 8f;
+        float buttonH = 32f;
+        float minButtonW = nvg.textWidth(Fonts.REGULAR, AetherLang.localize("Default Colours"), 12.5f) + 24f;
+        for (ThemePreset preset : presets) {
+            minButtonW = Math.max(minButtonW, nvg.textWidth(Fonts.REGULAR, AetherLang.localize(preset.label()), 12.5f) + 24f);
+        }
+        int columns = Math.clamp((int) ((gw + gap) / (minButtonW + gap)), 1, presets.length + 1);
+        float buttonW = (gw - gap * (columns - 1)) / columns;
+        for (int i = 0; i <= presets.length; i++) {
+            ThemePreset preset = i < presets.length ? presets[i] : null;
+            String label = AetherLang.localize(preset == null ? "Default Colours" : preset.label());
+            float buttonX = gx + (i % columns) * (buttonW + gap);
+            float buttonY = y + 16f + (i / columns) * (buttonH + gap);
+            boolean hovered = mx >= buttonX && mx <= buttonX + buttonW && my >= buttonY && my <= buttonY + buttonH;
+            int bg = hovered ? Theme.withAlpha(Theme.ACCENT_PRIMARY, 0.15f) : Theme.ELEMENT_BG;
+            int border = hovered ? Theme.withAlpha(Theme.ACCENT_PRIMARY, 0.35f) : Theme.withAlpha(0xFFFFFFFF, 0.06f);
+            int text = hovered ? Theme.ACCENT_PRIMARY : Theme.TEXT_VALUE;
+            nvg.roundedRect(buttonX, buttonY, buttonW, buttonH, 7f, bg);
+            nvg.rectOutline(buttonX, buttonY, buttonW, buttonH, 7f, 1f, border);
+            nvg.textCentered(Fonts.REGULAR, label, buttonX, buttonY, buttonW, buttonH, 12.5f, text);
+            owner.addClickArea(buttonX, buttonY, buttonW, buttonH, () -> {
+                owner.commitText();
+                owner.commitColor();
+                if (preset == null) {
+                    Theme.resetColorsToDefaults();
+                } else {
+                    preset.apply();
+                }
+                Theme.saveTheme();
+            });
+        }
+        int rows = (presets.length + columns) / columns;
+        return 16f + rows * (buttonH + gap) - gap + 18f;
     }
 }
