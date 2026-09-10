@@ -163,8 +163,7 @@ public final class AutoSprayonatorManager {
 
         try {
             cancelRequested = false;
-            String hotbarMaterial = getSprayonatorMaterialFromHotbar(client);
-            if (hotbarMaterial == null) {
+            if (PestClientThread.call(client, () -> findSprayonatorSlot(client), -1) < 0) {
                 msg(client, "\u00A7cSprayonator not found in hotbar. Skipping auto spray.");
                 return;
             }
@@ -498,7 +497,7 @@ public final class AutoSprayonatorManager {
         ItemStack held = client.player.getMainHandItem();
         if (held == null || held.isEmpty()) return null;
 
-        return getMaterialFromSprayonatorStack(client, held);
+        return SprayonatorItem.selectedMaterial(held);
     }
 
     private static String getSprayonatorMaterialFromHotbar(Minecraft client) {
@@ -507,49 +506,8 @@ public final class AutoSprayonatorManager {
         }
         if (client.player == null) return null;
 
-        for (int i = 0; i < 9; i++) {
-            ItemStack stack = client.player.getInventory().getItem(i);
-            if (stack == null || stack.isEmpty()) continue;
-
-            String material = getMaterialFromSprayonatorStack(client, stack);
-            if (material != null) {
-                return material;
-            }
-        }
-
-        return null;
-    }
-
-    private static String getMaterialFromSprayonatorStack(Minecraft client, ItemStack stack) {
-        if (stack == null || stack.isEmpty()) return null;
-
-        String name = TablistUtils.stripColors(stack.getHoverName().getString()).toLowerCase();
-        if (!name.contains("sprayonator")) return null;
-
-        try {
-            Component hoverText = stack.getTooltipLines(
-                    net.minecraft.world.item.Item.TooltipContext.EMPTY,
-                    client.player,
-                    net.minecraft.world.item.TooltipFlag.NORMAL)
-                    .stream()
-                    .filter(c -> {
-                        String line = TablistUtils.stripColors(c.getString()).toLowerCase();
-                        return line.contains("selected material:");
-                    })
-                    .findFirst()
-                    .orElse(null);
-
-            if (hoverText != null) {
-                String line = TablistUtils.stripColors(hoverText.getString());
-                int idx = line.toLowerCase().indexOf("selected material:");
-                if (idx >= 0) {
-                    return line.substring(idx + "selected material:".length()).trim();
-                }
-            }
-        } catch (Exception ignored) {
-        }
-
-        return null;
+        int slot = findSprayonatorSlot(client);
+        return slot < 0 ? null : SprayonatorItem.selectedMaterial(client.player.getInventory().getItem(slot));
     }
 
     public static boolean holdSprayonator(Minecraft client) {
@@ -597,9 +555,7 @@ public final class AutoSprayonatorManager {
         }
         for (int i = 0; i < 9; i++) {
             ItemStack stack = client.player.getInventory().getItem(i);
-            if (stack != null && !stack.isEmpty()
-                    && TablistUtils.stripColors(stack.getHoverName().getString())
-                            .toLowerCase().contains("sprayonator")) {
+            if (SprayonatorItem.matches(stack)) {
                 return i;
             }
         }
