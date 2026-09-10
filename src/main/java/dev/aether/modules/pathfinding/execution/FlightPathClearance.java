@@ -15,20 +15,47 @@ public final class FlightPathClearance {
     private FlightPathClearance() {}
 
     public static boolean isClear(Minecraft client, Vec3 from, Vec3 to) {
+        return isClear(client, from, to, 0.0);
+    }
+
+    public static boolean isClear(Minecraft client, Vec3 from, Vec3 to, double margin) {
         if (client.player == null || client.level == null) {
             return false;
         }
-        AABB bounds = client.player.getBoundingBox().move(from.subtract(client.player.position()));
-        return isClear(bounds, to.subtract(from), search -> {
-            List<AABB> obstacles = new ArrayList<>();
-            for (var shape : client.level.getBlockCollisions(client.player, search)) {
-                obstacles.addAll(shape.toAabbs());
-            }
-            return obstacles;
-        });
+        AABB bounds = client.player.getBoundingBox().inflate(margin, 0.0, margin)
+                .move(from.subtract(client.player.position()));
+        return isClear(bounds, to.subtract(from), search -> collisions(client, search));
     }
 
-    static boolean isClear(AABB bounds, Vec3 travel, Function<AABB, Iterable<AABB>> collisions) {
+    public static boolean canCoast(Minecraft client) {
+        if (client.player == null || client.level == null) return false;
+        return canCoast(client, client.player.getDeltaMovement());
+    }
+
+    public static boolean canCoast(Minecraft client, Vec3 velocity) {
+        if (client.player == null || client.level == null) return false;
+        return canCoast(client.player.getBoundingBox(), velocity,
+                search -> collisions(client, search));
+    }
+
+    static boolean canCoast(AABB bounds, Vec3 velocity, Function<AABB, Iterable<AABB>> collisions) {
+        for (int tick = 0; tick < 12; tick++) {
+            if (!isClear(bounds, velocity, collisions)) return false;
+            bounds = bounds.move(velocity);
+            velocity = velocity.multiply(0.91, 0.6, 0.91);
+        }
+        return true;
+    }
+
+    private static List<AABB> collisions(Minecraft client, AABB search) {
+        List<AABB> obstacles = new ArrayList<>();
+        for (var shape : client.level.getBlockCollisions(client.player, search)) {
+            obstacles.addAll(shape.toAabbs());
+        }
+        return obstacles;
+    }
+
+    public static boolean isClear(AABB bounds, Vec3 travel, Function<AABB, Iterable<AABB>> collisions) {
         int segments = Math.max(1, (int) Math.ceil(travel.length() / SEGMENT_LENGTH));
         Vec3 step = travel.scale(1.0 / segments);
         AABB body = bounds.deflate(EPSILON);

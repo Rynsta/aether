@@ -4,6 +4,8 @@ import dev.aether.util.ClientUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.function.Predicate;
+
 public final class FlightMotion {
     private static final double HORIZONTAL_DRAG = 0.91;
     private static final double DRIVE_DEADBAND = 0.04;
@@ -32,20 +34,54 @@ public final class FlightMotion {
     }
 
     public static Input horizontalInput(Vec3 desiredVelocity, Vec3 velocity, float yaw) {
+        return horizontalInput(desiredVelocity, velocity, yaw, BRAKE_DEADBAND);
+    }
+
+    public static Input brakingInput(Vec3 velocity, float yaw) {
+        return horizontalInput(Vec3.ZERO, velocity, yaw, 0.001);
+    }
+
+    public static Input avoidObstacles(Input requested, Vec3 velocity, float yaw, double acceleration,
+                                       Predicate<Vec3> canCoast) {
+        Vec3 desired = velocity.add(acceleration(requested, yaw, acceleration));
+        if (canCoast.test(desired)) return requested;
+        Input best = brakingInput(velocity, yaw);
+        double bestScore = Double.POSITIVE_INFINITY;
+        for (int forward = -1; forward <= 1; forward++) {
+            for (int right = -1; right <= 1; right++) {
+                Input candidate = new Input(forward, right);
+                Vec3 next = velocity.add(acceleration(candidate, yaw, acceleration));
+                double score = next.distanceToSqr(desired);
+                if (score < bestScore && canCoast.test(next)) {
+                    best = candidate;
+                    bestScore = score;
+                }
+            }
+        }
+        return best;
+    }
+
+    private static Vec3 acceleration(Input input, float yaw, double amount) {
+        Vec3 local = new Vec3(-input.right(), 0, input.forward());
+        if (local.lengthSqr() > 1) local = local.normalize();
+        return local.yRot((float) -Math.toRadians(yaw)).scale(amount);
+    }
+
+    private static Input horizontalInput(Vec3 desiredVelocity, Vec3 velocity, float yaw, double brakeDeadband) {
         double angle = Math.toRadians(yaw);
         double sin = Math.sin(angle);
         double cos = Math.cos(angle);
         return new Input(
                 axisInput(-desiredVelocity.x * sin + desiredVelocity.z * cos,
-                        -velocity.x * sin + velocity.z * cos),
-                axisInput(desiredVelocity.x * cos + desiredVelocity.z * sin,
-                        velocity.x * cos + velocity.z * sin));
+                        -velocity.x * sin + velocity.z * cos, brakeDeadband),
+                axisInput(-desiredVelocity.x * cos - desiredVelocity.z * sin,
+                        -velocity.x * cos - velocity.z * sin, brakeDeadband));
     }
 
-    private static int axisInput(double desired, double current) {
+    private static int axisInput(double desired, double current, double brakeDeadband) {
         double error = desired - current;
         // A wider brake band lets a single strong flight input settle without alternating opposite keys.
-        double deadband = desired * error <= 0.0 ? BRAKE_DEADBAND : DRIVE_DEADBAND;
+        double deadband = desired * error <= 0.0 ? brakeDeadband : DRIVE_DEADBAND;
         if (Math.abs(error) <= deadband) {
             return 0;
         }

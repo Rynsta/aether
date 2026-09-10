@@ -12,12 +12,8 @@ import dev.aether.modules.pathfinding.rotation.RotationExecutor;
 import dev.aether.modules.pathfinding.rotation.strategy.TimedEaseStrategy;
 import dev.aether.util.ClientUtils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
-// vertical movement is space/shift driven by raycasts in front and behind, not by pitch; rotation is yaw only
-// stuck recovery holds space at 1.5s and aborts at 3s
 public final class FlyExecutor {
 
     public enum State {
@@ -33,11 +29,9 @@ public final class FlyExecutor {
     // Stuck timers
     private static final long STUCK_CLIMB_MS = 1500;
     private static final long STUCK_ABORT_MS = 3000;
-    // How far ahead to raycast for block detection (blocks)
-    private static final double RAY_DIST = 2.5;
     private static final long ROTATION_DURATION_MS = 300L;
     private static final long DECELERATE_TIMEOUT_MS = 650L;
-    private static final float YAW_ROTATION_THRESHOLD = 6.0f;
+    private static final float YAW_ROTATION_THRESHOLD = 1.0f;
     private static final float PITCH_ROTATION_THRESHOLD = 6.0f;
 
     private State state = State.IDLE;
@@ -224,7 +218,7 @@ public final class FlyExecutor {
         // -- Rotation -------------------------------------------------------
         if (useLookTargetRotation && lookTarget != null) {
             rotateTowardLookTarget(mc, lookTarget);
-        } else if (distToGoal > 3.0) {
+        } else if (distToGoal > finalWaypointReach) {
             setHorizontalRotation(mc, dx, dz, usePitchControl ? targetPitch : mc.player.getXRot());
         } else if (usePitchControl) {
             rotateSmoothly(mc, new Rotation(mc.player.getYRot(), targetPitch));
@@ -237,7 +231,9 @@ public final class FlyExecutor {
         Vec3 horizontalTravel = new Vec3(dx, 0, dz);
         double lookahead = Math.min(horizontalTravel.length(), brakingRange);
         Vec3 horizontalEnd = pos.add(horizontalTravel.normalize().scale(lookahead));
-        if (!FlightPathClearance.isClear(mc, pos, horizontalEnd)) {
+        if (!FlightPathClearance.canCoast(mc)) {
+            FlightMotion.apply(mc, FlightMotion.brakingInput(mc.player.getDeltaMovement(), mc.player.getYRot()));
+        } else if (!FlightPathClearance.isClear(mc, pos, horizontalEnd)) {
             FlightMotion.apply(mc, FlightMotion.horizontalInput(Vec3.ZERO,
                     mc.player.getDeltaMovement(), mc.player.getYRot()));
         } else if (finalApproach) {
@@ -248,7 +244,8 @@ public final class FlyExecutor {
             applyStrafingMovement(mc, dx, dz);
             ClientUtils.setKeyMappingState(mc.options.keySprint, distToGoal > 5.0);
         }
-        adjustVerticalKeysWithRaycast(mc, pos, dyWp, preserveWaypoint ? CORNER_REACH : 0.75);
+        adjustVerticalKeys(mc, pos, dyWp, preserveWaypoint ? CORNER_REACH : 0.75);
+        constrainHorizontalMovement(mc);
 
         // -- Stuck detection ------------------------------------------------
         double moved = pos.distanceTo(lastPosCheck);
@@ -264,11 +261,12 @@ public final class FlyExecutor {
         if (ticksSinceLastMove > TICKS_FOR_STUCK || stuckMs > STUCK_ABORT_MS) {
             if (stuckMs > STUCK_ABORT_MS) {
                 if (mc.player != null) {
-                    ClientUtils.sendMessage("\u00A7cFly stuck! Aborting navigation.", false);
+                    ClientUtils.sendDebugMessage("Fly route stalled. Requesting a new path.");
                 }
                 stop(mc);
                 return;
-            } else if (stuckMs > STUCK_CLIMB_MS) {
+            } else if (stuckMs > STUCK_CLIMB_MS && dyWp > pos.y
+                    && FlightPathClearance.isClear(mc, pos, pos.add(0, 1, 0))) {
                 // Recovery: try climbing over the obstruction
                 ClientUtils.setKeyMappingState(mc.options.keyJump, true);
                 ClientUtils.setKeyMappingState(mc.options.keyShift, false);
@@ -324,8 +322,13 @@ public final class FlyExecutor {
             finish(mc);
             return;
         }
-        applyArrivalMovement(mc, goal);
-        adjustVerticalKeysWithRaycast(mc, mc.player.position(), goal.y, 0.75);
+        if (!FlightPathClearance.canCoast(mc)) {
+            FlightMotion.apply(mc, FlightMotion.brakingInput(vel, mc.player.getYRot()));
+        } else {
+            applyArrivalMovement(mc, goal);
+        }
+        adjustVerticalKeys(mc, mc.player.position(), goal.y, 0.75);
+        constrainHorizontalMovement(mc);
         if (!arrived && System.currentTimeMillis() - decelStartTime > DECELERATE_TIMEOUT_MS) {
             // A coast prediction is not arrival; retry the endpoint if momentum left us short or wide.
             wpIndex = Math.max(0, path.size() - 1);
@@ -335,6 +338,17 @@ public final class FlyExecutor {
 
     private void applyArrivalMovement(Minecraft mc, Vec3 goal) {
         applyArrivalMovement(mc, goal, goalStopThreshold);
+    }
+
+    private void constrainHorizontalMovement(Minecraft mc) {
+        FlightMotion.Input requested = new FlightMotion.Input(
+                (mc.options.keyUp.isDown() ? 1 : 0) - (mc.options.keyDown.isDown() ? 1 : 0),
+                (mc.options.keyRight.isDown() ? 1 : 0) - (mc.options.keyLeft.isDown() ? 1 : 0));
+        double acceleration = mc.player.getAbilities().getFlyingSpeed()
+                * (mc.player.isSprinting() || mc.options.keySprint.isDown() ? 2.0 : 1.0);
+        FlightMotion.Input safe = FlightMotion.avoidObstacles(requested, mc.player.getDeltaMovement(),
+                mc.player.getYRot(), acceleration, velocity -> FlightPathClearance.canCoast(mc, velocity));
+        if (!safe.equals(requested)) FlightMotion.apply(mc, safe);
     }
 
     private void applyArrivalMovement(Minecraft mc, Vec3 goal, double tolerance) {
@@ -362,8 +376,8 @@ public final class FlyExecutor {
         if (mc.player == null)
             return;
         double horizDist = Math.sqrt(dx * dx + dz * dz);
-        if (horizDist < 3.0)
-            return; // rotation lock range - don't update yaw to avoid spinning near targets
+        if (horizDist < 0.25)
+            return;
 
         float targetYaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
         rotateSmoothly(mc, new Rotation(targetYaw, pitch));
@@ -390,8 +404,11 @@ public final class FlyExecutor {
                 : mc.player.getXRot();
         float yawDrift = Math.abs(AngleUtils.getRotationDelta(sourceYaw, desiredRot.yaw));
         float pitchDrift = Math.abs(AngleUtils.getRotationDelta(sourcePitch, desiredRot.pitch));
+        boolean settled = !RotationExecutor.isRotating()
+                || (Math.abs(AngleUtils.getRotationDelta(mc.player.getYRot(), sourceYaw)) <= YAW_ROTATION_THRESHOLD
+                    && Math.abs(mc.player.getXRot() - sourcePitch) <= PITCH_ROTATION_THRESHOLD);
 
-        if ((!RotationExecutor.isRotating()
+        if ((settled
                         && (yawDrift > YAW_ROTATION_THRESHOLD || pitchDrift > PITCH_ROTATION_THRESHOLD))
                 || yawDrift > 16.0f
                 || pitchDrift > 14.0f) {
@@ -406,9 +423,7 @@ public final class FlyExecutor {
     private void applyStrafingMovement(Minecraft mc, double dx, double dz) {
         float yawRad = (float) Math.toRadians(mc.player.getYRot());
         double fX = -Math.sin(yawRad), fZ = Math.cos(yawRad);
-        // Positive strafe is to the player's right (yaw 0 => +X).  Using the
-        // old +PI/2 vector inverted A/D and caused visible side-to-side chatter.
-        double sX = Math.cos(yawRad), sZ = Math.sin(yawRad);
+        double sX = -Math.cos(yawRad), sZ = -Math.sin(yawRad);
         double dotF = dx * fX + dz * fZ;
         double dotS = dx * sX + dz * sZ;
 
@@ -465,66 +480,17 @@ public final class FlyExecutor {
         return FlightPathClearance.isClear(mc, pos, target);
     }
 
-    // raycast in front of the player to decide up or down, which avoids the drift pitch-based steering gives
-    private void adjustVerticalKeysWithRaycast(Minecraft mc, Vec3 pos, double waypointY, double tolerance) {
-        if (mc.player == null || mc.level == null)
-            return;
-
+    private void adjustVerticalKeys(Minecraft mc, Vec3 pos, double waypointY, double tolerance) {
+        if (mc.player == null || mc.level == null) return;
         double dy = waypointY - pos.y;
-
-        // If waypoint is significantly above or below, prioritise that
-        double verticalTolerance = Math.min(tolerance, finalWaypointReach);
-        int vertical = FlightMotion.verticalInput(dy, mc.player.getDeltaMovement().y, verticalTolerance);
-        double verticalLookahead = Math.min(Math.abs(dy), 0.5 + Math.abs(mc.player.getDeltaMovement().y) / 0.4);
-        if (vertical != 0 && !FlightPathClearance.isClear(mc, pos, pos.add(0, vertical * verticalLookahead, 0))) {
-            ClientUtils.setKeyMappingState(mc.options.keyJump, false);
-            ClientUtils.setKeyMappingState(mc.options.keyShift, false);
-            return;
+        int vertical = FlightMotion.verticalInput(dy, mc.player.getDeltaMovement().y,
+                Math.min(tolerance, finalWaypointReach));
+        double lookahead = Math.min(Math.abs(dy), 0.5 + Math.abs(mc.player.getDeltaMovement().y) / 0.4);
+        if (vertical != 0 && !FlightPathClearance.isClear(mc, pos, pos.add(0, vertical * lookahead, 0))) {
+            vertical = 0;
         }
-        if (dy > verticalTolerance) {
-            ClientUtils.setKeyMappingState(mc.options.keyJump, vertical > 0);
-            ClientUtils.setKeyMappingState(mc.options.keyShift, false);
-            return;
-        }
-        if (dy < -verticalTolerance && mc.player.getAbilities().flying) {
-            ClientUtils.setKeyMappingState(mc.options.keyShift, vertical < 0);
-            ClientUtils.setKeyMappingState(mc.options.keyJump, false);
-            return;
-        }
-
-        // Raycast at feet height and head height in the direction we're facing
-        float yaw = (float) Math.toRadians(mc.player.getYRot());
-        double lookX = -Math.sin(yaw);
-        double lookZ = Math.cos(yaw);
-
-        // Player feet/head positions
-        Vec3 feetPos = pos.add(0, 0.1, 0);
-        Vec3 headPos = pos.add(0, mc.player.getBbHeight() - 0.1, 0);
-
-        Vec3 feetEnd = feetPos.add(lookX * RAY_DIST, 0, lookZ * RAY_DIST);
-        Vec3 headEnd = headPos.add(lookX * RAY_DIST, 0, lookZ * RAY_DIST);
-
-        HitResult feetTrace = mc.level.clip(new ClipContext(feetPos, feetEnd,
-                ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, mc.player));
-        HitResult headTrace = mc.level.clip(new ClipContext(headPos, headEnd,
-                ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, mc.player));
-
-        boolean blockAtFeet = feetTrace.getType() == HitResult.Type.BLOCK;
-        boolean blockAtHead = headTrace.getType() == HitResult.Type.BLOCK;
-
-        if (blockAtFeet && !blockAtHead) {
-            // Something blocking at feet level -> jump up
-            ClientUtils.setKeyMappingState(mc.options.keyJump, true);
-            ClientUtils.setKeyMappingState(mc.options.keyShift, false);
-        } else if (blockAtHead && !blockAtFeet) {
-            // Something blocking at head level -> sneak down
-            ClientUtils.setKeyMappingState(mc.options.keyShift, true);
-            ClientUtils.setKeyMappingState(mc.options.keyJump, false);
-        } else {
-            // No obstruction - small Y correction if needed
-            ClientUtils.setKeyMappingState(mc.options.keyJump, false);
-            ClientUtils.setKeyMappingState(mc.options.keyShift, false);
-        }
+        ClientUtils.setKeyMappingState(mc.options.keyJump, vertical > 0);
+        ClientUtils.setKeyMappingState(mc.options.keyShift, vertical < 0 && mc.player.getAbilities().flying);
     }
 
     private boolean shouldStopNow(Minecraft mc, Vec3 goal) {

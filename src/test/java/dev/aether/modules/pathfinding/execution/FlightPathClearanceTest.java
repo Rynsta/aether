@@ -82,4 +82,19 @@ class FlightPathClearanceTest {
         return FlightPathClearance.isClear(PLAYER, travel, search -> Arrays.stream(obstacles)
                 .filter(search::intersects).toList());
     }
+
+    @Test
+    void predictsSidewaysDriftIntoATrunkBeforeTurningTowardAClearWaypoint() {
+        AABB trunk = new AABB(2, 0, -1, 3, 4, 1);
+        assertTrue(clear(new Vec3(0, 0, 5), trunk));
+        assertFalse(FlightPathClearance.canCoast(PLAYER, new Vec3(0.4, 0, 0), search -> List.of(trunk)));
+        assertTrue(FlightPathClearance.canCoast(PLAYER, new Vec3(-0.4, 0, 0), search -> List.of(trunk)));
+    }
+
+    @Test
+    void predictsCurvedDescentTowardBranchesUsingVerticalDrag() {
+        AABB branch = new AABB(-1, -0.45, 0.7, 1, -0.4, 1.5);
+        assertFalse(FlightPathClearance.canCoast(PLAYER, new Vec3(0, -0.2, 0.4), search -> List.of(branch)));
+        assertTrue(FlightPathClearance.canCoast(PLAYER, new Vec3(0, 0.2, 0.4), search -> List.of(branch)));
+    }
 }

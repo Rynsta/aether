@@ -22,15 +22,39 @@ class FlightMotionTest {
     @Test
     void brakesAgainstWorldMomentumEvenDuringAHalfTurn() {
         Vec3 momentum = new Vec3(0.3, 0, 0.8);
-        assertEquals(new FlightMotion.Input(-1, -1), FlightMotion.horizontalInput(Vec3.ZERO, momentum, 0));
-        assertEquals(new FlightMotion.Input(1, 1), FlightMotion.horizontalInput(Vec3.ZERO, momentum, 180));
-        assertEquals(new FlightMotion.Input(1, -1), FlightMotion.horizontalInput(Vec3.ZERO, momentum, 90));
+        assertEquals(new FlightMotion.Input(-1, 1), FlightMotion.horizontalInput(Vec3.ZERO, momentum, 0));
+        assertEquals(new FlightMotion.Input(1, -1), FlightMotion.horizontalInput(Vec3.ZERO, momentum, 180));
+        assertEquals(new FlightMotion.Input(1, 1), FlightMotion.horizontalInput(Vec3.ZERO, momentum, 90));
     }
 
     @Test
     void doesNotReverseForSmallResidualDrift() {
         assertEquals(new FlightMotion.Input(0, 0),
                 FlightMotion.horizontalInput(Vec3.ZERO, new Vec3(0.03, 0, -0.04), 0));
+    }
+
+    @Test
+    void activelyBrakesSmallResidualDriftWhenAnObstacleIsAhead() {
+        Vec3 drift = new Vec3(0, 0, 0.1);
+        assertEquals(new FlightMotion.Input(0, 0), FlightMotion.horizontalInput(Vec3.ZERO, drift, 0));
+        assertEquals(new FlightMotion.Input(-1, 0), FlightMotion.brakingInput(drift, 0));
+        assertEquals(new FlightMotion.Input(0, 1), FlightMotion.brakingInput(new Vec3(0.1, 0, 0), 0));
+        assertEquals(new FlightMotion.Input(0, 0), FlightMotion.brakingInput(Vec3.ZERO, 0));
+    }
+
+    @Test
+    void rejectsInputThatWouldAccelerateIntoAnObstacleWhileCurrentlyStationary() {
+        var forward = new FlightMotion.Input(1, 0);
+        assertEquals(new FlightMotion.Input(0, 0), FlightMotion.avoidObstacles(
+                forward, Vec3.ZERO, 0, 0.1, next -> next.z <= 0));
+        assertEquals(forward, FlightMotion.avoidObstacles(forward, Vec3.ZERO, 0, 0.1, next -> true));
+    }
+
+    @Test
+    void brakesInsteadOfCoastingWhenOnlyACounterInputClearsTheCorner() {
+        assertEquals(new FlightMotion.Input(-1, 0), FlightMotion.avoidObstacles(
+                new FlightMotion.Input(1, 0), new Vec3(0, 0, 0.1), 0, 0.1,
+                next -> next.lengthSqr() < 0.0001));
     }
 
     @Test
@@ -101,5 +125,27 @@ class FlightMotionTest {
             assertTrue(pest - player > 3);
         }
         assertTrue(pest - player < 7);
+    }
+
+    @Test
+    void steersAndBrakesInWorldSpaceAtEveryCameraHeading() {
+        for (float yaw : new float[]{0, 45, 90, 180, 270}) {
+            for (double acceleration : new double[]{0.05, 0.1, 0.2}) {
+                Vec3 position = Vec3.ZERO;
+                Vec3 velocity = new Vec3(0.4, 0, -0.2);
+                Vec3 goal = new Vec3(8, 0, 12);
+                for (int tick = 0; tick < 350; tick++) {
+                    Vec3 desired = FlightMotion.approachVelocity(goal.subtract(position), Vec3.ZERO, 0.5, 0.35, 2);
+                    var input = FlightMotion.horizontalInput(desired, velocity, yaw);
+                    Vec3 local = new Vec3(-input.right(), 0, input.forward());
+                    if (local.lengthSqr() > 1) local = local.normalize();
+                    velocity = velocity.add(local.yRot((float) -Math.toRadians(yaw)).scale(acceleration));
+                    position = position.add(velocity);
+                    velocity = velocity.scale(0.91);
+                }
+                assertTrue(position.distanceTo(goal) < 1.5, "Missed goal at yaw " + yaw);
+                assertTrue(velocity.length() < 0.2, "Failed to brake at yaw " + yaw);
+            }
+        }
     }
 }

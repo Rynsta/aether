@@ -1,11 +1,23 @@
 package dev.aether.modules.pest.helpers;
 
 import net.minecraft.world.phys.Vec3;
+import net.fabricmc.loader.api.FabricLoader;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
+import java.nio.file.Files;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class PestFlightControllerTest {
+    @BeforeAll
+    static void configureLoader() throws Exception {
+        var loader = FabricLoader.getInstance();
+        var configDir = loader.getClass().getDeclaredField("configDir");
+        configDir.setAccessible(true);
+        if (configDir.get(loader) == null) configDir.set(loader, Files.createTempDirectory("aether-flight-test"));
+    }
+
     @Test
     void brakingKeepsTheCapturedApproachUntilTheTargetIsReset() {
         PestFlightController controller = new PestFlightController();

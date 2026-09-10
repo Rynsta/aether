@@ -7,6 +7,7 @@ import dev.aether.modules.pathfinding.etherwarp.EtherwarpHelper;
 import dev.aether.modules.pathfinding.execution.EtherwarpExecutor;
 import dev.aether.modules.pathfinding.execution.FlyExecutor;
 import dev.aether.modules.pathfinding.execution.FlightPathClearance;
+import dev.aether.modules.pathfinding.movement.FlightPathSmoother;
 import dev.aether.modules.pathfinding.execution.PathExecutor;
 import dev.aether.modules.pathfinding.movement.PathSmoother;
 import dev.aether.modules.pathfinding.movement.WalkabilityChecker;
@@ -56,6 +57,8 @@ public final class PathfindingManager {
     private static final double ETHERWARP_WALK_ASSIST_GOAL_TOLERANCE = 0.2;
     private static final int ETHERWARP_WALK_ASSIST_MAX_CANDIDATES = 12;
     private static final int ETHERWARP_REPATH_MAX_RETRIES = 3;
+    private static final int FLY_REPATH_MAX_RETRIES = 3;
+    private static int flyRepathCount;
 
     private static volatile boolean navigating = false;
     private static volatile int goalX, goalY, goalZ;
@@ -183,6 +186,11 @@ public final class PathfindingManager {
                 mc.player.onUpdateAbilities();
             }
             flyExecutor.tick(mc);
+            if (flyExecutor.getState() == FlyExecutor.State.IDLE && flyRepathCount < FLY_REPATH_MAX_RETRIES) {
+                flyRepathCount++;
+                doStartPathfind(mc, goalX, goalY, goalZ, true, true);
+                return;
+            }
             if (flyExecutor.getState() == FlyExecutor.State.FINISHED
                     || flyExecutor.getState() == FlyExecutor.State.IDLE) {
                 navigating = false;
@@ -628,6 +636,11 @@ public final class PathfindingManager {
     // --- Internal ------------------------------------------------------------
 
     private static void doStartPathfind(Minecraft mc, int x, int y, int z, boolean fly) {
+        doStartPathfind(mc, x, y, z, fly, false);
+    }
+
+    private static void doStartPathfind(Minecraft mc, int x, int y, int z, boolean fly, boolean retry) {
+        if (!retry) flyRepathCount = 0;
         if (navigating || currentPathfinder != null) {
             abortCurrentNavigation(mc);
         }
@@ -1366,39 +1379,15 @@ public final class PathfindingManager {
         return Mth.ceil(playerY);
     }
 
-    // line-of-sight raycast skips as many nodes as still have a clear hitbox path, which cuts waypoint count hard on open flight
     private static List<Node> smoothFlyPath(Minecraft mc, List<Node> path) {
-        if (mc.level == null || path.size() < 3) return path;
-
-        List<Node> smoothed = new ArrayList<>();
-        smoothed.add(path.get(0));
-        int lowerIdx = 0;
-
-        while (lowerIdx < path.size() - 1) {
-            PathPosition from = path.get(lowerIdx).position;
-            int lastValid = lowerIdx + 1;
-
-            // Try extending as far forward as possible with clear LOS
-            for (int upper = lowerIdx + 2; upper < path.size(); upper++) {
-                PathPosition to = path.get(upper).position;
-                if (hasFreePath(mc, from, to)) {
-                    lastValid = upper;
-                } else {
-                    break; // path is blocked - stop extending
-                }
-            }
-
-            smoothed.add(path.get(lastValid));
-            lowerIdx = lastValid;
-        }
-
-        return smoothed;
+        if (mc.level == null) return List.of();
+        return FlightPathSmoother.smooth(path, (from, to) -> hasFreePath(mc, from, to));
     }
 
     private static boolean hasFreePath(Minecraft mc, PathPosition from, PathPosition to) {
         return FlightPathClearance.isClear(mc,
                 new Vec3(from.flooredX() + 0.5, from.flooredY() + 0.15, from.flooredZ() + 0.5),
-                new Vec3(to.flooredX() + 0.5, to.flooredY() + 0.15, to.flooredZ() + 0.5));
+                new Vec3(to.flooredX() + 0.5, to.flooredY() + 0.15, to.flooredZ() + 0.5), 0.05);
     }
 
     // --- Utilities -----------------------------------------------------------
