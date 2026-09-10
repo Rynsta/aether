@@ -1,8 +1,10 @@
 package dev.aether.modules.pathfinding.execution;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.Direction;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.Shapes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,21 +29,33 @@ public final class FlightPathClearance {
         return isClear(bounds, to.subtract(from), search -> collisions(client, search));
     }
 
-    public static boolean canCoast(Minecraft client) {
+    public static boolean canCoastHorizontally(Minecraft client) {
         if (client.player == null || client.level == null) return false;
-        return canCoast(client, client.player.getDeltaMovement());
+        return canCoastHorizontally(client, client.player.getDeltaMovement());
     }
 
-    public static boolean canCoast(Minecraft client, Vec3 velocity) {
+    public static boolean canCoastHorizontally(Minecraft client, Vec3 velocity) {
         if (client.player == null || client.level == null) return false;
-        return canCoast(client.player.getBoundingBox(), velocity,
+        return canCoastHorizontally(client.player.getBoundingBox(), velocity,
                 search -> collisions(client, search));
     }
 
-    static boolean canCoast(AABB bounds, Vec3 velocity, Function<AABB, Iterable<AABB>> collisions) {
+    static boolean canCoastHorizontally(AABB bounds, Vec3 velocity, Function<AABB, Iterable<AABB>> collisions) {
         for (int tick = 0; tick < 12; tick++) {
-            if (!isClear(bounds, velocity, collisions)) return false;
-            bounds = bounds.move(velocity);
+            Iterable<AABB> obstacles = collisions.apply(bounds.expandTowards(velocity));
+            double vertical = velocity.y;
+            if (Math.abs(vertical) > EPSILON) {
+                for (AABB obstacle : obstacles) {
+                    vertical = Shapes.create(obstacle).collide(Direction.Axis.Y, bounds, vertical);
+                }
+            }
+            Vec3 travel = new Vec3(velocity.x, vertical, velocity.z);
+            if (!isClear(bounds, travel, search -> obstacles)
+                    || Math.abs(vertical) > EPSILON
+                    && !isClear(bounds.move(0, vertical, 0), new Vec3(velocity.x, 0, velocity.z), search -> obstacles)) {
+                return false;
+            }
+            bounds = bounds.move(travel);
             velocity = velocity.multiply(0.91, 0.6, 0.91);
         }
         return true;

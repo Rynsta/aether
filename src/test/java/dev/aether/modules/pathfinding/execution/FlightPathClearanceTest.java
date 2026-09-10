@@ -87,14 +87,75 @@ class FlightPathClearanceTest {
     void predictsSidewaysDriftIntoATrunkBeforeTurningTowardAClearWaypoint() {
         AABB trunk = new AABB(2, 0, -1, 3, 4, 1);
         assertTrue(clear(new Vec3(0, 0, 5), trunk));
-        assertFalse(FlightPathClearance.canCoast(PLAYER, new Vec3(0.4, 0, 0), search -> List.of(trunk)));
-        assertTrue(FlightPathClearance.canCoast(PLAYER, new Vec3(-0.4, 0, 0), search -> List.of(trunk)));
+        assertFalse(FlightPathClearance.canCoastHorizontally(PLAYER, new Vec3(0.4, 0, 0), search -> List.of(trunk)));
+        assertTrue(FlightPathClearance.canCoastHorizontally(PLAYER, new Vec3(-0.4, 0, 0), search -> List.of(trunk)));
     }
 
     @Test
     void predictsCurvedDescentTowardBranchesUsingVerticalDrag() {
-        AABB branch = new AABB(-1, -0.45, 0.7, 1, -0.4, 1.5);
-        assertFalse(FlightPathClearance.canCoast(PLAYER, new Vec3(0, -0.2, 0.4), search -> List.of(branch)));
-        assertTrue(FlightPathClearance.canCoast(PLAYER, new Vec3(0, 0.2, 0.4), search -> List.of(branch)));
+        AABB branch = new AABB(-1, -0.35, 1, 1, -0.3, 1.5);
+        assertFalse(FlightPathClearance.canCoastHorizontally(PLAYER, new Vec3(0, -0.2, 0.4), search -> List.of(branch)));
+        assertTrue(FlightPathClearance.canCoastHorizontally(PLAYER, new Vec3(0, 0.2, 0.4), search -> List.of(branch)));
+    }
+
+    @Test
+    void allowsForwardMovementWhenTheCeilingStopsUpwardMomentum() {
+        AABB ceiling = new AABB(-2, 1.8, -2, 2, 3, 2);
+        assertTrue(FlightPathClearance.canCoastHorizontally(PLAYER, new Vec3(0, 0.3, 0.2),
+                search -> List.of(ceiling)));
+        assertTrue(FlightPathClearance.canCoastHorizontally(PLAYER, new Vec3(0, 0.3, 0),
+                search -> List.of(ceiling)));
+    }
+
+    @Test
+    void predictsTheHeightReachedBeforeHittingACeiling() {
+        AABB ceiling = new AABB(-2, 1.9, -2, 2, 3, 5);
+        AABB headObstacle = new AABB(-2, 1.85, 1, 2, 3, 2);
+        assertTrue(FlightPathClearance.canCoastHorizontally(PLAYER, new Vec3(0, 0.3, 0.2),
+                search -> List.of(ceiling)));
+        assertFalse(FlightPathClearance.canCoastHorizontally(PLAYER, new Vec3(0, 0.3, 0.2),
+                search -> List.of(ceiling, headObstacle)));
+    }
+
+    @Test
+    void stillRejectsWallsAndHeadObstaclesWhileSlidingUnderACeiling() {
+        AABB ceiling = new AABB(-2, 1.8, -2, 2, 3, 5);
+        for (AABB obstacle : List.of(new AABB(-2, 0, 1, 2, 3, 2),
+                new AABB(-2, 1.7, 1, 2, 3, 2))) {
+            assertFalse(FlightPathClearance.canCoastHorizontally(PLAYER, new Vec3(0, 0.3, 0.2),
+                    search -> List.of(ceiling, obstacle)));
+        }
+    }
+
+    @Test
+    void allowsHorizontalMovementAfterLandingWithoutIgnoringFeetObstacles() {
+        AABB floor = new AABB(-2, -1, -2, 2, 0, 5);
+        AABB obstacle = new AABB(-2, 0, 1, 2, 0.1, 2);
+        assertTrue(FlightPathClearance.canCoastHorizontally(PLAYER, new Vec3(0, -0.3, 0.2),
+                search -> List.of(floor)));
+        assertFalse(FlightPathClearance.canCoastHorizontally(PLAYER, new Vec3(0, -0.3, 0.2),
+                search -> List.of(floor, obstacle)));
+    }
+
+    @Test
+    void doesNotReverseHorizontalKeysWhileUpwardMomentumDecaysAgainstACeiling() {
+        AABB ceiling = new AABB(-5, 1.8, -5, 5, 3, 5);
+        for (double acceleration : new double[]{0.05, 0.1, 0.2}) {
+            AABB bounds = PLAYER;
+            Vec3 velocity = new Vec3(0, 0.3, 0.1);
+            double distance = 0;
+            for (int tick = 0; tick < 15; tick++) {
+                AABB current = bounds;
+                var forward = new FlightMotion.Input(1, 0);
+                var safe = FlightMotion.avoidObstacles(forward, velocity, 0, acceleration,
+                        next -> FlightPathClearance.canCoastHorizontally(current, next, search -> List.of(ceiling)));
+                assertEquals(forward, safe, "Unnecessary braking at tick " + tick);
+                double movement = velocity.z + safe.forward() * acceleration;
+                bounds = bounds.move(0, 0, movement);
+                distance += movement;
+                velocity = new Vec3(0, velocity.y * 0.6, movement * 0.91);
+            }
+            assertTrue(distance > 3, "Failed to move out from under the ceiling");
+        }
     }
 }

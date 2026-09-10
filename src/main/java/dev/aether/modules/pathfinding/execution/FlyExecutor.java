@@ -39,11 +39,8 @@ public final class FlyExecutor {
     private int wpIndex;
     private int goalX, goalY, goalZ;
 
-    private Vec3 lastPosCheck = Vec3.ZERO;
-    private long lastProgressTime;
+    private final FlightProgressTracker progressTracker = new FlightProgressTracker();
     private long decelStartTime = 0;
-    private int ticksSinceLastMove = 0;
-    private static final int TICKS_FOR_STUCK = 15; // ~750ms at 20 tps
 
     private Runnable onFinished;
     private boolean usePitchControl = false;
@@ -66,9 +63,7 @@ public final class FlyExecutor {
         this.goalZ = goalZ;
         this.wpIndex = 0;
         this.decelStartTime = 0;
-        this.lastProgressTime = System.currentTimeMillis();
-        this.lastPosCheck = Vec3.ZERO;
-        this.ticksSinceLastMove = 0;
+        this.progressTracker.reset();
         this.onFinished = onFinished;
         this.usePitchControl = false;
         this.useLookTargetRotation = false;
@@ -147,8 +142,6 @@ public final class FlyExecutor {
             if (wpIndex >= path.size() - 1) {
                 // Special handling for final waypoint (likely rewarp point)
                 if (distSq <= finalWaypointReach * finalWaypointReach * 1.5) {  // Slightly more tolerant but precise
-                    lastProgressTime = System.currentTimeMillis();
-                    ticksSinceLastMove = 0;
                     wpIndex++;
                     break; // Stop advancing if we get close to final waypoint
                 }
@@ -185,8 +178,6 @@ public final class FlyExecutor {
             }
 
             if (reached) {
-                lastProgressTime = System.currentTimeMillis();
-                ticksSinceLastMove = 0;
                 wpIndex++;
             } else {
                 break;
@@ -231,7 +222,7 @@ public final class FlyExecutor {
         Vec3 horizontalTravel = new Vec3(dx, 0, dz);
         double lookahead = Math.min(horizontalTravel.length(), brakingRange);
         Vec3 horizontalEnd = pos.add(horizontalTravel.normalize().scale(lookahead));
-        if (!FlightPathClearance.canCoast(mc)) {
+        if (!FlightPathClearance.canCoastHorizontally(mc)) {
             FlightMotion.apply(mc, FlightMotion.brakingInput(mc.player.getDeltaMovement(), mc.player.getYRot()));
         } else if (!FlightPathClearance.isClear(mc, pos, horizontalEnd)) {
             FlightMotion.apply(mc, FlightMotion.horizontalInput(Vec3.ZERO,
@@ -248,29 +239,16 @@ public final class FlyExecutor {
         constrainHorizontalMovement(mc);
 
         // -- Stuck detection ------------------------------------------------
-        double moved = pos.distanceTo(lastPosCheck);
-        if (moved < 0.15) {
-            ticksSinceLastMove++;
-        } else {
-            ticksSinceLastMove = 0;
-            lastPosCheck = pos;
-            lastProgressTime = System.currentTimeMillis();
-        }
-
-        long stuckMs = System.currentTimeMillis() - lastProgressTime;
-        if (ticksSinceLastMove > TICKS_FOR_STUCK || stuckMs > STUCK_ABORT_MS) {
-            if (stuckMs > STUCK_ABORT_MS) {
-                if (mc.player != null) {
-                    ClientUtils.sendDebugMessage("Fly route stalled. Requesting a new path.");
-                }
-                stop(mc);
-                return;
-            } else if (stuckMs > STUCK_CLIMB_MS && dyWp > pos.y
-                    && FlightPathClearance.isClear(mc, pos, pos.add(0, 1, 0))) {
-                // Recovery: try climbing over the obstruction
-                ClientUtils.setKeyMappingState(mc.options.keyJump, true);
-                ClientUtils.setKeyMappingState(mc.options.keyShift, false);
-            }
+        long stuckMs = progressTracker.stalledFor(wpIndex, Math.sqrt(waypointDistanceSqr(wp, pos)),
+                System.currentTimeMillis());
+        if (stuckMs > STUCK_ABORT_MS) {
+            ClientUtils.sendDebugMessage("Fly route stalled. Requesting a new path.");
+            stop(mc);
+            return;
+        } else if (stuckMs > STUCK_CLIMB_MS && dyWp > pos.y
+                && FlightPathClearance.isClear(mc, pos, pos.add(0, 1, 0))) {
+            ClientUtils.setKeyMappingState(mc.options.keyJump, true);
+            ClientUtils.setKeyMappingState(mc.options.keyShift, false);
         }
 
         ClientUtils.sendDebugMessage(String.format(
@@ -322,7 +300,13 @@ public final class FlyExecutor {
             finish(mc);
             return;
         }
-        if (!FlightPathClearance.canCoast(mc)) {
+        if (progressTracker.stalledFor(path.size() - 1, mc.player.position().distanceTo(goal),
+                System.currentTimeMillis()) > STUCK_ABORT_MS) {
+            ClientUtils.sendDebugMessage("Fly arrival stalled. Requesting a new path.");
+            stop(mc);
+            return;
+        }
+        if (!FlightPathClearance.canCoastHorizontally(mc)) {
             FlightMotion.apply(mc, FlightMotion.brakingInput(vel, mc.player.getYRot()));
         } else {
             applyArrivalMovement(mc, goal);
@@ -347,7 +331,7 @@ public final class FlyExecutor {
         double acceleration = mc.player.getAbilities().getFlyingSpeed()
                 * (mc.player.isSprinting() || mc.options.keySprint.isDown() ? 2.0 : 1.0);
         FlightMotion.Input safe = FlightMotion.avoidObstacles(requested, mc.player.getDeltaMovement(),
-                mc.player.getYRot(), acceleration, velocity -> FlightPathClearance.canCoast(mc, velocity));
+                mc.player.getYRot(), acceleration, velocity -> FlightPathClearance.canCoastHorizontally(mc, velocity));
         if (!safe.equals(requested)) FlightMotion.apply(mc, safe);
     }
 
