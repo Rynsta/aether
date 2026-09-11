@@ -56,8 +56,8 @@ class FlyNavigationHarnessTest {
                 reached, results.size(), seconds,
                 results.stream().mapToInt(FlightTrial.Result::totalWaypoints).sum(), replans, stalled);
 
-        // budgets sit well above what these routes currently cost and well below the stop-at-every-
-        // waypoint behaviour they replaced, which needed 671 ticks, 5 replans and 41 stalled ticks
+        // budgets sit above what these routes cost now and below the stop-at-every-waypoint behaviour
+        // they replaced, which needed 671 ticks, 62 waypoints, 4 replans and 41 stalled ticks
         assertAll(
                 () -> assertEquals(results.size(), reached, () -> "routes that never arrived: "
                         + results.stream().filter(result -> !result.reached()).toList()),
