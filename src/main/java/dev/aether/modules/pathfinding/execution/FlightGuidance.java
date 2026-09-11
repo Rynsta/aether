@@ -139,10 +139,8 @@ public final class FlightGuidance {
 
         Vec3 pos = view.position();
 
-        // An async path is calculated from an earlier player position. Momentum
-        // can move us beyond its first node before the result arrives, so begin
-        // at the closest directly visible early waypoint instead of flying
-        // backwards to the stale start block.
+        // momentum can carry us past a node while the async search is still running, so pick up at
+        // the closest early waypoint we can see rather than flying back to a stale start block
         skipStaleStartingWaypoints(view, pos);
 
         Vec3 rejoin = null;
@@ -287,7 +285,7 @@ public final class FlightGuidance {
         horizontal = constrain(view, horizontal, false);
 
         if (!arrived && view.nowMillis() - decelStartTime > DECELERATE_TIMEOUT_MS) {
-            // A coast prediction is not arrival; retry the endpoint if momentum left us short or wide.
+            // a coast prediction is not arrival; retry the endpoint if momentum left us short or wide
             wpIndex = Math.max(0, path.size() - 1);
             state = State.FLYING;
         }
@@ -308,9 +306,8 @@ public final class FlightGuidance {
         return usePitchControl ? new Rotation(view.yaw(), targetPitch) : null;
     }
 
-    // an intermediate waypoint is a corner to carry speed through, not a place to stop.
-    // the heading stays locked on the waypoint, which is the one direction already known to be clear;
-    // the turn ahead only decides how much speed we may still be carrying when we get there.
+    // an intermediate waypoint is a corner to carry speed through, not a place to stop; the heading
+    // stays on the waypoint, the only direction known to be clear, and the turn ahead sets the speed
     private FlightMotion.Input passingInput(FlightView view, Vec3 target, double exitSpeed, double maxSpeed) {
         Vec3 offset = target.subtract(view.position());
         double horizontal = offset.horizontalDistance();
@@ -356,9 +353,8 @@ public final class FlightGuidance {
         return MAX_SPEED * Math.max(0.0, 0.5 + 0.5 * alignment);
     }
 
-    // the straight line to a waypoint can be blocked while the segment itself is still flyable, either
-    // because we drifted sideways off it or because a climb left us a few centimetres too high for the
-    // headroom it was planned with. try to get back on it before throwing the whole route away.
+    // a blocked straight line to the waypoint usually means we drifted off a segment that is still
+    // flyable, sideways or in height, so try to get back onto it before binning the whole route
     private Vec3 rejoinPoint(FlightView view, Vec3 pos) {
         Vec3 to = waypoint(path.get(wpIndex));
         Vec3 from = wpIndex > 0 ? waypoint(path.get(wpIndex - 1)) : to;
