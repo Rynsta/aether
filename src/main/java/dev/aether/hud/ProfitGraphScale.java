@@ -30,8 +30,9 @@ final class ProfitGraphScale {
     static Bounds target(double min, double max) {
         double precision = Math.ulp(Math.max(Math.abs(min), Math.abs(max))) * 8;
         double padding = Math.max(Math.max(5, precision), (max - min) * 0.12);
-        double low = min >= 0 ? Math.max(0, min - padding) : min - padding;
-        double high = max <= 0 ? Math.min(0, max + padding) : max + padding;
+        // zero stays on the axis so the trace is always read against a fixed baseline
+        double low = min >= 0 ? 0 : min - padding;
+        double high = max <= 0 ? 0 : max + padding;
         if (high <= low) high = low + 10;
         double step = tickStep(high - low);
         return new Bounds(Math.floor(low / step) * step, Math.ceil(high / step) * step);
@@ -42,13 +43,6 @@ final class ProfitGraphScale {
         double power = Math.pow(10, Math.floor(Math.log10(rough)));
         double fraction = rough / power;
         return power * (fraction <= 1 ? 1 : fraction <= 2 ? 2 : fraction <= 5 ? 5 : 10);
-    }
-
-    static double offset(Bounds bounds) {
-        double span = bounds.max - bounds.min;
-        if (Math.max(Math.abs(bounds.min), Math.abs(bounds.max)) < span * 1_000) return 0;
-        double unit = Math.pow(10, Math.ceil(Math.log10(span)));
-        return Math.floor(bounds.min / unit) * unit;
     }
 
     static String label(double value, double step) {

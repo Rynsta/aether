@@ -8,7 +8,6 @@ import dev.aether.util.AetherLang;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 final class ProfitGraph {
     private static final double MILLIS_PER_HOUR = 3_600_000.0;
@@ -28,26 +27,21 @@ final class ProfitGraph {
         lastWindow = windowMillis;
         double step = ProfitGraphScale.tickStep(bounds.max() - bounds.min());
         double firstTick = Math.ceil(bounds.min() / step) * step;
-        double offset = ProfitGraphScale.offset(bounds);
         float labelWidth = 0f;
         for (double tick = firstTick; tick <= bounds.max(); tick += step) {
             labelWidth = Math.max(labelWidth,
-                    nvg.textWidth(Fonts.MONO, ProfitGraphScale.label(tick - offset, step), 8f));
+                    nvg.textWidth(Fonts.MONO, ProfitGraphScale.label(tick, step), 8f));
         }
         float plotX = x + labelWidth + 7f;
         float plotY = y + 23f;
         float plotWidth = width - 2f * (plotX - x);
         float plotHeight = 65f;
         nvg.text(Fonts.REGULAR, AetherLang.localize("Coins per hour"), x, y + 3f, 9f, Theme.HUD_LABEL);
-        if (offset != 0) {
-            String label = AetherLang.localize("Axis offset") + String.format(Locale.ROOT, " %+,.0f", offset);
-            nvg.textRight(Fonts.MONO, label, x, y + 3f, width, 8f, Theme.HUD_LABEL);
-        }
 
         for (double tick = firstTick; tick <= bounds.max(); tick += step) {
             float tickY = plotY + plotHeight * (1f - (float) bounds.fraction(tick));
             nvg.line(plotX, tickY, plotX + plotWidth, tickY, tick == 0 ? 1f : 0.6f, Theme.HUD_SEP);
-            nvg.textRight(Fonts.MONO, ProfitGraphScale.label(tick - offset, step), x, tickY - 4f,
+            nvg.textRight(Fonts.MONO, ProfitGraphScale.label(tick, step), x, tickY - 4f,
                     labelWidth, 8f, Theme.HUD_LABEL);
         }
         nvg.line(plotX, plotY, plotX, plotY + plotHeight, 0.7f, Theme.HUD_SEP);

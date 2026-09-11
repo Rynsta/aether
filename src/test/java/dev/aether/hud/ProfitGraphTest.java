@@ -50,12 +50,13 @@ class ProfitGraphTest {
             assertTrue(bounds.max() > bounds.min());
             assertTrue(bounds.min() <= range[0]);
             assertTrue(bounds.max() >= range[1]);
+            assertTrue(bounds.min() <= 0 && bounds.max() >= 0, "Zero always stays on the axis");
+            if (range[0] >= 0) assertEquals(0d, bounds.min(), "Positive rates keep zero as the baseline");
             assertTrue(Double.isFinite(bounds.fraction(range[0])));
             double step = ProfitGraphScale.tickStep(bounds.max() - bounds.min());
-            double offset = ProfitGraphScale.offset(bounds);
             var labels = new HashSet<String>();
             for (double tick = Math.ceil(bounds.min() / step) * step; tick <= bounds.max(); tick += step) {
-                assertTrue(labels.add(ProfitGraphScale.label(tick - offset, step)), "Distinct axis ticks need distinct labels");
+                assertTrue(labels.add(ProfitGraphScale.label(tick, step)), "Distinct axis ticks need distinct labels");
             }
         }
     }
