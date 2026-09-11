@@ -61,7 +61,7 @@ public final class FlightMotion {
         return best;
     }
 
-    private static Vec3 acceleration(Input input, float yaw, double amount) {
+    public static Vec3 acceleration(Input input, float yaw, double amount) {
         Vec3 local = new Vec3(-input.right(), 0, input.forward());
         if (local.lengthSqr() > 1) local = local.normalize();
         return local.yRot((float) -Math.toRadians(yaw)).scale(amount);

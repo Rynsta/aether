@@ -52,6 +52,10 @@ public final class FlightCollisionChecker {
         this.collisions = collisions;
     }
 
+    public static FlightCollisionChecker over(Function<AABB, Iterable<AABB>> collisions) {
+        return new FlightCollisionChecker(collisions);
+    }
+
     public boolean hasClearance(PathPosition position) {
         long key = BlockPos.asLong(position.flooredX(), position.flooredY(), position.flooredZ());
         byte cached = clearanceCache.get(key);
