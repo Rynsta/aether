@@ -242,7 +242,7 @@ public class PestManager {
         int effectiveAlive = getEffectiveAliveCount(data.aliveCount());
 
         if (data.bonusInactive() != null) {
-            PestBonusManager.setBonusInactive(data.bonusInactive());
+            PestBonusManager.applyTabBonusState(data.bonusInactive());
         }
 
         // Handle prep swap flag updates based on cooldown
@@ -324,8 +324,8 @@ public class PestManager {
             if (!canTriggerAfterRewarp()) {
                 return;
             }
-            // Priority: if exchange is enabled and the bonus is inactive, let exchange happen first.
-            if (AetherConfig.AUTO_PEST_EXCHANGE.get() && PestBonusManager.isBonusInactive()) {
+            // a pest exchange we are still waiting on takes priority over cleaning
+            if (AutoPestExchangeManager.isExchangePending()) {
                 return;
             }
 

@@ -17,11 +17,14 @@ import net.minecraft.client.Minecraft;
 public final class AutoPestExchangeManager {
 
     private static final long RUN_COOLDOWN_MS = 30_000L;
+    // a finished exchange is remembered this long while the tab still claims INACTIVE
+    private static final long EXCHANGE_MEMORY_MS = 600_000L;
 
     private static volatile boolean running = false;
     private static volatile long bonusInactiveSinceMs = 0L;
     private static volatile long lastRunMs = 0L;
     private static volatile long pendingTriggerReadyAtMs = 0L;
+    private static volatile long exchangeRememberedAtMs = 0L;
     private static volatile boolean sawBonusInactive = false;
     private static volatile boolean pendingTrigger = false;
 
@@ -42,13 +45,36 @@ public final class AutoPestExchangeManager {
         return Math.max(0L, RUN_COOLDOWN_MS - (System.currentTimeMillis() - lastRunMs));
     }
 
+    public static long getExchangeMemoryRemainingMs() {
+        long now = System.currentTimeMillis();
+        return isExchangeRemembered(now) ? EXCHANGE_MEMORY_MS - (now - exchangeRememberedAtMs) : 0L;
+    }
+
     public static void reset() {
         running = false;
         bonusInactiveSinceMs = 0L;
         lastRunMs = 0L;
         pendingTriggerReadyAtMs = 0L;
+        exchangeRememberedAtMs = 0L;
         sawBonusInactive = false;
         pendingTrigger = false;
+    }
+
+    // pests we already handed over, keyed to the run so late confirmations do not push the window
+    static void rememberExchange() {
+        exchangeRememberedAtMs = running ? lastRunMs : System.currentTimeMillis();
+    }
+
+    public static boolean isExchangePending() {
+        if (!AetherConfig.AUTO_PEST_EXCHANGE.get()) {
+            return false;
+        }
+        if (running || PestExchangeManager.isExchanging()) {
+            return true;
+        }
+        return pendingTrigger
+                && PestBonusManager.isBonusInactive()
+                && !isExchangeRemembered(System.currentTimeMillis());
     }
 
     public static boolean shouldBlockFarmingResume() {
@@ -61,26 +87,28 @@ public final class AutoPestExchangeManager {
         if (!PestBonusManager.isBonusInactive() || !pendingTrigger) {
             return false;
         }
-        return isPendingTriggerReady(System.currentTimeMillis());
+        long now = System.currentTimeMillis();
+        return !isExchangeRemembered(now) && isPendingTriggerReady(now);
     }
 
     public static void update() {
         Minecraft client = Minecraft.getInstance();
         if (client == null || client.player == null || client.getConnection() == null) return;
         if (!AetherConfig.AUTO_PEST_EXCHANGE.get()) {
-            bonusInactiveSinceMs = 0L;
-            pendingTriggerReadyAtMs = 0L;
-            sawBonusInactive = false;
-            pendingTrigger = false;
+            clearPendingTrigger();
+            exchangeRememberedAtMs = 0L;
             return;
         }
 
         long now = System.currentTimeMillis();
+        if (isExchangeRemembered(now)) {
+            clearPendingTrigger();
+            return;
+        }
+        exchangeRememberedAtMs = 0L;
+
         if (!PestBonusManager.isBonusInactive()) {
-            bonusInactiveSinceMs = 0L;
-            pendingTriggerReadyAtMs = 0L;
-            sawBonusInactive = false;
-            pendingTrigger = false;
+            clearPendingTrigger();
             return;
         }
 
@@ -112,6 +140,9 @@ public final class AutoPestExchangeManager {
         if (running || PestExchangeManager.isExchanging()) {
             return true;
         }
+        if (isExchangeRemembered(now)) {
+            return false;
+        }
         if (PestManager.isCleaningInProgress()) {
             return false;
         }
@@ -135,9 +166,7 @@ public final class AutoPestExchangeManager {
         PestManager.setCleaningInProgress(true);
         running = true;
         lastRunMs = now;
-        // Keep the trigger armed until the bonus actually flips back to active.
-        // That lets the manager retry after cooldown if the first run fails or
-        // the exchange completes without reactivating the bonus yet.
+        // the trigger stays armed so a run that never reaches phillip retries after the cooldown
         MacroWorkerThread.getInstance().submit("AutoPestExchange", () -> runSequence(client));
         return true;
     }
@@ -170,9 +199,8 @@ public final class AutoPestExchangeManager {
             if (MacroWorkerThread.shouldAbortTask(client))
                 return;
 
-            boolean exchangeCompleted = PestExchangeManager.runExchangeBlocking(client);
-            if (exchangeCompleted) {
-                PestBonusManager.setBonusInactive(false);
+            if (PestExchangeManager.runExchangeBlocking(client)) {
+                rememberExchange();
             }
 
             if (MacroWorkerThread.shouldAbortTask(client))
@@ -207,6 +235,23 @@ public final class AutoPestExchangeManager {
                 msg(client, "\u00A7aAuto pest exchange finished. Resuming farming.");
             }
         }
+    }
+
+    private static boolean isExchangeRemembered(long now) {
+        if (exchangeRememberedAtMs == 0L) {
+            return false;
+        }
+        if (PestBonusManager.hasSeenBonusActiveSince(exchangeRememberedAtMs)) {
+            return false;
+        }
+        return now - exchangeRememberedAtMs < EXCHANGE_MEMORY_MS;
+    }
+
+    private static void clearPendingTrigger() {
+        bonusInactiveSinceMs = 0L;
+        pendingTriggerReadyAtMs = 0L;
+        sawBonusInactive = false;
+        pendingTrigger = false;
     }
 
     private static boolean isPendingTriggerReady(long now) {

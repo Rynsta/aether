@@ -122,7 +122,7 @@ final class TaskHudStatusProvider {
         if (cooldownMs > 0 && alive >= threshold) {
             return TaskStatusRow.waiting("Pest Destroyer", "cooldown " + fmtSeconds(cooldownMs));
         }
-        if (AetherConfig.AUTO_PEST_EXCHANGE.get() && PestBonusManager.isBonusInactive()) {
+        if (AutoPestExchangeManager.isExchangePending()) {
             return TaskStatusRow.blocked("Pest Destroyer", "waiting for pest exchange");
         }
         if (AetherConfig.DELAY_PEST_FOR_CROP_FEVER.get() && CropFeverManager.isCropFeverActive) {
@@ -288,6 +288,11 @@ final class TaskHudStatusProvider {
         }
         if (AutoPestExchangeManager.isRunning() || PestExchangeManager.isExchanging()) {
             return TaskStatusRow.running("Pest Exchange", "heading to Phillip");
+        }
+
+        long memoryMs = AutoPestExchangeManager.getExchangeMemoryRemainingMs();
+        if (memoryMs > 0) {
+            return TaskStatusRow.waiting("Pest Exchange", "exchanged, awaiting bonus " + fmtMinutes(memoryMs));
         }
 
         long cooldownMs = AutoPestExchangeManager.getRunCooldownRemainingMs();
