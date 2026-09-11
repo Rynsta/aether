@@ -4,6 +4,7 @@ import dev.aether.modules.pathfinding.execution.FlightPathClearance;
 import dev.aether.modules.pathfinding.wrapper.PathPosition;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ByteOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2DoubleOpenHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
@@ -15,11 +16,22 @@ import java.util.function.Function;
 
 public final class FlightCollisionChecker {
     private static final AABB BODY = new AABB(-0.35, 0, -0.35, 0.35, 1.8, 0.35);
+
+    // a cell is only as good as the room around it: creative flight moves in 0.15 steps, so a route
+    // that leans on the last few centimetres of head clearance cannot actually be flown
+    private static final double HEADROOM_PROBE = 0.35;
+    private static final double NEAR_WALL_PROBE = 0.25;
+    private static final double WIDE_WALL_PROBE = 0.6;
+    private static final double TIGHT_HEADROOM_COST = 0.9;
+    private static final double NEAR_WALL_COST = 0.55;
+    private static final double WIDE_WALL_COST = 0.3;
+
     private final Function<AABB, Iterable<AABB>> collisions;
     private final Long2ByteOpenHashMap clearanceCache = new Long2ByteOpenHashMap();
-    private final Long2ByteOpenHashMap proximityCache = new Long2ByteOpenHashMap();
+    private final Long2DoubleOpenHashMap clearanceCostCache = new Long2DoubleOpenHashMap();
 
     public FlightCollisionChecker(WalkabilityChecker checker) {
+        this.clearanceCostCache.defaultReturnValue(Double.NaN);
         var cache = new Long2ObjectOpenHashMap<List<AABB>>();
         collisions = search -> {
             List<AABB> result = new ArrayList<>();
@@ -50,6 +62,7 @@ public final class FlightCollisionChecker {
 
     FlightCollisionChecker(Function<AABB, Iterable<AABB>> collisions) {
         this.collisions = collisions;
+        this.clearanceCostCache.defaultReturnValue(Double.NaN);
     }
 
     public static FlightCollisionChecker over(Function<AABB, Iterable<AABB>> collisions) {
@@ -70,13 +83,24 @@ public final class FlightCollisionChecker {
         return FlightPathClearance.isClear(BODY.move(start), waypoint(to).subtract(start), collisions);
     }
 
-    public boolean isNearObstacle(PathPosition position) {
+    // graded room around a cell, zero when nothing is close on any side
+    public double clearanceCost(PathPosition position) {
         long key = BlockPos.asLong(position.flooredX(), position.flooredY(), position.flooredZ());
-        byte cached = proximityCache.get(key);
-        if (cached != 0) return cached == 2;
-        boolean nearby = !FlightPathClearance.isClear(BODY.move(waypoint(position)).inflate(0.5), Vec3.ZERO, collisions);
-        proximityCache.put(key, nearby ? (byte) 2 : (byte) 1);
-        return nearby;
+        double cached = clearanceCostCache.get(key);
+        if (!Double.isNaN(cached)) return cached;
+
+        AABB body = BODY.move(waypoint(position));
+        double cost = 0.0;
+        if (!isFree(body.expandTowards(0.0, HEADROOM_PROBE, 0.0))) cost += TIGHT_HEADROOM_COST;
+        if (!isFree(body.inflate(NEAR_WALL_PROBE, 0.0, NEAR_WALL_PROBE))) cost += NEAR_WALL_COST;
+        else if (!isFree(body.inflate(WIDE_WALL_PROBE, 0.0, WIDE_WALL_PROBE))) cost += WIDE_WALL_COST;
+
+        clearanceCostCache.put(key, cost);
+        return cost;
+    }
+
+    private boolean isFree(AABB box) {
+        return FlightPathClearance.isClear(box, Vec3.ZERO, collisions);
     }
 
     public static Vec3 waypoint(PathPosition position) {

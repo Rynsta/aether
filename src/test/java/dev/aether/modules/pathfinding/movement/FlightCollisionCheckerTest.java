@@ -36,8 +36,8 @@ class FlightCollisionCheckerTest {
         assertFalse(checker(List.of(new AABB(0.84, 0.5, 2, 0.9, 0.6, 2.01)))
                 .isClear(pos(0, 0, 0), pos(0, 0, 5)));
         var checker = checker(List.of(new AABB(1, 0, 0, 2, 3, 1)));
-        assertTrue(checker.isNearObstacle(pos(0, 0, 0)));
-        assertFalse(checker.isNearObstacle(pos(-2, 0, 0)));
+        assertTrue(checker.clearanceCost(pos(0, 0, 0)) > checker.clearanceCost(pos(-2, 0, 0)));
+        assertEquals(0.0, checker.clearanceCost(pos(-2, 0, 0)));
     }
 
     @Test

@@ -240,7 +240,7 @@ public final class FlightGuidance {
             mode = Mode.CRUISE;
         }
 
-        int vertical = verticalInput(view, pos, dyWp, preserveWaypoint ? CORNER_REACH : 0.75);
+        int vertical = verticalInput(view, pos, dyWp, preserveWaypoint || rejoin != null ? CORNER_REACH : 0.75);
         horizontal = constrain(view, horizontal, sprint);
 
         long stuckMs = progressTracker.stalledFor(wpIndex, pos.distanceTo(waypointTarget), view.nowMillis());
@@ -338,27 +338,26 @@ public final class FlightGuidance {
         return MAX_SPEED * Math.max(0.0, 0.5 + 0.5 * alignment);
     }
 
-    // furthest point still ahead of us on the segment we are flying that we can reach in a straight
-    // line; aiming at the foot of the perpendicular alone would just hold position where we already are
+    // the straight line to a waypoint can be blocked while the segment itself is still flyable, either
+    // because we drifted sideways off it or because a climb left us a few centimetres too high for the
+    // headroom it was planned with. try to get back on it before throwing the whole route away.
     private Vec3 rejoinPoint(FlightView view, Vec3 pos) {
-        if (wpIndex == 0) {
-            return null;
-        }
         Vec3 to = waypoint(path.get(wpIndex));
-        Vec3 from = waypoint(path.get(wpIndex - 1));
+        Vec3 from = wpIndex > 0 ? waypoint(path.get(wpIndex - 1)) : to;
         Vec3 segment = to.subtract(from);
         double lengthSq = segment.lengthSqr();
-        if (lengthSq < 1.0e-9) {
-            return null;
-        }
-        double foot = Math.max(0.0, Math.min(1.0, pos.subtract(from).dot(segment) / lengthSq));
-        for (int step = REJOIN_SAMPLES; step >= 1; step--) {
+        double foot = lengthSq < 1.0e-9 ? 1.0
+                : Math.max(0.0, Math.min(1.0, pos.subtract(from).dot(segment) / lengthSq));
+
+        for (int step = REJOIN_SAMPLES; step >= 1 && lengthSq >= 1.0e-9; step--) {
             Vec3 candidate = from.add(segment.scale(foot + (1.0 - foot) * step / REJOIN_SAMPLES));
             if (isClear(view, pos, candidate)) {
                 return candidate;
             }
         }
-        return null;
+
+        Vec3 levelled = new Vec3(pos.x, from.y + (to.y - from.y) * foot, pos.z);
+        return isClear(view, pos, levelled) && isClear(view, levelled, to) ? levelled : null;
     }
 
     private FlightMotion.Input arrivalInput(FlightView view, Vec3 target, double tolerance) {

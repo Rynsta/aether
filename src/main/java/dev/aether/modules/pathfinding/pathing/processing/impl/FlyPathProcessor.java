@@ -9,7 +9,6 @@ import dev.aether.modules.pathfinding.wrapper.PathPosition;
 
 // unlike the walking processor this only wants body clearance, no floor support
 public final class FlyPathProcessor implements NodeProcessor {
-    private static final double WALL_PROXIMITY_COST = 0.6;
     private static final double VERTICAL_COST = 0.08;
 
     private final FlightCollisionChecker checker;
@@ -49,9 +48,8 @@ public final class FlyPathProcessor implements NodeProcessor {
             return Cost.ZERO;
         }
 
-        double cost = Math.abs(pos.flooredY() - prev.flooredY()) * VERTICAL_COST;
-
-        if (checker.isNearObstacle(pos)) cost += WALL_PROXIMITY_COST;
+        double cost = Math.abs(pos.flooredY() - prev.flooredY()) * VERTICAL_COST
+                + checker.clearanceCost(pos);
 
         return Cost.of(cost);
     }
