@@ -21,10 +21,14 @@ public final class FlightPathClearance {
     }
 
     public static boolean isClear(Minecraft client, Vec3 from, Vec3 to, double margin) {
+        return isClear(client, from, to, margin, 0.0);
+    }
+
+    public static boolean isClear(Minecraft client, Vec3 from, Vec3 to, double margin, double verticalMargin) {
         if (client.player == null || client.level == null) {
             return false;
         }
-        AABB bounds = client.player.getBoundingBox().inflate(margin, 0.0, margin)
+        AABB bounds = client.player.getBoundingBox().inflate(margin, verticalMargin, margin)
                 .move(from.subtract(client.player.position()));
         return isClear(bounds, to.subtract(from), search -> collisions(client, search));
     }

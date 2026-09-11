@@ -170,14 +170,15 @@ public final class FlightTrial {
             return null;
         }
 
-        List<Node> smoothed = FlightPathSmoother.smooth(nodes, (a, b) -> freePath(world, a, b));
+        List<Node> smoothed = FlightPathSmoother.smooth(nodes, (a, b, margin) -> freePath(world, a, b, margin));
         return smoothed.isEmpty() ? null : new Route(smoothed, goalY);
     }
 
-    private static boolean freePath(BlockWorld world, PathPosition from, PathPosition to) {
+    private static boolean freePath(BlockWorld world, PathPosition from, PathPosition to, double verticalMargin) {
         Vec3 start = FlightGuidance.waypoint(from.flooredX(), from.flooredY(), from.flooredZ());
         Vec3 end = FlightGuidance.waypoint(to.flooredX(), to.flooredY(), to.flooredZ());
-        return FlightPathClearance.isClear(body(start).inflate(SMOOTHING_MARGIN, 0.0, SMOOTHING_MARGIN),
+        return FlightPathClearance.isClear(
+                body(start).inflate(SMOOTHING_MARGIN, verticalMargin, SMOOTHING_MARGIN),
                 end.subtract(start), world::collisions);
     }
 

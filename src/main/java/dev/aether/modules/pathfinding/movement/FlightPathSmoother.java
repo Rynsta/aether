@@ -5,12 +5,20 @@ import dev.aether.modules.pathfinding.wrapper.PathPosition;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiPredicate;
 
 public final class FlightPathSmoother {
+    // creative flight only trims height in 0.15 steps, so a merged climb is flown as a band around
+    // the ideal slope rather than along it, and only merges with room for that band are safe
+    private static final double SLOPE_MARGIN = 0.15;
+
+    @FunctionalInterface
+    public interface Clearance {
+        boolean isClear(PathPosition from, PathPosition to, double verticalMargin);
+    }
+
     private FlightPathSmoother() {}
 
-    public static List<Node> smooth(List<Node> path, BiPredicate<PathPosition, PathPosition> clear) {
+    public static List<Node> smooth(List<Node> path, Clearance clear) {
         if (path.isEmpty()) return path;
         List<Node> result = new ArrayList<>();
         result.add(path.getFirst());
@@ -18,15 +26,11 @@ public final class FlightPathSmoother {
         while (anchor < path.size() - 1) {
             PathPosition from = path.get(anchor).position;
             int lastValid = anchor + 1;
-            if (!clear.test(from, path.get(lastValid).position)) return List.of();
+            if (!clear.isClear(from, path.get(lastValid).position, 0.0)) return List.of();
             for (int candidate = anchor + 2; candidate < path.size(); candidate++) {
                 PathPosition to = path.get(candidate).position;
-                PathPosition previous = path.get(candidate - 1).position;
-                if (previous.flooredY() != from.flooredY() || to.flooredY() != from.flooredY()) {
-                    if (previous.flooredX() != from.flooredX() || previous.flooredZ() != from.flooredZ()
-                            || to.flooredX() != from.flooredX() || to.flooredZ() != from.flooredZ()) break;
-                }
-                if (!clear.test(from, to)) break;
+                double margin = to.flooredY() == from.flooredY() ? 0.0 : SLOPE_MARGIN;
+                if (!clear.isClear(from, to, margin)) break;
                 lastValid = candidate;
             }
             result.add(path.get(lastValid));

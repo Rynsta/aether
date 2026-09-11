@@ -19,8 +19,6 @@ public interface FlightView {
 
     boolean sprinting();
 
-    boolean turning();
-
     long nowMillis();
 
     AABB bodyAt(Vec3 feet);

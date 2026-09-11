@@ -4,6 +4,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.Vec3;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,7 +34,7 @@ class FlyNavigationHarnessTest {
     }
 
     @Test
-    void reportFlightQualityAcrossTightStructures() {
+    void fliesTightStructuresWithoutReplanningOrCrawling() {
         List<FlightTrial.Result> results = new ArrayList<>();
         for (Scenario scenario : scenarios()) {
             long start = System.nanoTime();
@@ -45,10 +49,20 @@ class FlyNavigationHarnessTest {
 
         long reached = results.stream().filter(FlightTrial.Result::reached).count();
         double seconds = results.stream().mapToDouble(FlightTrial.Result::seconds).sum();
+        int ticks = results.stream().mapToInt(FlightTrial.Result::ticks).sum();
+        int replans = results.stream().mapToInt(FlightTrial.Result::repaths).sum();
+        int stalled = results.stream().mapToInt(FlightTrial.Result::stallTicks).sum();
         System.out.printf("TOTAL reached=%d/%d time=%.1fs waypoints=%d replans=%d stalled=%d%n",
                 reached, results.size(), seconds,
-                results.stream().mapToInt(FlightTrial.Result::totalWaypoints).sum(),
-                results.stream().mapToInt(FlightTrial.Result::repaths).sum(),
-                results.stream().mapToInt(FlightTrial.Result::stallTicks).sum());
+                results.stream().mapToInt(FlightTrial.Result::totalWaypoints).sum(), replans, stalled);
+
+        // budgets sit well above what these routes currently cost and well below the stop-at-every-
+        // waypoint behaviour they replaced, which needed 671 ticks, 5 replans and 41 stalled ticks
+        assertAll(
+                () -> assertEquals(results.size(), reached, () -> "routes that never arrived: "
+                        + results.stream().filter(result -> !result.reached()).toList()),
+                () -> assertEquals(0, replans, () -> "routes were abandoned mid-flight: " + results),
+                () -> assertTrue(ticks <= 520, () -> "flights got slower: " + ticks + " ticks, " + results),
+                () -> assertTrue(stalled <= 25, () -> "flights stalled more often: " + stalled + ", " + results));
     }
 }

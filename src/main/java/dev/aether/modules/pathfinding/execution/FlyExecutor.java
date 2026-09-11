@@ -186,11 +186,6 @@ public final class FlyExecutor {
         }
 
         @Override
-        public boolean turning() {
-            return RotationExecutor.isRotating();
-        }
-
-        @Override
         public long nowMillis() {
             return System.currentTimeMillis();
         }

@@ -183,11 +183,6 @@ public final class FlightSim implements FlightView {
     }
 
     @Override
-    public boolean turning() {
-        return turning;
-    }
-
-    @Override
     public long nowMillis() {
         return now;
     }

@@ -6,6 +6,7 @@ import dev.aether.modules.pathfinding.debug.PathVisualizer;
 import dev.aether.modules.pathfinding.etherwarp.EtherwarpHelper;
 import dev.aether.modules.pathfinding.execution.EtherwarpExecutor;
 import dev.aether.modules.pathfinding.execution.FlyExecutor;
+import dev.aether.modules.pathfinding.execution.FlightGuidance;
 import dev.aether.modules.pathfinding.execution.FlightPathClearance;
 import dev.aether.modules.pathfinding.movement.FlightPathSmoother;
 import dev.aether.modules.pathfinding.execution.PathExecutor;
@@ -1381,13 +1382,13 @@ public final class PathfindingManager {
 
     private static List<Node> smoothFlyPath(Minecraft mc, List<Node> path) {
         if (mc.level == null) return List.of();
-        return FlightPathSmoother.smooth(path, (from, to) -> hasFreePath(mc, from, to));
+        return FlightPathSmoother.smooth(path, (from, to, verticalMargin) -> hasFreePath(mc, from, to, verticalMargin));
     }
 
-    private static boolean hasFreePath(Minecraft mc, PathPosition from, PathPosition to) {
+    private static boolean hasFreePath(Minecraft mc, PathPosition from, PathPosition to, double verticalMargin) {
         return FlightPathClearance.isClear(mc,
-                new Vec3(from.flooredX() + 0.5, from.flooredY() + 0.15, from.flooredZ() + 0.5),
-                new Vec3(to.flooredX() + 0.5, to.flooredY() + 0.15, to.flooredZ() + 0.5), 0.05);
+                FlightGuidance.waypoint(from.flooredX(), from.flooredY(), from.flooredZ()),
+                FlightGuidance.waypoint(to.flooredX(), to.flooredY(), to.flooredZ()), 0.05, verticalMargin);
     }
 
     // --- Utilities -----------------------------------------------------------

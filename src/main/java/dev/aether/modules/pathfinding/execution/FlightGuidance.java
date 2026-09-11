@@ -15,11 +15,14 @@ public final class FlightGuidance {
     public static final double CORNER_REACH = 0.1;
     public static final double STOP_THRESH = 0.5;
     public static final double MAX_SPEED = 0.6;
+    public static final double SPRINT_SPEED = 1.0;
 
     private static final long STUCK_CLIMB_MS = 1500;
     private static final long STUCK_ABORT_MS = 3000;
     private static final long DECELERATE_TIMEOUT_MS = 650L;
     private static final int REJOIN_SAMPLES = 4;
+    // holding nearer the planned height than this just oscillates: one flight impulse drifts 0.375
+    static final double CRUISE_HEIGHT_TOLERANCE = 0.25;
 
     public enum State {
         IDLE, FLYING, DECELERATING, FINISHED
@@ -208,7 +211,7 @@ public final class FlightGuidance {
                 : wpIndex + 1 < path.size() ? waypoint(path.get(wpIndex + 1)) : null;
         double dx = target.x - pos.x;
         double dz = target.z - pos.z;
-        double dyWp = target.y;
+        double dyWp = rejoin != null ? target.y : segmentHeight(pos, target);
 
         Rotation aim = aim(view, dx, dz, distToGoal);
 
@@ -228,19 +231,16 @@ public final class FlightGuidance {
         } else if (finalApproach) {
             horizontal = arrivalInput(view, goal, goalStopThreshold);
             mode = Mode.ARRIVE;
-        } else if (rejoin != null) {
-            horizontal = passingInput(view, target, exitSpeed(pos, target, next));
-            mode = Mode.REJOIN;
-        } else if (preserveWaypoint || horizontalTravel.length() <= brakingRange) {
-            horizontal = passingInput(view, target, exitSpeed(pos, target, next));
-            mode = Mode.CORNER;
         } else {
-            horizontal = strafingInput(view, dx, dz);
-            sprint = distToGoal > 5.0;
-            mode = Mode.CRUISE;
+            // a waypoint beyond braking range is an open run, so lift the cap and sprint into it
+            boolean open = rejoin == null && !preserveWaypoint && horizontalTravel.length() > brakingRange;
+            sprint = open && distToGoal > 5.0;
+            horizontal = passingInput(view, target, exitSpeed(pos, target, next),
+                    sprint ? SPRINT_SPEED : MAX_SPEED);
+            mode = rejoin != null ? Mode.REJOIN : open ? Mode.CRUISE : Mode.CORNER;
         }
 
-        int vertical = verticalInput(view, pos, dyWp, preserveWaypoint || rejoin != null ? CORNER_REACH : 0.75);
+        int vertical = verticalInput(view, pos, dyWp, preserveWaypoint || rejoin != null ? CORNER_REACH : CRUISE_HEIGHT_TOLERANCE);
         horizontal = constrain(view, horizontal, sprint);
 
         long stuckMs = progressTracker.stalledFor(wpIndex, pos.distanceTo(waypointTarget), view.nowMillis());
@@ -311,16 +311,34 @@ public final class FlightGuidance {
     // an intermediate waypoint is a corner to carry speed through, not a place to stop.
     // the heading stays locked on the waypoint, which is the one direction already known to be clear;
     // the turn ahead only decides how much speed we may still be carrying when we get there.
-    private FlightMotion.Input passingInput(FlightView view, Vec3 target, double exitSpeed) {
+    private FlightMotion.Input passingInput(FlightView view, Vec3 target, double exitSpeed, double maxSpeed) {
         Vec3 offset = target.subtract(view.position());
         double horizontal = offset.horizontalDistance();
         if (horizontal < 1.0e-6) {
             return FlightMotion.horizontalInput(Vec3.ZERO, view.velocity(), view.yaw());
         }
-        double speed = Math.min(MAX_SPEED,
+        double speed = Math.min(maxSpeed,
                 exitSpeed + horizontal / FlightMotion.coastTicks(brakingLookaheadTicks));
         Vec3 desired = new Vec3(offset.x, 0.0, offset.z).scale(Math.max(speed, 0.08) / horizontal);
         return FlightMotion.horizontalInput(desired, view.velocity(), view.yaw());
+    }
+
+    // height the current segment wants us at for how far along it we are, so a climb is flown as the
+    // diagonal it was planned as rather than as a climb followed by a level run
+    private double segmentHeight(Vec3 pos, Vec3 target) {
+        if (wpIndex == 0) {
+            return target.y;
+        }
+        Vec3 from = waypoint(path.get(wpIndex - 1));
+        double runX = target.x - from.x;
+        double runZ = target.z - from.z;
+        double runSq = runX * runX + runZ * runZ;
+        if (runSq < 1.0e-9) {
+            return target.y;
+        }
+        double progress = Math.max(0.0, Math.min(1.0,
+                ((pos.x - from.x) * runX + (pos.z - from.z) * runZ) / runSq));
+        return from.y + (target.y - from.y) * progress;
     }
 
     private static double exitSpeed(Vec3 pos, Vec3 target, Vec3 next) {
@@ -368,26 +386,6 @@ public final class FlightGuidance {
             desired = desired.normalize().scale(0.08);
         }
         return FlightMotion.horizontalInput(desired, view.velocity(), view.yaw());
-    }
-
-    private FlightMotion.Input strafingInput(FlightView view, double dx, double dz) {
-        float yawRad = (float) Math.toRadians(view.yaw());
-        double fX = -Math.sin(yawRad), fZ = Math.cos(yawRad);
-        double sX = -Math.cos(yawRad), sZ = -Math.sin(yawRad);
-        double dotF = dx * fX + dz * fZ;
-        double dotS = dx * sX + dz * sZ;
-
-        // Never reverse or strafe while the camera is still turning toward the
-        // route. Once the forward component is safely positive we can move
-        // through the smooth turn instead of waiting stationary for it.
-        if (view.turning()) {
-            return new FlightMotion.Input(dotF > Math.hypot(dx, dz) * 0.5 ? 1 : 0, 0);
-        }
-
-        boolean lateral = Math.abs(dotS) > 0.50;
-        int forward = (!lateral && dotF > 0.05) || (lateral && dotF > 0.18) ? 1 : 0;
-        int right = lateral && dotS > 0.50 ? 1 : lateral && dotS < -0.50 ? -1 : 0;
-        return new FlightMotion.Input(forward, right);
     }
 
     private FlightMotion.Input constrain(FlightView view, FlightMotion.Input requested, boolean sprint) {
