@@ -729,7 +729,6 @@
   "text.aether.graph_window": "Graph Window",
   "text.aether.coins_per_hour": "Coins per hour",
   "text.aether.active_time": "Active time",
-  "text.aether.axis_offset": "Axis offset",
   "text.aether.pathfinder": "Pathfinder",
   "text.aether.tune_obstacle_jumps_camera_tracking_sprinting_and_stuck_recovery": "Tune obstacle jumps, camera tracking, sprinting and stuck recovery",
   "text.aether.raycast_jump_detection": "Raycast Jump Detection",
