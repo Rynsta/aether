@@ -153,6 +153,12 @@ final class MainGUIProfilesPanel {
         nvg.roundedRect(saveBtnX, y, saveBtnW, fieldH, 7f, saveBg);
         nvg.rectOutline(saveBtnX, y, saveBtnW, fieldH, 7f, 1f, saveBrd);
         nvg.textCentered(Fonts.REGULAR, AetherLang.localize("Save"), saveBtnX, y, saveBtnW, fieldH, 12.5f, saveTxt);
+        owner.offerHoverHelp("profile-save:" + (isConfig ? "config" : "theme"),
+                AetherLang.localize("Save"),
+                AetherLang.localize(isConfig
+                        ? "Saves the current client configuration as a named profile."
+                        : "Saves the current menu and HUD theme as a named profile."),
+                saveBtnX, y, saveBtnW, fieldH, mx, my);
         final String capturedName = owner.profileNameInput;
         owner.addClickArea(saveBtnX, y, saveBtnW, fieldH, () -> {
             if (!capturedName.isBlank()) {
@@ -241,6 +247,13 @@ final class MainGUIProfilesPanel {
                     nvg.roundedRect(actionX, btnY, btnW, btnH, 5f, bgColor);
                     nvg.rectOutline(actionX, btnY, btnW, btnH, 5f, 1f, borderColor);
                     nvg.textCentered(Fonts.REGULAR, label, actionX, btnY, btnW, btnH, 11.5f, textColor);
+                    String help = switch (index) {
+                        case 0 -> isConfig ? "Loads this saved configuration profile." : "Loads this saved theme profile.";
+                        case 1 -> "Copies this profile as JSON so it can be backed up or shared.";
+                        default -> "Deletes this saved profile.";
+                    };
+                    owner.offerHoverHelp("profile-action:" + (isConfig ? "config:" : "theme:") + profileName + ":" + index,
+                            label, AetherLang.localize(help), actionX, btnY, btnW, btnH, mx, my);
                     final int action = index;
                     owner.addClickArea(actionX, btnY, btnW, btnH, () -> {
                         Minecraft mc = Minecraft.getInstance();
