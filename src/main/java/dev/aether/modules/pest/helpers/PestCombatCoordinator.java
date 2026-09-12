@@ -389,7 +389,8 @@ final class PestCombatCoordinator {
             return;
         }
 
-        double stopDistance = aotvRange * aotvGapMultiplier;
+        double stopDistance = PestTargetController.getAotvStopDistance(
+                client, currentTarget, context.getVacuumRange());
         double dist = client.player.distanceTo(currentTarget);
         if (finishAotvIfClose(client, context, currentTarget, dist, stopDistance)) {
             return;

@@ -169,6 +169,19 @@ public final class PestManagerRegistryProvider extends AbstractModulesRegistryPr
                             AetherConfig.PEST_AOTV_BETWEEN.set(v);
                             AetherConfig.save();
                         }))
+                .add(new ToggleSetting("Smart AOTV Routing",
+                        AetherConfig.PEST_SMART_AOTV_ROUTING::get,
+                        v -> {
+                            AetherConfig.PEST_SMART_AOTV_ROUTING.set(v);
+                            AetherConfig.save();
+                        })
+                        .visibleWhen(AetherConfig.PEST_AOTV_BETWEEN::get))
+                .add(FarmingSettingsFactory.pestAotvStartDistanceSetting()
+                        .visibleWhen(() -> AetherConfig.PEST_AOTV_BETWEEN.get()
+                                && AetherConfig.PEST_SMART_AOTV_ROUTING.get()))
+                .add(FarmingSettingsFactory.pestAotvStopDistanceSetting()
+                        .visibleWhen(() -> AetherConfig.PEST_AOTV_BETWEEN.get()
+                                && AetherConfig.PEST_SMART_AOTV_ROUTING.get()))
                 .add(new ToggleSetting("Confirm AOTV Between Pests",
                         () -> AetherConfig.PEST_AOTV_CONFIRM_BETWEEN.get(),
                         v -> {

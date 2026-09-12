@@ -397,6 +397,11 @@ public final class AetherConfig {
         public static final IntEntry BALLSACK_LOOK_DOWN_TIME_MS = Config.integer("ballsackLookDownTimeMs", 1000)
                         .range(0, 3000);
         public static final BooleanEntry PEST_AOTV_BETWEEN = Config.bool("pestAotvBetween", false);
+        public static final BooleanEntry PEST_SMART_AOTV_ROUTING = Config.bool("pestSmartAotvRouting", true);
+        public static final FloatEntry PEST_AOTV_START_DISTANCE =
+                        Config.floatVal("pestAotvStartDistance", 20.0f).range(12.0f, 40.0f);
+        public static final FloatEntry PEST_AOTV_STOP_DISTANCE =
+                        Config.floatVal("pestAotvStopDistance", 11.0f).range(6.0f, 20.0f);
         public static final BooleanEntry PEST_AOTV_CONFIRM_BETWEEN = Config.bool("pestAotvConfirmBetween", false);
         public static final IntEntry PEST_AOTV_DELAY_MIN = Config.integer("pestAotvDelayMin", 150).range(100, 250);
         public static final IntEntry PEST_AOTV_DELAY_MAX = Config.integer("pestAotvDelayMax", 250).range(100, 250);

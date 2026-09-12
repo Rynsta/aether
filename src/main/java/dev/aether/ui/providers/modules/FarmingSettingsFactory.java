@@ -88,7 +88,27 @@ final class FarmingSettingsFactory {
                 (min, max) -> {
                     AetherConfig.PEST_AOTV_DELAY_MIN.set(min);
                     AetherConfig.PEST_AOTV_DELAY_MAX.set(max);
-                });
+        });
+    }
+
+    static SliderSetting pestAotvStartDistanceSetting() {
+        return new SliderSetting("AOTV Start Distance (Blocks)", 12, 40,
+                () -> AetherConfig.PEST_AOTV_START_DISTANCE.get(),
+                value -> {
+                    AetherConfig.PEST_AOTV_START_DISTANCE.set(value);
+                    AetherConfig.save();
+                })
+                .withDecimals(1).withSuffix(" blocks");
+    }
+
+    static SliderSetting pestAotvStopDistanceSetting() {
+        return new SliderSetting("AOTV Stop Distance (Blocks)", 6, 20,
+                () -> AetherConfig.PEST_AOTV_STOP_DISTANCE.get(),
+                value -> {
+                    AetherConfig.PEST_AOTV_STOP_DISTANCE.set(value);
+                    AetherConfig.save();
+                })
+                .withDecimals(1).withSuffix(" blocks");
     }
 
     static RangeSliderSetting rodSwapDelaySetting() {

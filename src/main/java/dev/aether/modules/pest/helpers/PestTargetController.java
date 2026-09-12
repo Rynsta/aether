@@ -22,6 +22,9 @@ import java.util.function.Predicate;
 final class PestTargetController {
     static final double AOTV_RANGE = 12.0;
     static final double AOTV_GAP_MULTIPLIER = 1.6;
+    private static final double SMART_AOTV_VERTICAL_WEIGHT = 1.35;
+    private static final double SMART_AOTV_NO_LOS_PENALTY = 6.0;
+    private static final double SMART_AOTV_MIN_START_STOP_GAP = 3.0;
 
     private static final double TARGET_REACH_DISTANCE = 12.0;
     private static final double PRE_TRIGGER_RATIO = 0.67;
@@ -70,7 +73,9 @@ final class PestTargetController {
                         + String.format("%.1f", distance)
                         + ")");
 
-        if (distance > AOTV_RANGE * AOTV_GAP_MULTIPLIER && runtime.aotvSlot == -1) {
+        boolean shouldUseAotv = AetherConfig.PEST_AOTV_BETWEEN.get()
+                && shouldUseAotvBetweenPests(client, pest, runtime.vacuumRange);
+        if (shouldUseAotv && runtime.aotvSlot == -1) {
             runtime.aotvSlot = PestLoadoutHelper.findAotvHotbarSlot(client);
         }
 
@@ -83,9 +88,7 @@ final class PestTargetController {
             }
             runtime.aotvSlot = -1;
             beginTerminalState(client, runtime, context);
-        } else if (distance > AOTV_RANGE * AOTV_GAP_MULTIPLIER
-                && runtime.aotvSlot != -1
-                && AetherConfig.PEST_AOTV_BETWEEN.get()) {
+        } else if (shouldUseAotv && runtime.aotvSlot != -1) {
             runtime.aotvUseCount = 0;
             ClientUtils.sendDebugMessage(
                     "[PestDestroyer] Distance too large ("
@@ -189,6 +192,53 @@ final class PestTargetController {
                 runtime.killedEntities,
                 runtime.navigation.leaveOneReservedEntityId,
                 eligibleTarget(client, runtime));
+    }
+
+    static boolean shouldUseAotvBetweenPests(
+            Minecraft client,
+            Entity pest,
+            double vacuumRange) {
+        if (client == null || client.player == null || pest == null) {
+            return false;
+        }
+
+        double directDistance = client.player.distanceTo(pest);
+        if (!AetherConfig.PEST_SMART_AOTV_ROUTING.get()) {
+            return directDistance > AOTV_RANGE * AOTV_GAP_MULTIPLIER;
+        }
+
+        double stopDistance = getAotvStopDistance(client, pest, vacuumRange);
+        double startThreshold = Math.max(
+                AetherConfig.PEST_AOTV_START_DISTANCE.get(),
+                stopDistance + SMART_AOTV_MIN_START_STOP_GAP);
+        if (directDistance <= stopDistance) {
+            return false;
+        }
+
+        Vec3 playerEye = client.player.getEyePosition();
+        Vec3 targetEye = pest.position().add(0, pest.getEyeHeight(pest.getPose()), 0);
+        double horizontalDistance = Math.hypot(
+                targetEye.x - playerEye.x,
+                targetEye.z - playerEye.z);
+        double verticalDistance = Math.abs(targetEye.y - playerEye.y);
+        double routeCost = horizontalDistance + verticalDistance * SMART_AOTV_VERTICAL_WEIGHT;
+        if (!ClientUtils.hasLineOfSight(client.player, targetEye)) {
+            routeCost += SMART_AOTV_NO_LOS_PENALTY;
+        }
+        return routeCost >= startThreshold;
+    }
+
+    static double getAotvStopDistance(
+            Minecraft client,
+            Entity pest,
+            double vacuumRange) {
+        if (!AetherConfig.PEST_SMART_AOTV_ROUTING.get()) {
+            return AOTV_RANGE * AOTV_GAP_MULTIPLIER;
+        }
+        double handoffRange = pest == null
+                ? vacuumRange
+                : PestHuntingController.handoffRange(client, pest, vacuumRange);
+        return Math.max(AetherConfig.PEST_AOTV_STOP_DISTANCE.get(), handoffRange);
     }
 
     static List<Entity> buildPlannedRoute(
