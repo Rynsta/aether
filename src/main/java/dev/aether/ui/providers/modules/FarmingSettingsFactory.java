@@ -98,7 +98,7 @@ final class FarmingSettingsFactory {
                     AetherConfig.PEST_AOTV_START_DISTANCE.set(value);
                     AetherConfig.save();
                 })
-                .withDecimals(1).withSuffix(" blocks");
+                .withDecimals(1);
     }
 
     static SliderSetting pestAotvStopDistanceSetting() {
@@ -108,17 +108,17 @@ final class FarmingSettingsFactory {
                     AetherConfig.PEST_AOTV_STOP_DISTANCE.set(value);
                     AetherConfig.save();
                 })
-                .withDecimals(1).withSuffix(" blocks");
+                .withDecimals(1);
     }
 
     static SliderSetting pestEtherwarpMinDistanceSetting() {
-        return new SliderSetting("Etherwarp Minimum Distance (Blocks)", 20, 60,
+        return new SliderSetting("Etherwarp Minimum Distance (Blocks)", 10, 50,
                 () -> AetherConfig.PEST_ETHERWARP_MIN_DISTANCE.get(),
                 value -> {
                     AetherConfig.PEST_ETHERWARP_MIN_DISTANCE.set(value);
                     AetherConfig.save();
                 })
-                .withDecimals(1).withSuffix(" blocks");
+                .withDecimals(1);
     }
 
     static RangeSliderSetting rodSwapDelaySetting() {
