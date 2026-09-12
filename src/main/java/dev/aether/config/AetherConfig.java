@@ -398,6 +398,9 @@ public final class AetherConfig {
                         .range(0, 3000);
         public static final BooleanEntry PEST_AOTV_BETWEEN = Config.bool("pestAotvBetween", false);
         public static final BooleanEntry PEST_SMART_AOTV_ROUTING = Config.bool("pestSmartAotvRouting", true);
+        public static final BooleanEntry PEST_ETHERWARP_TO_PEST = Config.bool("pestEtherwarpToPest", false);
+        public static final FloatEntry PEST_ETHERWARP_MIN_DISTANCE =
+                        Config.floatVal("pestEtherwarpMinDistance", 32.0f).range(20.0f, 60.0f);
         public static final FloatEntry PEST_AOTV_START_DISTANCE =
                         Config.floatVal("pestAotvStartDistance", 20.0f).range(12.0f, 40.0f);
         public static final FloatEntry PEST_AOTV_STOP_DISTANCE =

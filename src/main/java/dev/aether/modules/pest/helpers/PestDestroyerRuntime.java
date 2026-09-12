@@ -2,6 +2,7 @@ package dev.aether.modules.pest.helpers;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.core.BlockPos;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -99,6 +100,12 @@ final class PestDestroyerRuntime {
     int airborneRecoveryTargetEntityId = -1;
     Vec3 airborneRecoveryAimPoint = null;
     long airborneRecoveryAimUpdatedAt = 0L;
+    boolean pestEtherwarpActive = false;
+    int pestEtherwarpTargetEntityId = -1;
+    Vec3 pestEtherwarpAimPoint = null;
+    long pestEtherwarpClickAt = 0L;
+    long pestEtherwarpRetryAfter = 0L;
+    BlockPos pestEtherwarpLandingBlock = null;
 
     final PestNavigationState navigation = new PestNavigationState();
 
@@ -161,6 +168,12 @@ final class PestDestroyerRuntime {
             aotvLastUsePlayerX = Double.NaN;
             aotvLastUsePlayerY = Double.NaN;
             aotvLastUsePlayerZ = Double.NaN;
+            pestEtherwarpActive = false;
+            pestEtherwarpTargetEntityId = -1;
+            pestEtherwarpAimPoint = null;
+            pestEtherwarpClickAt = 0L;
+            pestEtherwarpRetryAfter = 0L;
+            pestEtherwarpLandingBlock = null;
         }
         if (newState != PestDestroyer.State.KILL_PEST) {
             targetWithoutSkullTicks = 0;
@@ -205,6 +218,12 @@ final class PestDestroyerRuntime {
         aotvLastUsePlayerX = Double.NaN;
         aotvLastUsePlayerY = Double.NaN;
         aotvLastUsePlayerZ = Double.NaN;
+        pestEtherwarpActive = false;
+        pestEtherwarpTargetEntityId = -1;
+        pestEtherwarpAimPoint = null;
+        pestEtherwarpClickAt = 0L;
+        pestEtherwarpRetryAfter = 0L;
+        pestEtherwarpLandingBlock = null;
         arrivedAtCurrentTargetViaAotv = false;
         aotvStartY = Double.NaN;
         lastRoofRescanAt = 0L;
