@@ -95,6 +95,10 @@ final class PestDestroyerRuntime {
 
     int zeroPestTabTicks = 0;
     int targetWithoutSkullTicks = 0;
+    boolean airborneRecoveryActive = false;
+    int airborneRecoveryTargetEntityId = -1;
+    Vec3 airborneRecoveryAimPoint = null;
+    long airborneRecoveryAimUpdatedAt = 0L;
 
     final PestNavigationState navigation = new PestNavigationState();
 
@@ -162,6 +166,7 @@ final class PestDestroyerRuntime {
             targetWithoutSkullTicks = 0;
             lastPreRotateAt = 0L;
             resetKillVacuumRetry();
+            resetAirborneRecovery();
         }
         if (newState != PestDestroyer.State.HUNT_PEST) {
             resetHuntState();
@@ -184,6 +189,7 @@ final class PestDestroyerRuntime {
         approachTicks = 0;
         zeroPestTabTicks = 0;
         targetWithoutSkullTicks = 0;
+        resetAirborneRecovery();
         lastVacuumUseAt = 0L;
         flyRetryAfterUnflyAt = 0L;
         killVacuumHoldStartedAt = 0L;
@@ -204,6 +210,13 @@ final class PestDestroyerRuntime {
         lastRoofRescanAt = 0L;
         roofAotvReturnState = null;
         resetHuntState();
+    }
+
+    void resetAirborneRecovery() {
+        airborneRecoveryActive = false;
+        airborneRecoveryTargetEntityId = -1;
+        airborneRecoveryAimPoint = null;
+        airborneRecoveryAimUpdatedAt = 0L;
     }
 
     void resetHuntState() {

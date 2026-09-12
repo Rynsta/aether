@@ -35,6 +35,13 @@ final class PestCombatCoordinator {
     private static final float AOTV_AIM_MAX_TURN_SPEED = 900.0f;
     private static final double VACUUM_REAPPROACH_BUFFER = 6.0;
     private static final double TARGET_REACQUIRE_CONE_DEGREES = 120.0;
+    private static final double AIRBORNE_RECOVERY_TRIGGER_GAP = 2.5;
+    private static final double AIRBORNE_RECOVERY_EXIT_GAP = 1.25;
+    private static final double AIRBORNE_RECOVERY_HORIZONTAL_BUFFER = 2.0;
+    private static final double AIRBORNE_RECOVERY_EXIT_HORIZONTAL_BUFFER = 4.0;
+    private static final long AIRBORNE_RECOVERY_AIM_REFRESH_MS = 100L;
+    private static final double AIRBORNE_RECOVERY_AIM_BLEND = 0.45;
+    private static final float AIRBORNE_RECOVERY_AIM_SMOOTHING_MS = 240.0f;
     interface Context {
         PestDestroyerRuntime runtime();
 
@@ -177,6 +184,18 @@ final class PestCombatCoordinator {
 
         boolean lassoTarget = PestHuntingController.shouldLassoTarget(client, currentTarget);
         double terminalRange = PestHuntingController.handoffRange(client, currentTarget, context.getVacuumRange());
+        double approachHorizontalDistance = Math.hypot(
+                currentTarget.getX() - client.player.getX(),
+                currentTarget.getZ() - client.player.getZ());
+        double approachVerticalGap = getEntityEyePosition(currentTarget).y - client.player.getEyePosition().y;
+        if (!lassoTarget
+                && client.player.getAbilities().flying
+                && approachHorizontalDistance <= terminalRange
+                && approachVerticalGap > AIRBORNE_RECOVERY_TRIGGER_GAP) {
+            PathfindingManager.stop(false);
+            context.beginTerminalState(client);
+            return;
+        }
         boolean directApproach = !lassoTarget && context.runtime().flightController.canApproachDirectly(client, currentTarget, context.getVacuumRange());
         if (dist <= terminalRange && (lassoTarget || directApproach)) {
             context.beginTerminalState(client);
@@ -230,6 +249,44 @@ final class PestCombatCoordinator {
         }
 
         double dist = client.player.distanceTo(currentTarget);
+        double horizontalDistance = Math.hypot(
+                currentTarget.getX() - client.player.getX(),
+                currentTarget.getZ() - client.player.getZ());
+        double verticalGap = getEntityEyePosition(currentTarget).y - client.player.getEyePosition().y;
+        PestDestroyerRuntime runtime = context.runtime();
+        boolean sameAirborneTarget = runtime.airborneRecoveryActive
+                && runtime.airborneRecoveryTargetEntityId == currentTarget.getId();
+        boolean shouldEnterAirborneRecovery = client.player.getAbilities().flying
+                && verticalGap > AIRBORNE_RECOVERY_TRIGGER_GAP
+                && horizontalDistance <= context.getVacuumRange() + AIRBORNE_RECOVERY_HORIZONTAL_BUFFER;
+
+        if (!sameAirborneTarget && shouldEnterAirborneRecovery) {
+            runtime.airborneRecoveryActive = true;
+            runtime.airborneRecoveryTargetEntityId = currentTarget.getId();
+            runtime.airborneRecoveryAimPoint = getEntityEyePosition(currentTarget);
+            runtime.airborneRecoveryAimUpdatedAt = System.currentTimeMillis();
+            context.setTargetWithoutSkullTicks(0);
+            PathfindingManager.stop(false);
+            RotationManager.cancelRotation();
+            sameAirborneTarget = true;
+            ClientUtils.sendDebugMessage(
+                    "[PestDestroyer] Pest jumped vertically. Recovering on target " + currentTarget.getId() + ".");
+        }
+
+        if (sameAirborneTarget) {
+            boolean keepRecovering = client.player.getAbilities().flying
+                    && verticalGap > AIRBORNE_RECOVERY_EXIT_GAP
+                    && horizontalDistance <= context.getVacuumRange() + AIRBORNE_RECOVERY_EXIT_HORIZONTAL_BUFFER;
+            if (keepRecovering) {
+                handleAirbornePestRecovery(client, context, currentTarget, dist, verticalGap);
+                return;
+            }
+            runtime.resetAirborneRecovery();
+            context.setTargetWithoutSkullTicks(0);
+            ClientUtils.setKeyMappingState(client.options.keyJump, false);
+            ClientUtils.sendDebugMessage("[PestDestroyer] Airborne pest stabilized. Resuming normal combat.");
+        }
+
         boolean directApproach = context.runtime().flightController.canApproachDirectly(client, currentTarget, context.getVacuumRange());
         if (PathfindingManager.isNavigating()) {
             PathfindingManager.stop();
@@ -509,6 +566,54 @@ final class PestCombatCoordinator {
 
     private static Vec3 getEntityEyePosition(Entity entity) {
         return entity.position().add(0, entity.getEyeHeight(entity.getPose()), 0);
+    }
+
+    private static void handleAirbornePestRecovery(
+            Minecraft client,
+            Context context,
+            Entity currentTarget,
+            double dist,
+            double verticalGap) {
+        PestDestroyerRuntime runtime = context.runtime();
+        if (PathfindingManager.isNavigating()) {
+            PathfindingManager.stop(false);
+        }
+        ClientUtils.setKeyMappingState(client.options.keyUp, false);
+        ClientUtils.setKeyMappingState(client.options.keyDown, false);
+        ClientUtils.setKeyMappingState(client.options.keySprint, false);
+        ClientUtils.setKeyMappingState(client.options.keyJump, verticalGap > AIRBORNE_RECOVERY_EXIT_GAP);
+        context.setTargetWithoutSkullTicks(0);
+
+        if (context.getVacuumSlot() == -1) {
+            context.setVacuumSlot(context.findVacuumHotbarSlot(client));
+        }
+        if (context.getVacuumSlot() != -1
+                && ((AccessorInventory) client.player.getInventory()).getSelected() != context.getVacuumSlot()) {
+            client.execute(() -> FailsafeManager.selectHotbarSlot(client, context.getVacuumSlot()));
+        }
+
+        long now = System.currentTimeMillis();
+        Vec3 rawAim = buildCombatAimTarget(client, currentTarget);
+        if (runtime.airborneRecoveryAimPoint == null) {
+            runtime.airborneRecoveryAimPoint = rawAim;
+            runtime.airborneRecoveryAimUpdatedAt = now;
+        } else if (now - runtime.airborneRecoveryAimUpdatedAt >= AIRBORNE_RECOVERY_AIM_REFRESH_MS) {
+            runtime.airborneRecoveryAimPoint = runtime.airborneRecoveryAimPoint.lerp(
+                    rawAim, AIRBORNE_RECOVERY_AIM_BLEND);
+            runtime.airborneRecoveryAimUpdatedAt = now;
+        }
+
+        if (!FailsafeManager.shouldSuppressPestCleanerRotation(client)) {
+            RotationManager.trackRotation(
+                    client,
+                    runtime.airborneRecoveryAimPoint,
+                    AIRBORNE_RECOVERY_AIM_SMOOTHING_MS,
+                    AetherConfig.PEST_MAX_TURN_SPEED.get());
+        }
+
+        boolean inVacuumRange = dist <= context.getVacuumRange();
+        boolean retryingUse = context.shouldTemporarilyReleaseKillVacuum(client, true, inVacuumRange);
+        ClientUtils.setKeyMappingState(client.options.keyUse, inVacuumRange && !retryingUse);
     }
 
     private static void clearAotvBetweenPests(Minecraft client, Context context) {
