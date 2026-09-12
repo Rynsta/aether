@@ -32,7 +32,6 @@ final class PestCombatCoordinator {
     // enough that settling inside AOTV_AIM_TOLERANCE_DEGREES stays in the same
     // ballpark as that delay even from a half-turn away.
     private static final float AOTV_AIM_SMOOTHING_MS = 40.0f;
-    private static final float AOTV_AIM_MAX_TURN_SPEED = 900.0f;
     private static final double VACUUM_REAPPROACH_BUFFER = 6.0;
     private static final double TARGET_REACQUIRE_CONE_DEGREES = 120.0;
     private static final double AIRBORNE_RECOVERY_TRIGGER_GAP = 2.5;
@@ -421,7 +420,8 @@ final class PestCombatCoordinator {
             // A one-shot rotation lands where the pest was and has to restart, which is
             // what froze the hop chain staring at the pest. Retarget every tick instead.
             RotationManager.trackRotation(
-                    client, aimPos, AOTV_AIM_SMOOTHING_MS, AOTV_AIM_MAX_TURN_SPEED);
+                    client, aimPos, AOTV_AIM_SMOOTHING_MS,
+                    AetherConfig.PEST_NEXT_TARGET_TURN_SPEED.get());
 
             float tolerance = now - context.getAotvAimStartedAt() > AOTV_AIM_SETTLE_TIMEOUT_MS
                     ? AOTV_AIM_FALLBACK_TOLERANCE_DEGREES

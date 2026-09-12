@@ -403,6 +403,8 @@ public final class AetherConfig {
         public static final FloatEntry PEST_FOV_RANGE = Config.floatVal("pestFovRange", 20.0f).range(0.0f, 90.0f);
         public static final FloatEntry PEST_MAX_TURN_SPEED =
                         Config.floatVal("pestMaxTurnSpeed", 300.0f).range(60.0f, 1200.0f);
+        public static final FloatEntry PEST_NEXT_TARGET_TURN_SPEED =
+                        Config.floatVal("pestNextTargetTurnSpeed", 450.0f).range(60.0f, 1200.0f);
         public static final FloatEntry PEST_VACUUM_FOLLOW_DISTANCE =
                         Config.floatVal("pestVacuumFollowDistance", 5.0f).range(2.0f, 7.0f);
         public static final BooleanEntry RESPECT_VACUUM_TRUE_RANGE = Config.bool("respectVacuumTrueRange", true);

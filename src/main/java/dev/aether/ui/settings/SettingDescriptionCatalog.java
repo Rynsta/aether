@@ -9,6 +9,7 @@ final class SettingDescriptionCatalog {
             Map.entry("Pest Threshold", "Number of pests required before Pest Destroyer starts automatically."),
             Map.entry("Leave One Pest Alive", "Preserves one pest on selected plots instead of fully clearing them."),
             Map.entry("AOTV Between Distant Pests", "Allows Pest Destroyer to use an Aspect of the Void between distant pests."),
+            Map.entry("Next Pest Turn Speed", "Controls how quickly the camera turns when handing off to the next pest or aiming an AOTV hop."),
             Map.entry("Optimized Route ESP", "Draws the planned Pest Destroyer route from the current target through nearby pests."),
             Map.entry("Optimized Route Color", "Sets the color used for the optimized Pest Destroyer route."),
             Map.entry("Highlight", "Draws a highlight around detected pests."),

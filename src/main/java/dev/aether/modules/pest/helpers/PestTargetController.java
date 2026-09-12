@@ -370,7 +370,7 @@ final class PestTargetController {
                     client,
                     targetEye,
                     AetherConfig.PEST_TRACKING_SMOOTHING_MS.get(),
-                    AetherConfig.PEST_MAX_TURN_SPEED.get());
+                    AetherConfig.PEST_NEXT_TARGET_TURN_SPEED.get());
         }
     }
 
