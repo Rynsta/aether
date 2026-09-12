@@ -12,6 +12,7 @@ import dev.aether.ui.theme.Theme;
 import dev.aether.ui.util.Fonts;
 import dev.aether.util.BpsTracker;
 import dev.aether.util.PingTracker;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 
 import java.time.LocalTime;
@@ -20,7 +21,10 @@ import java.time.format.DateTimeFormatter;
 public class WatermarkHudElement extends HudElement {
 
     private static final String NAME    = "Aether";
-    private static final String VERSION = "DEBUG";
+    private static final String VERSION = FabricLoader.getInstance()
+            .getModContainer("aether")
+            .map(container -> stripReleaseSuffix(container.getMetadata().getVersion().getFriendlyString()))
+            .orElse("dev");
 
     private static final float PAD_H     = 12f;
     private static final float PAD_V     = 9f;
@@ -318,6 +322,10 @@ public class WatermarkHudElement extends HudElement {
         long s = ms / 1000, h = s / 3600, m = (s % 3600) / 60;
         return h > 0 ? String.format("%d:%02d:%02d", h, m, s % 60)
                      : String.format("%02d:%02d", m, s % 60);
+    }
+
+    private static String stripReleaseSuffix(String version) {
+        return version.replaceFirst("-r\\d+$", "");
     }
 
     private static String getPing(Minecraft mc) {
