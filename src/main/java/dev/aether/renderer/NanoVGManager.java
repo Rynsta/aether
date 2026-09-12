@@ -143,7 +143,6 @@ public final class NanoVGManager {
         GL33C.glBindSampler(0, 0);
 
         renderer.beginMinecraftTextFrame();
-        GlStateManager._disableDepthTest();
         NanoVG.nvgBeginFrame(vg, width, height, pxRatio);
         NanoVG.nvgTextAlign(vg, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_TOP);
         drawing = true;

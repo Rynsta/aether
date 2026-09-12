@@ -95,7 +95,6 @@ public class HudRegistry {
 
             // Keep themed inventory surfaces below the native item and player-model pass.
             if (alpha > FADE_EPSILON) {
-                guiGraphics.nextStratum();
                 renderMcElements(guiGraphics);
                 if (ELEMENTS.stream().anyMatch(e -> e.rendersBeforeMinecraft() && e.isVisible())) {
                     AetherRenderQueue.enqueueBeforeGui(() -> renderBackgroundFrame(sw, sh, alpha));
