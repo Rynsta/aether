@@ -7,6 +7,7 @@ import net.minecraft.core.BlockPos;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -106,6 +107,9 @@ final class PestDestroyerRuntime {
     long pestEtherwarpClickAt = 0L;
     long pestEtherwarpRetryAfter = 0L;
     BlockPos pestEtherwarpLandingBlock = null;
+    final Map<Long, Long> pestEtherwarpFailedBlocksUntil = new ConcurrentHashMap<>();
+    boolean pestEtherwarpMaintainHeight = false;
+    boolean pestEtherwarpJumpHeld = false;
 
     final PestNavigationState navigation = new PestNavigationState();
 
@@ -224,6 +228,9 @@ final class PestDestroyerRuntime {
         pestEtherwarpClickAt = 0L;
         pestEtherwarpRetryAfter = 0L;
         pestEtherwarpLandingBlock = null;
+        pestEtherwarpFailedBlocksUntil.clear();
+        pestEtherwarpMaintainHeight = false;
+        pestEtherwarpJumpHeld = false;
         arrivedAtCurrentTargetViaAotv = false;
         aotvStartY = Double.NaN;
         lastRoofRescanAt = 0L;
