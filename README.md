@@ -24,7 +24,7 @@
 
 ## features
 - **farming qol** - auto farming, pest destroyer, auto pest exchange, auto spray, auto loadouts, auto greenhouse, auto composter ... + many more!
-- **visual** - nick hider, purse spoofer, sawdust spoofer, customizable halos, Aether logo cape
+- **visual** - nick hider, purse spoofer, sawdust spoofer, fun visual features
 - **failsafes** - too many failsafes to list
 
 ---
