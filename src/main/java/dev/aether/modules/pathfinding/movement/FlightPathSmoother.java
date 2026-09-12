@@ -7,13 +7,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class FlightPathSmoother {
-    // creative flight only trims height in 0.15 steps, so a merged climb is flown as a band around
-    // the ideal slope rather than along it, and only merges with room for that band are safe
-    private static final double SLOPE_MARGIN = 0.15;
+    // height is trimmed independently of the horizontal drive, so a climb is flown as a corner that
+    // reaches the new height early rather than as an even slope; both legs of it have to be clear
+    private static final int MAX_MERGED_CLIMB = 3;
 
     @FunctionalInterface
     public interface Clearance {
-        boolean isClear(PathPosition from, PathPosition to, double verticalMargin);
+        boolean isClear(PathPosition from, PathPosition to);
     }
 
     private FlightPathSmoother() {}
@@ -26,16 +26,27 @@ public final class FlightPathSmoother {
         while (anchor < path.size() - 1) {
             PathPosition from = path.get(anchor).position;
             int lastValid = anchor + 1;
-            if (!clear.isClear(from, path.get(lastValid).position, 0.0)) return List.of();
+            if (!clear.isClear(from, path.get(lastValid).position)) return List.of();
             for (int candidate = anchor + 2; candidate < path.size(); candidate++) {
-                PathPosition to = path.get(candidate).position;
-                double margin = to.flooredY() == from.flooredY() ? 0.0 : SLOPE_MARGIN;
-                if (!clear.isClear(from, to, margin)) break;
+                if (!mergeable(from, path.get(candidate).position, clear)) break;
                 lastValid = candidate;
             }
             result.add(path.get(lastValid));
             anchor = lastValid;
         }
         return result;
+    }
+
+    private static boolean mergeable(PathPosition from, PathPosition to, Clearance clear) {
+        boolean level = from.flooredY() == to.flooredY();
+        boolean column = from.flooredX() == to.flooredX() && from.flooredZ() == to.flooredZ();
+        if (level || column) {
+            return clear.isClear(from, to);
+        }
+        if (Math.abs(to.flooredY() - from.flooredY()) > MAX_MERGED_CLIMB) {
+            return false;
+        }
+        PathPosition corner = new PathPosition(from.flooredX(), to.flooredY(), from.flooredZ());
+        return clear.isClear(from, to) && clear.isClear(from, corner) && clear.isClear(corner, to);
     }
 }

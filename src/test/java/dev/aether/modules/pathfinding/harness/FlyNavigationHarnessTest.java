@@ -52,9 +52,10 @@ class FlyNavigationHarnessTest {
         int ticks = results.stream().mapToInt(FlightTrial.Result::ticks).sum();
         int replans = results.stream().mapToInt(FlightTrial.Result::repaths).sum();
         int stalled = results.stream().mapToInt(FlightTrial.Result::stallTicks).sum();
-        System.out.printf("TOTAL reached=%d/%d time=%.1fs waypoints=%d replans=%d stalled=%d%n",
+        int flips = results.stream().mapToInt(FlightTrial.Result::verticalFlips).sum();
+        System.out.printf("TOTAL reached=%d/%d time=%.1fs waypoints=%d replans=%d stalled=%d flips=%d%n",
                 reached, results.size(), seconds,
-                results.stream().mapToInt(FlightTrial.Result::totalWaypoints).sum(), replans, stalled);
+                results.stream().mapToInt(FlightTrial.Result::totalWaypoints).sum(), replans, stalled, flips);
 
         // budgets sit above what these routes cost now and below the stop-at-every-waypoint behaviour
         // they replaced, which needed 671 ticks, 62 waypoints, 4 replans and 41 stalled ticks
@@ -63,6 +64,8 @@ class FlyNavigationHarnessTest {
                         + results.stream().filter(result -> !result.reached()).toList()),
                 () -> assertEquals(0, replans, () -> "routes were abandoned mid-flight: " + results),
                 () -> assertTrue(ticks <= 520, () -> "flights got slower: " + ticks + " ticks, " + results),
-                () -> assertTrue(stalled <= 25, () -> "flights stalled more often: " + stalled + ", " + results));
+                () -> assertTrue(stalled <= 25, () -> "flights stalled more often: " + stalled + ", " + results),
+                // climbs and descents should be held, not tapped on and off tick by tick
+                () -> assertTrue(flips <= 34, () -> "vertical input is feathering: " + flips + ", " + results));
     }
 }

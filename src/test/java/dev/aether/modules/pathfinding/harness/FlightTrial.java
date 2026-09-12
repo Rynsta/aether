@@ -31,7 +31,8 @@ public final class FlightTrial {
 
     public record Result(String name, boolean reached, String failure, int ticks, int repaths, int plans,
                          int firstWaypoints, int totalWaypoints, double travelled, int stallTicks,
-                         int blockedTicks, List<String> notes, Map<FlightGuidance.Mode, Integer> modes) {
+                         int blockedTicks, int verticalFlips, int verticalTicks, List<String> notes,
+                         Map<FlightGuidance.Mode, Integer> modes) {
 
         public double meanSpeed() {
             return ticks == 0 ? 0.0 : travelled / ticks;
@@ -44,9 +45,10 @@ public final class FlightTrial {
         @Override
         public String toString() {
             return String.format(
-                    "%-22s %-7s t=%4d (%4.1fs) replans=%d waypoints=%2d/%2d speed=%.3f stalled=%3d blocked=%3d %s%s",
+                    "%-22s %-7s t=%4d (%4.1fs) replans=%d wp=%2d/%2d speed=%.3f stalled=%3d blocked=%3d vert=%3d/%3d flips=%3d %s%s",
                     name, reached ? "OK" : "FAIL", ticks, seconds(), repaths, firstWaypoints, totalWaypoints,
-                    meanSpeed(), stallTicks, blockedTicks, modes, failure == null ? "" : "  <" + failure + ">");
+                    meanSpeed(), stallTicks, blockedTicks, verticalTicks, ticks, verticalFlips, modes,
+                    failure == null ? "" : "  <" + failure + ">");
         }
     }
 
@@ -61,7 +63,7 @@ public final class FlightTrial {
 
         Route route = plan(world, sim.position(), goal);
         if (route == null) {
-            return new Result(name, false, "no initial path", 0, 0, 1, 0, 0, 0.0, 0, 0, notes, modes);
+            return new Result(name, false, "no initial path", 0, 0, 1, 0, 0, 0.0, 0, 0, 0, 0, notes, modes);
         }
         guidance.start(route.nodes(), goal.getX(), route.goalY(), goal.getZ());
 
@@ -73,24 +75,27 @@ public final class FlightTrial {
         double travelled = 0.0;
         int stallTicks = 0;
         int blockedTicks = 0;
+        int verticalFlips = 0;
+        int verticalTicks = 0;
+        int previousVertical = 0;
 
         while (ticks < maxTicks) {
             FlightGuidance.Command command = guidance.tick(sim);
             switch (command.status()) {
                 case ARRIVED -> {
                     return new Result(name, true, null, ticks, repaths, plans, firstWaypoints, totalWaypoints,
-                            travelled, stallTicks, blockedTicks, notes, modes);
+                            travelled, stallTicks, blockedTicks, verticalFlips, verticalTicks, notes, modes);
                 }
                 case HOLD -> {
                     return new Result(name, false, "guidance idle", ticks, repaths, plans, firstWaypoints,
-                            totalWaypoints, travelled, stallTicks, blockedTicks, notes, modes);
+                            totalWaypoints, travelled, stallTicks, blockedTicks, verticalFlips, verticalTicks, notes, modes);
                 }
                 case REPATH -> {
                     notes.add(command.note());
                     repaths++;
                     if (repaths > REPATH_LIMIT) {
                         return new Result(name, false, "gave up after " + repaths + " replans", ticks, repaths,
-                                plans, firstWaypoints, totalWaypoints, travelled, stallTicks, blockedTicks, notes, modes);
+                                plans, firstWaypoints, totalWaypoints, travelled, stallTicks, blockedTicks, verticalFlips, verticalTicks, notes, modes);
                     }
                     sim.stopTurning();
                     for (int i = 0; i < REPLAN_LATENCY_TICKS && ticks < maxTicks; i++) {
@@ -103,7 +108,7 @@ public final class FlightTrial {
                     plans++;
                     if (next == null) {
                         return new Result(name, false, "no path on replan", ticks, repaths, plans, firstWaypoints,
-                                totalWaypoints, travelled, stallTicks, blockedTicks, notes, modes);
+                                totalWaypoints, travelled, stallTicks, blockedTicks, verticalFlips, verticalTicks, notes, modes);
                     }
                     totalWaypoints += next.nodes().size();
                     guidance.start(next.nodes(), goal.getX(), next.goalY(), goal.getZ());
@@ -120,12 +125,19 @@ public final class FlightTrial {
                     if (sim.blocked()) {
                         blockedTicks++;
                     }
+                    if (command.vertical() != 0) {
+                        verticalTicks++;
+                    }
+                    if (command.vertical() != previousVertical) {
+                        verticalFlips++;
+                        previousVertical = command.vertical();
+                    }
                     ticks++;
                 }
             }
         }
         return new Result(name, false, "timed out", ticks, repaths, plans, firstWaypoints, totalWaypoints,
-                travelled, stallTicks, blockedTicks, notes, modes);
+                travelled, stallTicks, blockedTicks, verticalFlips, verticalTicks, notes, modes);
     }
 
     private static Route plan(BlockWorld world, Vec3 from, BlockPos goal) {
@@ -170,15 +182,14 @@ public final class FlightTrial {
             return null;
         }
 
-        List<Node> smoothed = FlightPathSmoother.smooth(nodes, (a, b, margin) -> freePath(world, a, b, margin));
+        List<Node> smoothed = FlightPathSmoother.smooth(nodes, (a, b) -> freePath(world, a, b));
         return smoothed.isEmpty() ? null : new Route(smoothed, goalY);
     }
 
-    private static boolean freePath(BlockWorld world, PathPosition from, PathPosition to, double verticalMargin) {
+    private static boolean freePath(BlockWorld world, PathPosition from, PathPosition to) {
         Vec3 start = FlightGuidance.waypoint(from.flooredX(), from.flooredY(), from.flooredZ());
         Vec3 end = FlightGuidance.waypoint(to.flooredX(), to.flooredY(), to.flooredZ());
-        return FlightPathClearance.isClear(
-                body(start).inflate(SMOOTHING_MARGIN, verticalMargin, SMOOTHING_MARGIN),
+        return FlightPathClearance.isClear(body(start).inflate(SMOOTHING_MARGIN, 0.0, SMOOTHING_MARGIN),
                 end.subtract(start), world::collisions);
     }
 

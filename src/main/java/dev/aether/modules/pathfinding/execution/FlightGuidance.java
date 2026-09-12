@@ -23,6 +23,8 @@ public final class FlightGuidance {
     private static final int REJOIN_SAMPLES = 4;
     // holding nearer the planned height than this just oscillates: one flight impulse drifts 0.375
     static final double CRUISE_HEIGHT_TOLERANCE = 0.25;
+    // levelling back onto a segment is worth one deliberate overshoot, so it may hunt where cruise may not
+    private static final double LEVEL_OFF_TOLERANCE = 0.1;
 
     public enum State {
         IDLE, FLYING, DECELERATING, FINISHED
@@ -209,7 +211,7 @@ public final class FlightGuidance {
                 : wpIndex + 1 < path.size() ? waypoint(path.get(wpIndex + 1)) : null;
         double dx = target.x - pos.x;
         double dz = target.z - pos.z;
-        double dyWp = rejoin != null ? target.y : segmentHeight(pos, target);
+        double dyWp = target.y;
 
         Rotation aim = aim(view, dx, dz, distToGoal);
 
@@ -238,7 +240,7 @@ public final class FlightGuidance {
             mode = rejoin != null ? Mode.REJOIN : open ? Mode.CRUISE : Mode.CORNER;
         }
 
-        int vertical = verticalInput(view, pos, dyWp, preserveWaypoint || rejoin != null ? CORNER_REACH : CRUISE_HEIGHT_TOLERANCE);
+        int vertical = verticalInput(view, pos, dyWp, rejoin != null ? LEVEL_OFF_TOLERANCE : CRUISE_HEIGHT_TOLERANCE);
         horizontal = constrain(view, horizontal, sprint);
 
         long stuckMs = progressTracker.stalledFor(wpIndex, pos.distanceTo(waypointTarget), view.nowMillis());
@@ -318,24 +320,6 @@ public final class FlightGuidance {
                 exitSpeed + horizontal / FlightMotion.coastTicks(brakingLookaheadTicks));
         Vec3 desired = new Vec3(offset.x, 0.0, offset.z).scale(Math.max(speed, 0.08) / horizontal);
         return FlightMotion.horizontalInput(desired, view.velocity(), view.yaw());
-    }
-
-    // height the current segment wants us at for how far along it we are, so a climb is flown as the
-    // diagonal it was planned as rather than as a climb followed by a level run
-    private double segmentHeight(Vec3 pos, Vec3 target) {
-        if (wpIndex == 0) {
-            return target.y;
-        }
-        Vec3 from = waypoint(path.get(wpIndex - 1));
-        double runX = target.x - from.x;
-        double runZ = target.z - from.z;
-        double runSq = runX * runX + runZ * runZ;
-        if (runSq < 1.0e-9) {
-            return target.y;
-        }
-        double progress = Math.max(0.0, Math.min(1.0,
-                ((pos.x - from.x) * runX + (pos.z - from.z) * runZ) / runSq));
-        return from.y + (target.y - from.y) * progress;
     }
 
     private static double exitSpeed(Vec3 pos, Vec3 target, Vec3 next) {

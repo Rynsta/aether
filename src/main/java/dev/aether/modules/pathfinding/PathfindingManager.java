@@ -1382,13 +1382,13 @@ public final class PathfindingManager {
 
     private static List<Node> smoothFlyPath(Minecraft mc, List<Node> path) {
         if (mc.level == null) return List.of();
-        return FlightPathSmoother.smooth(path, (from, to, verticalMargin) -> hasFreePath(mc, from, to, verticalMargin));
+        return FlightPathSmoother.smooth(path, (from, to) -> hasFreePath(mc, from, to));
     }
 
-    private static boolean hasFreePath(Minecraft mc, PathPosition from, PathPosition to, double verticalMargin) {
+    private static boolean hasFreePath(Minecraft mc, PathPosition from, PathPosition to) {
         return FlightPathClearance.isClear(mc,
                 FlightGuidance.waypoint(from.flooredX(), from.flooredY(), from.flooredZ()),
-                FlightGuidance.waypoint(to.flooredX(), to.flooredY(), to.flooredZ()), 0.05, verticalMargin);
+                FlightGuidance.waypoint(to.flooredX(), to.flooredY(), to.flooredZ()), 0.05);
     }
 
     // --- Utilities -----------------------------------------------------------
