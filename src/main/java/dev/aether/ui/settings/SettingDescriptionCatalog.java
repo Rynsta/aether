@@ -9,6 +9,8 @@ final class SettingDescriptionCatalog {
             Map.entry("Pest Threshold", "Number of pests required before Pest Destroyer starts automatically."),
             Map.entry("Leave One Pest Alive", "Preserves one pest on selected plots instead of fully clearing them."),
             Map.entry("AOTV Between Distant Pests", "Allows Pest Destroyer to use an Aspect of the Void between distant pests."),
+            Map.entry("Etherwarp Directly Near Pests", "Uses a long-distance Etherwarp to land on a safe block beside a distant pest."),
+            Map.entry("Etherwarp Minimum Distance (Blocks)", "Minimum distance before Pest Destroyer considers a direct Etherwarp to the target pest."),
             Map.entry("Next Pest Turn Speed", "Controls how quickly the camera turns when handing off to the next pest or aiming an AOTV hop."),
             Map.entry("Smart AOTV Routing", "Chooses AOTV using horizontal and vertical travel cost, line of sight, and the configured start and stop distances."),
             Map.entry("AOTV Start Distance (Blocks)", "Minimum travel distance at which Smart AOTV Routing begins considering AOTV."),

@@ -111,6 +111,16 @@ final class FarmingSettingsFactory {
                 .withDecimals(1).withSuffix(" blocks");
     }
 
+    static SliderSetting pestEtherwarpMinDistanceSetting() {
+        return new SliderSetting("Etherwarp Minimum Distance (Blocks)", 20, 60,
+                () -> AetherConfig.PEST_ETHERWARP_MIN_DISTANCE.get(),
+                value -> {
+                    AetherConfig.PEST_ETHERWARP_MIN_DISTANCE.set(value);
+                    AetherConfig.save();
+                })
+                .withDecimals(1).withSuffix(" blocks");
+    }
+
     static RangeSliderSetting rodSwapDelaySetting() {
         return intDelayRangeSetting("Rod Swap Delay", 0f, 1000f,
                 () -> AetherConfig.ROD_SWAP_DELAY_MIN.get(),

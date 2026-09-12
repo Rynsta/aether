@@ -176,6 +176,16 @@ public final class PestManagerRegistryProvider extends AbstractModulesRegistryPr
                             AetherConfig.save();
                         })
                         .visibleWhen(AetherConfig.PEST_AOTV_BETWEEN::get))
+                .add(new ToggleSetting("Etherwarp Directly Near Pests",
+                        AetherConfig.PEST_ETHERWARP_TO_PEST::get,
+                        v -> {
+                            AetherConfig.PEST_ETHERWARP_TO_PEST.set(v);
+                            AetherConfig.save();
+                        })
+                        .visibleWhen(AetherConfig.PEST_AOTV_BETWEEN::get))
+                .add(FarmingSettingsFactory.pestEtherwarpMinDistanceSetting()
+                        .visibleWhen(() -> AetherConfig.PEST_AOTV_BETWEEN.get()
+                                && AetherConfig.PEST_ETHERWARP_TO_PEST.get()))
                 .add(FarmingSettingsFactory.pestAotvStartDistanceSetting()
                         .visibleWhen(() -> AetherConfig.PEST_AOTV_BETWEEN.get()
                                 && AetherConfig.PEST_SMART_AOTV_ROUTING.get()))

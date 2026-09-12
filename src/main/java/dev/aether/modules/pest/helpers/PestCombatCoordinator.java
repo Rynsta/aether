@@ -3,12 +3,17 @@ package dev.aether.modules.pest.helpers;
 import dev.aether.config.AetherConfig;
 import dev.aether.mixin.AccessorInventory;
 import dev.aether.modules.failsafe.FailsafeManager;
+import dev.aether.modules.gear.GearManager;
 import dev.aether.modules.pathfinding.PathfindingManager;
 import dev.aether.modules.pathfinding.execution.FlightPathClearance;
+import dev.aether.modules.pathfinding.etherwarp.EtherwarpHelper;
+import dev.aether.modules.pathfinding.movement.WalkabilityChecker;
+import dev.aether.modules.pathfinding.wrapper.PathPosition;
 import dev.aether.modules.rotation.RotationManager;
 import dev.aether.util.ClientUtils;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
@@ -41,6 +46,12 @@ final class PestCombatCoordinator {
     private static final long AIRBORNE_RECOVERY_AIM_REFRESH_MS = 100L;
     private static final double AIRBORNE_RECOVERY_AIM_BLEND = 0.45;
     private static final float AIRBORNE_RECOVERY_AIM_SMOOTHING_MS = 240.0f;
+    private static final float ETHERWARP_AIM_TOLERANCE_DEGREES = 2.0f;
+    private static final long ETHERWARP_AIM_MIN_DURATION_MS = 120L;
+    private static final long ETHERWARP_CONFIRM_TIMEOUT_MS = 900L;
+    private static final long ETHERWARP_RETRY_COOLDOWN_MS = 1500L;
+    private static final int ETHERWARP_BLOCK_SCAN_DEPTH = 20;
+    private static final double ETHERWARP_MIN_TRAVEL_DISTANCE = 3.0;
     interface Context {
         PestDestroyerRuntime runtime();
 
@@ -396,6 +407,11 @@ final class PestCombatCoordinator {
             return;
         }
 
+        if ((AetherConfig.PEST_ETHERWARP_TO_PEST.get() || context.runtime().pestEtherwarpActive)
+                && handleEtherwarpNearPest(client, context, currentTarget, stopDistance, now)) {
+            return;
+        }
+
         Vec3 aimPos = getEntityEyePosition(currentTarget);
 
         Vec3 hopDirection = aimPos.subtract(client.player.getEyePosition()).normalize();
@@ -622,6 +638,8 @@ final class PestCombatCoordinator {
         ClientUtils.setKeyMappingState(client.options.keyUp, false);
         ClientUtils.setKeyMappingState(client.options.keySprint, false);
         ClientUtils.setKeyMappingState(client.options.keyJump, false);
+        ClientUtils.setKeyMappingState(client.options.keyShift, false);
+        client.player.setShiftKeyDown(false);
         RotationManager.cancelRotation();
         context.setAotvSlot(-1);
         context.setAotvUseCount(0);
@@ -630,6 +648,205 @@ final class PestCombatCoordinator {
         context.setAotvPostClickGraceUntil(0L);
         context.setAotvPendingUseAt(0L);
         context.setAotvAimStartedAt(0L);
+        clearPestEtherwarpAttempt(client, context.runtime(), true);
+    }
+
+    private record PestEtherwarpCandidate(Vec3 aimPoint, Vec3 landingFeet, BlockPos landingBlock) {
+    }
+
+    private static boolean handleEtherwarpNearPest(
+            Minecraft client,
+            Context context,
+            Entity currentTarget,
+            double stopDistance,
+            long now
+    ) {
+        PestDestroyerRuntime runtime = context.runtime();
+        if (!AetherConfig.PEST_ETHERWARP_TO_PEST.get() && !runtime.pestEtherwarpActive) {
+            return false;
+        }
+        if (runtime.pestEtherwarpRetryAfter > now && !runtime.pestEtherwarpActive) {
+            return false;
+        }
+        if (runtime.pestEtherwarpActive
+                && runtime.pestEtherwarpTargetEntityId != currentTarget.getId()) {
+            clearPestEtherwarpAttempt(client, runtime, false);
+        }
+
+        if (!runtime.pestEtherwarpActive) {
+            double pestDistance = client.player.distanceTo(currentTarget);
+            if (pestDistance < AetherConfig.PEST_ETHERWARP_MIN_DISTANCE.get()) {
+                return false;
+            }
+
+            int etherwarpSlot = GearManager.findEtherwarpAspectOfTheVoidHotbarSlot(client);
+            PestEtherwarpCandidate candidate = findEtherwarpCandidateNearPest(client, currentTarget);
+            if (etherwarpSlot < 0 || candidate == null) {
+                return false;
+            }
+
+            runtime.pestEtherwarpActive = true;
+            runtime.pestEtherwarpTargetEntityId = currentTarget.getId();
+            runtime.pestEtherwarpAimPoint = candidate.aimPoint();
+            runtime.pestEtherwarpLandingBlock = candidate.landingBlock();
+            runtime.pestEtherwarpClickAt = 0L;
+            context.setAotvSlot(etherwarpSlot);
+            context.setAotvAimStartedAt(0L);
+        }
+
+        int etherwarpSlot = GearManager.findEtherwarpAspectOfTheVoidHotbarSlot(client);
+        if (etherwarpSlot < 0 || runtime.pestEtherwarpAimPoint == null) {
+            clearPestEtherwarpAttempt(client, runtime, true);
+            return false;
+        }
+        context.setAotvSlot(etherwarpSlot);
+        ClientUtils.setKeyMappingState(client.options.keyUp, false);
+        ClientUtils.setKeyMappingState(client.options.keySprint, false);
+        ClientUtils.setKeyMappingState(client.options.keyJump, true);
+        ClientUtils.setKeyMappingState(client.options.keyShift, true);
+        client.player.setShiftKeyDown(true);
+
+        if (runtime.pestEtherwarpClickAt != 0L) {
+            double movedDistance = getAotvMovedDistance(client, context);
+            if (movedDistance >= AOTV_CONFIRM_DISTANCE) {
+                context.setAotvLastUseAt(runtime.pestEtherwarpClickAt);
+                context.setAotvUseCount(context.getAotvUseCount() + 1);
+                clearPestEtherwarpAttempt(client, runtime, false);
+                double distance = client.player.distanceTo(currentTarget);
+                finishAotvIfClose(client, context, currentTarget, distance, stopDistance);
+                return true;
+            }
+            if (now - runtime.pestEtherwarpClickAt <= ETHERWARP_CONFIRM_TIMEOUT_MS) {
+                return true;
+            }
+            runtime.pestEtherwarpRetryAfter = now + ETHERWARP_RETRY_COOLDOWN_MS;
+            clearPestEtherwarpAttempt(client, runtime, false);
+            return false;
+        }
+
+        if (FailsafeManager.shouldSuppressPestCleanerRotation(client)) {
+            clearPestEtherwarpAttempt(client, runtime, true);
+            return false;
+        }
+
+        boolean etherwarpSelected = ((AccessorInventory) client.player.getInventory()).getSelected() == etherwarpSlot;
+        if (!etherwarpSelected) {
+            client.execute(() -> FailsafeManager.selectHotbarSlot(client, etherwarpSlot));
+        }
+
+        Vec3 aimPoint = runtime.pestEtherwarpAimPoint;
+        if (context.getAotvAimStartedAt() == 0L) {
+            RotationManager.cancelRotation();
+            RotationManager.initiateRotation(
+                    client, aimPoint, ETHERWARP_AIM_MIN_DURATION_MS, 0.0f,
+                    AetherConfig.PEST_NEXT_TARGET_TURN_SPEED.get());
+            context.setAotvAimStartedAt(now);
+            return true;
+        }
+        if (RotationManager.isRotating()) {
+            return true;
+        }
+        if (!context.isLookingAt(client, aimPoint, ETHERWARP_AIM_TOLERANCE_DEGREES)) {
+            RotationManager.cancelRotation();
+            RotationManager.initiateRotation(
+                    client, aimPoint, ETHERWARP_AIM_MIN_DURATION_MS, 0.0f,
+                    AetherConfig.PEST_NEXT_TARGET_TURN_SPEED.get());
+            context.setAotvAimStartedAt(now);
+            return true;
+        }
+        if (!etherwarpSelected) {
+            return true;
+        }
+
+        long readyAt = context.getAotvNextUseAt();
+        if (readyAt == 0L) {
+            long anchor = context.getAotvLastUseAt() == 0L
+                    ? context.getStateEnteredAt() : context.getAotvLastUseAt();
+            readyAt = anchor + dev.aether.config.ConfigHelpers.getRandomizedDelay(
+                    AetherConfig.PEST_AOTV_DELAY_MIN.get(), AetherConfig.PEST_AOTV_DELAY_MAX.get());
+            context.setAotvNextUseAt(readyAt);
+        }
+        if (now < readyAt) {
+            return true;
+        }
+
+        context.setAotvLastUsePlayerX(client.player.getX());
+        context.setAotvLastUsePlayerY(client.player.getY());
+        context.setAotvLastUsePlayerZ(client.player.getZ());
+        ClientUtils.performUseClick();
+        FailsafeManager.addRotationGracePeriod(AOTV_POST_CLICK_GRACE_MS);
+        runtime.pestEtherwarpClickAt = now;
+        context.setAotvPostClickGraceUntil(now + AOTV_POST_CLICK_GRACE_MS);
+        context.setAotvAimStartedAt(0L);
+        context.setAotvNextUseAt(0L);
+        return true;
+    }
+
+    private static PestEtherwarpCandidate findEtherwarpCandidateNearPest(Minecraft client, Entity pest) {
+        WalkabilityChecker checker = new WalkabilityChecker(client.level);
+        Vec3 sneakingEye = EtherwarpHelper.getEyePosition(client, client.player.position());
+        int pestBlockX = (int) Math.floor(pest.getX());
+        int pestBlockZ = (int) Math.floor(pest.getZ());
+        int startY = (int) Math.floor(pest.getY()) - 1;
+        int[][] offsets = {
+                {1, 0}, {-1, 0}, {0, 1}, {0, -1},
+                {1, 1}, {1, -1}, {-1, 1}, {-1, -1},
+                {2, 0}, {-2, 0}, {0, 2}, {0, -2}
+        };
+        PestEtherwarpCandidate best = null;
+        double bestScore = Double.MAX_VALUE;
+        for (int[] offset : offsets) {
+            int x = pestBlockX + offset[0];
+            int z = pestBlockZ + offset[1];
+            for (int blockY = startY; blockY >= startY - ETHERWARP_BLOCK_SCAN_DEPTH; blockY--) {
+                PathPosition landingFeet = EtherwarpHelper.resolveTargetFeet(checker, x, blockY, z);
+                if (landingFeet == null) {
+                    continue;
+                }
+                Vec3 centeredFeet = EtherwarpHelper.getCenteredFeet(landingFeet);
+                if (client.player.position().distanceTo(centeredFeet) < ETHERWARP_MIN_TRAVEL_DISTANCE) {
+                    break;
+                }
+                Vec3 aimPoint = EtherwarpHelper.findVisibleTargetPoint(
+                        client, checker, sneakingEye, landingFeet);
+                if (aimPoint != null) {
+                    double score = centeredFeet.distanceTo(pest.position())
+                            + client.player.position().distanceTo(centeredFeet) * 0.05;
+                    if (score < bestScore) {
+                        best = new PestEtherwarpCandidate(
+                                aimPoint, centeredFeet, EtherwarpHelper.getTargetBlock(landingFeet));
+                        bestScore = score;
+                    }
+                    break;
+                }
+            }
+        }
+        return best;
+    }
+
+    private static void clearPestEtherwarpAttempt(
+            Minecraft client,
+            PestDestroyerRuntime runtime,
+            boolean clearRetryCooldown
+    ) {
+        if (client != null && client.options != null) {
+            ClientUtils.setKeyMappingState(client.options.keyShift, false);
+            ClientUtils.setKeyMappingState(client.options.keyJump, false);
+        }
+        if (client != null && client.player != null) {
+            client.player.setShiftKeyDown(false);
+        }
+        RotationManager.cancelRotation();
+        runtime.pestEtherwarpActive = false;
+        runtime.pestEtherwarpTargetEntityId = -1;
+        runtime.pestEtherwarpAimPoint = null;
+        runtime.pestEtherwarpLandingBlock = null;
+        runtime.pestEtherwarpClickAt = 0L;
+        runtime.aotvAimStartedAt = 0L;
+        runtime.aotvPostClickGraceUntil = 0L;
+        if (clearRetryCooldown) {
+            runtime.pestEtherwarpRetryAfter = 0L;
+        }
     }
 
     private static double getAotvMovedDistance(Minecraft client, Context context) {
