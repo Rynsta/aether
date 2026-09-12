@@ -14,6 +14,7 @@ import dev.aether.ui.settings.MultiDropdownSetting;
 import dev.aether.ui.settings.ModulesTab;
 import dev.aether.ui.settings.PositionSetting;
 import dev.aether.ui.settings.SettingGroup;
+import dev.aether.ui.settings.SectionSetting;
 import dev.aether.ui.settings.SliderSetting;
 import dev.aether.ui.settings.TextSetting;
 import dev.aether.ui.settings.ToggleSetting;
@@ -96,6 +97,7 @@ public final class PestManagerRegistryProvider extends AbstractModulesRegistryPr
                             AetherConfig.TRIGGER_PEST_ON_CHAT.set(v);
                             AetherConfig.save();
                         })
+                .add(new SectionSetting("General", "When Pest Destroyer starts and how a run completes"))
                 .add(new SliderSetting("Pest Threshold", 1, 8,
                         () -> (float) AetherConfig.PEST_THRESHOLD.get(),
                         v -> {
@@ -140,6 +142,7 @@ public final class PestManagerRegistryProvider extends AbstractModulesRegistryPr
                             AetherConfig.PEST_PLOT_TP_FOR_CURRENT_PLOT.set(v);
                             AetherConfig.save();
                         }))
+                .add(new SectionSetting("Targeting", "How pests are selected and reserved during a run"))
                 .add(new ToggleSetting("Leave One Pest Alive",
                         () -> AetherConfig.LEAVE_ONE_PEST_ALIVE.get(),
                         v -> {
@@ -159,6 +162,7 @@ public final class PestManagerRegistryProvider extends AbstractModulesRegistryPr
                             AetherConfig.SUNSET_PESTS.set(v);
                             AetherConfig.save();
                         }))
+                .add(new SectionSetting("Navigation", "Movement between pests and plot routing"))
                 .add(new ToggleSetting("AOTV Between Distant Pests",
                         () -> AetherConfig.PEST_AOTV_BETWEEN.get(),
                         v -> {
@@ -174,6 +178,7 @@ public final class PestManagerRegistryProvider extends AbstractModulesRegistryPr
                         .visibleWhen(() -> AetherConfig.PEST_AOTV_BETWEEN.get()))
                 .add(FarmingSettingsFactory.aotvBetweenPestsDelaySetting()
                         .visibleWhen(() -> AetherConfig.PEST_AOTV_BETWEEN.get()))
+                .add(new SectionSetting("Combat", "Aiming and vacuum engagement behavior"))
                 .add(FarmingSettingsFactory.pestFovRangeSetting())
                 .add(FarmingSettingsFactory.pestAboveAimPitchRangeSetting())
                 .add(FarmingSettingsFactory.pestMaxTurnSpeedSetting())
