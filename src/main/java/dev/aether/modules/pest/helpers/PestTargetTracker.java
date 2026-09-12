@@ -75,6 +75,48 @@ public final class PestTargetTracker {
         return next;
     }
 
+    static List<Entity> buildNearestRoute(
+            Minecraft client,
+            Collection<Entity> killedEntities,
+            int reservedEntityId,
+            Predicate<Entity> eligible,
+            Entity currentTarget) {
+        if (client == null || client.player == null) {
+            return List.of();
+        }
+
+        List<Entity> remaining = availableTargets(client, killedEntities, eligible);
+        remaining.removeIf(target -> target.getId() == reservedEntityId);
+        List<Entity> route = new ArrayList<>(remaining.size());
+        Vec3 cursor = client.player.position();
+
+        if (currentTarget != null) {
+            Entity active = remaining.stream()
+                    .filter(target -> target.getId() == currentTarget.getId())
+                    .findFirst()
+                    .orElse(null);
+            if (active != null) {
+                route.add(active);
+                remaining.remove(active);
+                cursor = active.position();
+            }
+        }
+
+        while (!remaining.isEmpty()) {
+            Vec3 origin = cursor;
+            Entity next = remaining.stream()
+                    .min(Comparator.comparingDouble(target -> origin.distanceToSqr(target.position())))
+                    .orElse(null);
+            if (next == null) {
+                break;
+            }
+            route.add(next);
+            remaining.remove(next);
+            cursor = next.position();
+        }
+        return List.copyOf(route);
+    }
+
     static <T> T nearestQueuedTarget(Deque<T> queue, Predicate<T> eligible, ToDoubleFunction<T> distanceSquared) {
         T closest = null;
         double closestDistance = Double.POSITIVE_INFINITY;

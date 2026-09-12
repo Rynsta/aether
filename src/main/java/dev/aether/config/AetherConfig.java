@@ -1029,6 +1029,8 @@ public final class AetherConfig {
         public static final IntEntry PEST_ESP_HIGHLIGHT_COLOR = Config.integer("pestEspHighlightColor", 0xFFFF3030);
         public static final BooleanEntry PEST_ESP_TRACER = Config.bool("pestEspTracer", true);
         public static final IntEntry PEST_ESP_TRACER_COLOR = Config.integer("pestEspTracerColor", 0xFFFF3030);
+        public static final BooleanEntry PEST_ESP_OPTIMIZED_ROUTE = Config.bool("pestEspOptimizedRoute", false);
+        public static final IntEntry PEST_ESP_OPTIMIZED_ROUTE_COLOR = Config.integer("pestEspOptimizedRouteColor", 0xFF00F0FF);
 
         // -- GREENHOUSE ------------------------------------------------------------
         public static final BooleanEntry AUTO_GREENHOUSE = Config.bool("autoGreenhouse", false);

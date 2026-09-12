@@ -64,6 +64,13 @@ public class PestDestroyer {
         return runtime.state;
     }
 
+    public static List<Entity> getPlannedPestRoute(Minecraft client) {
+        if (!runtime.active || client == null || client.player == null) {
+            return List.of();
+        }
+        return PestTargetController.buildPlannedRoute(client, runtime);
+    }
+
     public static void start(Minecraft client) {
         start(client, null);
     }

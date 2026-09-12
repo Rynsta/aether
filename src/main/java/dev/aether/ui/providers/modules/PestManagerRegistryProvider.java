@@ -73,7 +73,20 @@ public final class PestManagerRegistryProvider extends AbstractModulesRegistryPr
                             AetherConfig.PEST_ESP_TRACER_COLOR.set(value);
                             AetherConfig.save();
                         })
-                        .visibleWhen(AetherConfig.PEST_ESP_TRACER::get)));
+                        .visibleWhen(AetherConfig.PEST_ESP_TRACER::get))
+                .add(new ToggleSetting("Optimized Route ESP",
+                        AetherConfig.PEST_ESP_OPTIMIZED_ROUTE::get,
+                        value -> {
+                            AetherConfig.PEST_ESP_OPTIMIZED_ROUTE.set(value);
+                            AetherConfig.save();
+                        }))
+                .add(new ColorSetting("Optimized Route Color",
+                        AetherConfig.PEST_ESP_OPTIMIZED_ROUTE_COLOR::get,
+                        value -> {
+                            AetherConfig.PEST_ESP_OPTIMIZED_ROUTE_COLOR.set(value);
+                            AetherConfig.save();
+                        })
+                        .visibleWhen(AetherConfig.PEST_ESP_OPTIMIZED_ROUTE::get)));
 
         groups.add(SettingGroup.of(
                         "Pest Destroyer",

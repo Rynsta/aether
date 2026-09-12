@@ -14,6 +14,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
@@ -188,6 +189,20 @@ final class PestTargetController {
                 runtime.killedEntities,
                 runtime.navigation.leaveOneReservedEntityId,
                 eligibleTarget(client, runtime));
+    }
+
+    static List<Entity> buildPlannedRoute(
+            Minecraft client,
+            PestDestroyerRuntime runtime) {
+        if (client == null || client.player == null) {
+            return List.of();
+        }
+        return PestTargetTracker.buildNearestRoute(
+                client,
+                runtime.killedEntities,
+                runtime.navigation.leaveOneReservedEntityId,
+                eligibleTarget(client, runtime),
+                runtime.currentTarget);
     }
 
     private static Predicate<Entity> eligibleTarget(Minecraft client, PestDestroyerRuntime runtime) {
