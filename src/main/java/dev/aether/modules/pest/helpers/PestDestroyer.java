@@ -174,6 +174,7 @@ public class PestDestroyer {
             ClientUtils.setKeyMappingState(client.options.keyUse, false);
             ClientUtils.setKeyMappingState(client.options.keyAttack, false);
             ClientUtils.setKeyMappingState(client.options.keyShift, false);
+            ClientUtils.setKeyMappingState(client.options.keyJump, false);
         }
         ClientUtils.sendDebugMessage("[PestDestroyer] Stopped.");
     }
@@ -251,6 +252,7 @@ public class PestDestroyer {
                 PestDestroyerInputController.isVacuumTemporarilyReleased(runtime));
 
         PestDestroyerInputController.updateVacuumRetryPulse(client, runtime);
+        PestCombatCoordinator.updateEtherwarpAltitudeHold(client, runtime);
     }
 
     private static void processState(Minecraft client) {
@@ -324,6 +326,10 @@ public class PestDestroyer {
     private static void startRoofAotv(Minecraft client, String plot, State returnState, String taskName) {
         runtime.roofAotvReturnState = returnState;
         runtime.aotvStartY = Double.NaN;
+        runtime.pestEtherwarpMaintainHeight = false;
+        runtime.pestEtherwarpJumpHeld = false;
+        ClientUtils.setKeyMappingState(client.options.keyJump, false);
+        ClientUtils.setKeyMappingState(client.options.keyShift, false);
         setState(State.AOTV_TO_ROOF);
         PestAotvManager.setSneakingForAotv(true);
         MacroWorkerThread.getInstance().submit(taskName, () -> {
@@ -497,6 +503,10 @@ public class PestDestroyer {
     static boolean tryNextPlot(Minecraft client) {
         boolean shouldTeleport = PestPlotNavigator.tryNextPlot(client, runtime.navigation);
         if (shouldTeleport) {
+            runtime.pestEtherwarpMaintainHeight = false;
+            runtime.pestEtherwarpJumpHeld = false;
+            ClientUtils.setKeyMappingState(client.options.keyJump, false);
+            ClientUtils.setKeyMappingState(client.options.keyShift, false);
             setState(State.TELEPORT_TO_PLOT);
             return true;
         }
@@ -512,6 +522,8 @@ public class PestDestroyer {
         ClientUtils.setKeyMappingState(client.options.keyDown, false);
         ClientUtils.setKeyMappingState(client.options.keyAttack, false);
         ClientUtils.setKeyMappingState(client.options.keyUp, false);
+        ClientUtils.setKeyMappingState(client.options.keyJump, false);
+        ClientUtils.setKeyMappingState(client.options.keyShift, false);
         int killed = runtime.killedEntities.size();
         ClientUtils.sendMessage("\u00A7aPest destroyer finished. Tracked " + killed + " pest(s).", false);
         runtime.resetAll();
